@@ -14,7 +14,7 @@ function Restore-Guild {
 	if (Test-Path -Path $sqlFilePath) {
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		
-		Write-Host "`nRestoring guild $GuildName" -ForegroundColor Yellow
+		Write-Host "`nRestoring guild $GuildName..." -ForegroundColor Yellow
 		# Write-Host "The file exists: $sqlFilePath"
 		
 		# Get the maximum GUID from the characters table

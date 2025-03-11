@@ -53,7 +53,7 @@ try {
 	}
 ########################################
 } catch {
-	Write-Error "An error occurred: $($_.Exception.Message)"
+	Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
 } finally {
 	Stop-Transcript
 	# Write-Output "Transcript stopped"

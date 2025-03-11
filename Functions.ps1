@@ -39,7 +39,8 @@ function Backup-TableData {
         [string]$Race,
         [string]$Class,
         [string]$Gender,
-        [string]$Level
+        [string]$Level,
+        [string]$AccountName
     )
     
     # Convert race/class/gender (same as before)
@@ -62,7 +63,7 @@ function Backup-TableData {
         default { "Unknown_Gender" }
     }
 
-    $backupDirFull = "$CharacterBackupDir\$userNameToSearch\$characterName - $Race $Class $Gender LV$Level"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
@@ -70,7 +71,7 @@ function Backup-TableData {
     $backupFile = "$backupDirFull\$tableNameFile.sql"
     $whereClause = "$columnName=$value"
 
-    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$serverName`" --port=`"$port`" --user=`"$username`" --password=`"$password`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$database_characters`" `"$tableName`" > `"$backupFile`""
+    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
     Invoke-Expression $mysqldumpCommand
 }
 
@@ -85,7 +86,8 @@ function Backup-TableData-Array {
         [string]$Race,
         [string]$Class,
         [string]$Gender,
-        [string]$Level
+        [string]$Level,
+        [string]$AccountName
     )
     
     # Convert race/class/gender (same as above)
@@ -109,7 +111,7 @@ function Backup-TableData-Array {
     }
 
     # Create backup directory
-    $backupDirFull = "$CharacterBackupDir\$userNameToSearch\$characterName - $Race $Class $Gender LV$Level"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
@@ -118,7 +120,7 @@ function Backup-TableData-Array {
     $valuesList = $values -join ","
     $whereClause = "$columnName IN ($valuesList)"
     
-    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$serverName`" --port=`"$port`" --user=`"$username`" --password=`"$password`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$database_characters`" `"$tableName`" > `"$backupFile`""
+    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
     
     Invoke-Expression $mysqldumpCommand
 }

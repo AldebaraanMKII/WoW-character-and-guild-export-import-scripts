@@ -4,7 +4,7 @@
 $SourceServerName = "127.0.0.1"
 $SourcePort = 3306
 $SourceUsername = "root"
-$SourcePassword = "test"
+$SourcePassword = "ascent"
 $SourceDatabaseAuth = "acore_auth"
 $SourceDatabaseCharacters = "acore_characters"
 $SourceDatabaseWorld = "acore_world"
