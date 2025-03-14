@@ -40,7 +40,8 @@ function Backup-TableData {
         [string]$Class,
         [string]$Gender,
         [string]$Level,
-        [string]$AccountName
+        [string]$AccountName,
+        [string]$CurrentDate
     )
     
     # Convert race/class/gender (same as before)
@@ -63,7 +64,7 @@ function Backup-TableData {
         default { "Unknown_Gender" }
     }
 
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName - $Race $Class $Gender LV$Level"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
@@ -87,7 +88,8 @@ function Backup-TableData-Array {
         [string]$Class,
         [string]$Gender,
         [string]$Level,
-        [string]$AccountName
+        [string]$AccountName,
+        [string]$CurrentDate
     )
     
     # Convert race/class/gender (same as above)
@@ -111,7 +113,7 @@ function Backup-TableData-Array {
     }
 
     # Create backup directory
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName - $Race $Class $Gender LV$Level"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }

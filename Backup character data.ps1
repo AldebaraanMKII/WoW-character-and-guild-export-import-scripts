@@ -14,6 +14,8 @@ function Backup-Character {
     
     Write-Host "`nBacking up character $characterName..." -ForegroundColor Yellow
     
+	$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+	
     # List of tables to back up
     $tables = @(
         "characters",
@@ -34,7 +36,7 @@ function Backup-Character {
     )
     
     foreach ($table in $tables) {
-        Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+        Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
     }
     
     # Pet Data
@@ -46,28 +48,28 @@ function Backup-Character {
             Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Yellow
         }
         
-        Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+        Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
         
         $petIds = $petsData | Select-Object -ExpandProperty id
         
-        Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
-        Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
-        Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+        Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
+        Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
+        Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
     }
     
     # Item Data
-    Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+    Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
     
     # Mail Data
-    Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+    Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
     
     # Transmog Data
-    Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
-    Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
-    Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+    Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
+    Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
+    Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
     
     # Reagent Bank Data
-    Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName
+    Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -AccountName $AccountName -CurrentDate $CurrentDate
     
     # Delete empty SQL files
     Get-ChildItem -Path $CharacterBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
@@ -86,6 +88,7 @@ function Backup-Character-Main {
     $userNameToSearch = Read-Host "`nEnter account name"
     
     $id = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $userNameToSearch }
+    # $id = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -SqlParameterCollection @{ username = $userNameToSearch }
     
     if ($id) {
         Write-Host "`nID for username '$userNameToSearch': $($id.id)" -ForegroundColor Yellow
@@ -206,19 +209,22 @@ function Backup-Character-Main {
                         Write-Host "Invalid selection. Please try again." -ForegroundColor Red
                     }
                 }
+########################################
                 else {
                     Write-Host "Invalid selection. Please try again." -ForegroundColor Red
                 }
             }
         }
+########################################
         else {
             Write-Host "No characters found for account ID '$($id.id)'" -ForegroundColor Red
         }
+########################################
     }
     else {
         Write-Host "`nNo account found with username '$userNameToSearch'" -ForegroundColor Red
     }
-	
+########################################
 	# Close all connections
 	Close-SqlConnection -ConnectionName "AuthConn"
 	Close-SqlConnection -ConnectionName "CharConn"
