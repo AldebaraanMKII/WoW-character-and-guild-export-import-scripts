@@ -40,6 +40,9 @@ function Backup-TableData {
         [string]$Class,
         [string]$Gender,
         [string]$Level,
+        [int]$XP,
+        [int]$Money,
+        [int]$Honor,
         [string]$AccountName,
         [string]$CurrentDate
     )
@@ -64,13 +67,15 @@ function Backup-TableData {
         default { "Unknown_Gender" }
     }
 
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level - XP $XP - Money $Money - Honor $Honor"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
     
     $backupFile = "$backupDirFull\$tableNameFile.sql"
+	# Write-Host "File: $backupDirFull\$tableNameFile.sql" -ForegroundColor Yellow
     $whereClause = "$columnName=$value"
+	
 
     $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
     Invoke-Expression $mysqldumpCommand
@@ -88,6 +93,9 @@ function Backup-TableData-Array {
         [string]$Class,
         [string]$Gender,
         [string]$Level,
+        [int]$XP,
+        [int]$Money,
+        [int]$Honor,
         [string]$AccountName,
         [string]$CurrentDate
     )
@@ -113,7 +121,7 @@ function Backup-TableData-Array {
     }
 
     # Create backup directory
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level - XP $XP - Money $Money - Honor $Honor"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
@@ -123,8 +131,9 @@ function Backup-TableData-Array {
     $whereClause = "$columnName IN ($valuesList)"
     
     $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
-    
     Invoke-Expression $mysqldumpCommand
+
+	
 }
 
 ########################################
