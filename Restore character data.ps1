@@ -89,7 +89,7 @@ function Restore-Character {
 			@("custom_reagent_bank", 0)          #new
 		)
 		
-		Write-Output "Importing character data..." -ForegroundColor Yellow
+		Write-Host "Importing character data..." -ForegroundColor Yellow
 		# Loop through each table in the array
 		foreach ($entry in $tables) {
 			# Extract the table name and the column number
@@ -122,7 +122,7 @@ function Restore-Character {
 				})
 				
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query "$modifiedSqlQuery" -tablename $table -ConnectionName "CharConn"
@@ -172,7 +172,7 @@ function Restore-Character {
 			$sqlFilePath = "$CharacterBackupDir\*\$folder\character_pet.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
-				Write-Output "Importing pet data..." -ForegroundColor Yellow
+				Write-Host "Importing pet data..." -ForegroundColor Yellow
 				
 				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM character_pet"
 				
@@ -229,7 +229,7 @@ function Restore-Character {
 				$modifiedSqlQuery = "INSERT INTO `character_pet` VALUES " + ($modifiedRows -join ",") + ";"
     
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query "$modifiedSqlQuery" -tablename "character_pet" -ConnectionName "CharConn"
@@ -286,7 +286,7 @@ function Restore-Character {
 						$modifiedSqlQuery = "INSERT INTO $table VALUES " + ($modifiedRows -join ",") + ";"
 			
 						# Output the modified SQL to verify
-						# Write-Output "`nModified SQL: $modifiedSqlQuery"
+						# Write-Host "`nModified SQL: $modifiedSqlQuery"
 						
 						#Execute the query
 						Execute-Query -query "$modifiedSqlQuery" -tablename $table -ConnectionName "CharConn"
@@ -300,7 +300,7 @@ function Restore-Character {
 		$sqlFilePath = "$CharacterBackupDir\*\$folder\item_instance.sql"
 		
 		if (Test-Path -Path $sqlFilePath) {
-			Write-Output "Importing character items..." -ForegroundColor Yellow
+			Write-Host "Importing character items..." -ForegroundColor Yellow
 			
 			$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance"
 
@@ -358,10 +358,10 @@ function Restore-Character {
 			$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
 			
 			# Output the array to verify
-			# Write-Output $guidMappingpItems
+			# Write-Host $guidMappingpItems
 			
 			# Output the modified SQL to verify
-			# Write-Output "`nModified SQL: $modifiedSqlQuery"
+			# Write-Host "`nModified SQL: $modifiedSqlQuery"
 			
 			#Execute the query
 			Execute-Query -query "$modifiedSqlQuery" -tablename "item_instance" -ConnectionName "CharConn"
@@ -423,7 +423,7 @@ function Restore-Character {
 				$modifiedSqlQuery = "INSERT INTO `character_inventory` VALUES " + ($modifiedRows -join ",") + ";"
 			
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query "$modifiedSqlQuery" -tablename "character_inventory" -ConnectionName "CharConn"
@@ -434,7 +434,7 @@ function Restore-Character {
 			$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_transmogrification.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
-				Write-Output "Importing transmog item data..." -ForegroundColor Yellow
+				Write-Host "Importing transmog item data..." -ForegroundColor Yellow
 				# Read the contents of the .sql file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
 				
@@ -476,7 +476,7 @@ function Restore-Character {
 				$modifiedSqlQuery = "INSERT INTO `custom_transmogrification` VALUES " + ($modifiedRows -join ",") + ";"
 			
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query "$modifiedSqlQuery" -tablename "custom_transmogrification" -ConnectionName "CharConn"
@@ -486,7 +486,7 @@ function Restore-Character {
 				$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_transmogrification_sets.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
-					Write-Output "Importing transmog sets..." -ForegroundColor Yellow
+					Write-Host "Importing transmog sets..." -ForegroundColor Yellow
 					
 					# Get the maximum PresetID from the database
 					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(PresetID) AS MaxPresetID FROM custom_transmogrification_sets"
@@ -545,7 +545,7 @@ function Restore-Character {
 				$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_unlocked_appearances.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
-					Write-Output "Importing transmog unlocked appearances..." -ForegroundColor Yellow
+					Write-Host "Importing transmog unlocked appearances..." -ForegroundColor Yellow
 					# Read the contents of the .sql file
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
 					
@@ -567,7 +567,7 @@ function Restore-Character {
 						$itemTemplateID = $values[1]
 				
 						# Check if the row already exists in the database
-						if (-not (Row-Exists -accountID $accountID -itemTemplateID $itemTemplateID -ConnectionName "CharConn")) {
+						if (-not (Row-Exists-custom-unlocked-appearances -accountID $accountID -itemTemplateID $itemTemplateID -ConnectionName "CharConn")) {
 								$values[0] = $accountID # Update this with the appropriate variable for the new account ID
 				
 								# Recreate the modified row and store it
@@ -583,7 +583,7 @@ function Restore-Character {
 					$modifiedSqlQuery = "INSERT INTO `custom_unlocked_appearances` VALUES " + ($modifiedRows -join ",") + ";"
 					
 					# Output the modified SQL to verify
-					# Write-Output "`nModified SQL: $modifiedSqlQuery"
+					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					
 					#Execute the query
 					Execute-Query -query $modifiedSqlQuery -tablename "custom_unlocked_appearances" -ConnectionName "CharConn"
@@ -596,7 +596,7 @@ function Restore-Character {
 			$sqlFilePath = "$CharacterBackupDir\*\$folder\character_equipmentsets.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
-				Write-Output "Importing character equipment sets..." -ForegroundColor Yellow
+				Write-Host "Importing character equipment sets..." -ForegroundColor Yellow
 				
 				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(setguid) AS MaxSetguid FROM character_equipmentsets"
 
@@ -645,7 +645,7 @@ function Restore-Character {
 				$modifiedSqlQuery = "INSERT INTO `character_equipmentsets` VALUES " + ($modifiedRows -join ",") + ";"
 				
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query "$modifiedSqlQuery" -tablename "character_equipmentsets" -ConnectionName "CharConn"

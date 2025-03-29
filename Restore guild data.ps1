@@ -37,7 +37,7 @@ function Restore-Guild {
 		$modifiedSqlQuery = "INSERT INTO `guild_member` VALUES ($newGuid, $characterID, 0, '', '');"
 		
 		# Output the modified SQL to verify
-		# Write-Output "`nModified SQL: $modifiedSqlQuery"
+		# Write-Host "`nModified SQL: $modifiedSqlQuery"
 		
 		#Execute the query
 		Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
@@ -119,7 +119,7 @@ function Restore-Guild {
 				$modifiedSqlQuery = "INSERT INTO $table VALUES " + ($modifiedRows -join ",") + ";"
 				
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query $modifiedSqlQuery -tablename $table -ConnectionName "CharConn"
@@ -185,10 +185,10 @@ function Restore-Guild {
 				$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
 				
 				# Output the array to verify
-				# Write-Output $guidMappingpItems
+				# Write-Host $guidMappingpItems
 				
 				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				
 				#Execute the query
 				Execute-Query -query $modifiedSqlQuery -tablename "item_instance" -ConnectionName "CharConn"
@@ -237,7 +237,7 @@ function Restore-Guild {
 					$modifiedSqlQuery = "INSERT INTO `guild_bank_item` VALUES " + ($modifiedRows -join ",") + ";"
 			
 					# Output the modified SQL to verify
-					# Write-Output "`nModified SQL: $modifiedSqlQuery"
+					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					
 					#Execute the query
 					Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_item" -ConnectionName "CharConn"
@@ -245,6 +245,119 @@ function Restore-Guild {
 ########################################################
 			}
 ############################
+
+
+############################ PROCESS GUILD_HOUSE - alter id[0] taking into account existing items and guild[1]
+			$sqlFilePath = "$GuildBackupDir\$folder\guild_house.sql"
+			
+			if (Test-Path -Path $sqlFilePath) {
+				# Get the maximum GUID from the characters table
+				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxGuid FROM guild_house"
+				
+				# Extract the numeric value from the DataRow and check for DBNull
+				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
+					$maxGuid = $maxGuidResult.MaxGuid
+				} else {
+					# If no records found or value is DBNull, set maxGuid to 23
+					$maxGuid = 23
+				}
+				
+				#assign new guid to highest value in column guid + 24
+				$newRowID = $maxGuid + 1
+				
+				# Read the contents of the .sql file
+				$sqlContent = Get-Content -Path $sqlFilePath -Raw
+				
+				# Extract values inside parentheses
+				$pattern = "(?<=\().*?(?=\))"
+				$matches = [regex]::Matches($sqlContent, $pattern)
+			
+				# List to store modified rows
+				$modifiedRows = @()
+			
+				# Loop through each match
+				for ($i = 0; $i -lt $matches.Count; $i++) {
+					$match = $matches[$i].Value
+					
+					# Split the row into individual values
+					$values = $match -split ","
+					
+					# Modify the first value with the incrementing GUID
+					$newRowIDValue = $newRowID + $i
+					$values[0] = $newRowIDValue
+					
+					# Modify the second row value with the new GUID
+					$values[1] = $newGuid
+					
+					# Recreate the modified row and store it
+					$modifiedRow = "(" + ($values -join ",") + ")"
+					$modifiedRows += $modifiedRow
+				}
+			
+				# Join the modified rows into the final SQL query
+				$modifiedSqlQuery = "INSERT INTO `guild_house` VALUES " + ($modifiedRows -join ",") + ";"
+				
+				# Output the modified SQL to verify
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
+				
+				#Execute the query
+				Execute-Query -query $modifiedSqlQuery -tablename "guild_house" -ConnectionName "CharConn"
+############################ PROCESS CREATURE (this is for guild house NPCs) - alter guid[0] taking into account existing creatures
+				$sqlFilePath = "$GuildBackupDir\$folder\creature.sql"
+				
+				if (Test-Path -Path $sqlFilePath) {
+					# Get the maximum GUID from the characters table
+					$maxGuidResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(guid) AS MaxGuid FROM creature"
+					
+					# Extract the numeric value from the DataRow and check for DBNull
+					if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
+						$maxGuid = $maxGuidResult.MaxGuid
+					} else {
+						# If no records found or value is DBNull, set maxGuid to 0
+						$maxGuid = 0
+					}
+					
+					#assign new guid to highest value in column guid + 1
+					$newCreatureGuid = $maxGuid + 1
+					
+					# Read the contents of the .sql file
+					$sqlContent = Get-Content -Path $sqlFilePath -Raw
+					
+					# Extract values inside parentheses
+					$pattern = "(?<=\().*?(?=\))"
+					$matches = [regex]::Matches($sqlContent, $pattern)
+				
+					# List to store modified rows
+					$modifiedRows = @()
+				
+					# Loop through each match
+					for ($i = 0; $i -lt $matches.Count; $i++) {
+						$match = $matches[$i].Value
+						
+						# Split the row into individual values
+						$values = $match -split ","
+						
+						# Modify the first value with the incrementing GUID
+						$newCreatureGuidValue = $newCreatureGuid + $i
+						$values[0] = $newCreatureGuidValue
+					
+						# Recreate the modified row and store it
+						$modifiedRow = "(" + ($values -join ",") + ")"
+						$modifiedRows += $modifiedRow
+					}
+				
+					# Join the modified rows into the final SQL query
+					$modifiedSqlQuery = "INSERT INTO `creature` VALUES " + ($modifiedRows -join ",") + ";"
+					
+					# Output the modified SQL to verify
+					# Write-Host "`nModified SQL: $modifiedSqlQuery"
+					
+					#Execute the query
+					Execute-Query -query $modifiedSqlQuery -tablename "creature" -ConnectionName "WorldConn"
+				}
+########################################################
+			}
+########################################################
 			$stopwatch.Stop()
 			Write-Host "`nSuccessfully imported guild $GuildName in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
 		} else {
@@ -260,6 +373,7 @@ function Restore-Guild {
 function Restore-Guild-Main {
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 
 ################ MENU
 	$selectedGuild = $false
@@ -327,10 +441,18 @@ function Restore-Guild-Main {
 			$characterGuid = Check-Character -characterNameToSearch $characterNameToSearch
 			
 			if ($characterGuid){
-				Restore-Guild -folder $selectedFolder -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName
+				#check if character already is a member of a guild
+				$FoundRow = Row-Exists -TableName "guild_member" -RowName "guid" -RowValue $characterGuid -ConnectionName "CharConn"
+				if ($FoundRow){
+					Write-Host "Character $characterNameToSearch already is a member of a guild. Try again." -ForegroundColor Red
+				} else {
+					Restore-Guild -folder $selectedFolder -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName
+				}
 			} else {
 				Write-Host "Character name not found in database. Try again." -ForegroundColor Red
 			}
+			
+			
 		}
 ########################### All
 		elseif ($selectedGuildAll -eq $true) {
@@ -357,7 +479,7 @@ function Restore-Guild-Main {
 	# Close all connections
 	Close-SqlConnection -ConnectionName "AuthConn"
 	Close-SqlConnection -ConnectionName "CharConn"
-	# Close-SqlConnection -ConnectionName "WorldConn"
+	Close-SqlConnection -ConnectionName "WorldConn"
 }
 ###################################################
 

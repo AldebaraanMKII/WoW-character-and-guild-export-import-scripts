@@ -14,7 +14,7 @@ function Backup-Guild {
 
     Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Yellow
 
-    # List of tables to back up
+########### List of tables to back up
     $tables = @(
         "guild",
         "guild_bank_right",
@@ -46,7 +46,7 @@ function Backup-Guild {
 		}
     }
 
-    # Handle item_instance table
+########### Handle item_instance table
 	try {
 		$itemGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT item_guid FROM guild_bank_item WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID}
 		if ($itemGuids.Count -gt 0) {
@@ -57,9 +57,6 @@ function Backup-Guild {
 				$whereClause = "guid IN (" + ($guidList -join ',') + ")"
 				
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" item_instance > `"$backupFile`""
-				
-				# Run the mysqldump command
-				# Start-Process -FilePath "cmd.exe" -ArgumentList "/c $mysqldumpCommand" -Wait
 				
 				# Write-Host "Running mysqldump command..."
 				# Write-Host $mysqldumpCommand
@@ -79,8 +76,57 @@ function Backup-Guild {
 		Write-Host "Error backing up item_instance table: $_" -ForegroundColor Red
 	}
 	
+########### Guild House Data
+	try {
+		$GuildGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id FROM guild_house WHERE guild = @GuildID" -Parameters @{GuildID = $GuildID}
+		if ($GuildGuids.Count -gt 0) {
+			# Extract id values from DataRow objects
+			$guidList = $GuildGuids | ForEach-Object { $_.id } | Where-Object { $_ -ne $null }
+			if ($guidList.Count -gt 0) {
+				$backupFile = "$backupDirFull\guild_house.sql"
+				$whereClause = "id IN (" + ($guidList -join ',') + ")"
+				
+				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" guild_house > `"$backupFile`""
+				
+				# Write-Host "Running mysqldump command..."
+				# Write-Host $mysqldumpCommand
+				
+				# Run the mysqldump command
+				Invoke-Expression $mysqldumpCommand
+								
+				if ($LASTEXITCODE -eq 0) {
+					# Write-Host "Successfully backed up item_instance table to $backupFile" -ForegroundColor Green
+				} else {
+					Write-Host "Error backing up guild_house table." -ForegroundColor Red
+				}
+			}
+		}
+	} catch {
+		Write-Host "Error backing up guild_house table: $_" -ForegroundColor Red
+	}
+########### Handle creature_respawn table
 
-    # Delete empty SQL files
+	$backupFile = "$backupDirFull\creature.sql"
+	
+	$NPCIds = @(26327, 26324, 26325, 26326, 26328, 26329, 26330, 26331, 26332, 500030, 500031, 500032, 30605, 29195, 2836, 8128, 8736, 18774, 18751, 18773, 18753, 30721, 30722, 19187, 19180, 19052, 908, 2627, 19184, 2834, 19185, 8719, 9856, 184137, 1685, 4087, 500000, 500001, 500002, 500003, 500004, 500005, 500006, 500007, 500008, 500009, 187293, 28692, 28776, 4255, 6491, 191028, 29636, 29493, 28690, 9858, 2622) 
+	
+	$whereClause = "id1 IN (" + ($NPCIds -join ',') + ") AND map = 1 AND zoneId = 0 AND areaId = 0"
+	
+	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseWorld`" creature > `"$backupFile`""
+	
+	# Write-Host "Running mysqldump command..."
+	# Write-Host $mysqldumpCommand
+	
+	# Run the mysqldump command
+	Invoke-Expression $mysqldumpCommand
+
+	if ($LASTEXITCODE -eq 0) {
+		# Write-Host "Successfully backed up creature table to $backupFile" -ForegroundColor Green
+	} else {
+		Write-Host "Error backing up creature table." -ForegroundColor Red
+	}
+
+########### Delete empty SQL files
     Get-ChildItem -Path $GuildBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 }
 ########################################

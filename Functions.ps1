@@ -174,8 +174,8 @@ function Execute-Query {
         [Parameter(Mandatory=$true)]
         [string]$TableName,
         
-        [Parameter(Mandatory=$false)]
-        [string]$ConnectionName = "CharConn"
+        [Parameter(Mandatory=$true)]
+        [string]$ConnectionName
     )
 
     try {
@@ -187,8 +187,8 @@ function Execute-Query {
     }
 }
 ########################################
-# Function to check if a row already exists in a table
-function Row-Exists {
+# Function to check if a row already exists in a table (custom-unlocked-appearances)
+function Row-Exists-custom-unlocked-appearances {
     param (
         [Parameter(Mandatory=$true)]
         [int]$AccountID,
@@ -196,8 +196,8 @@ function Row-Exists {
         [Parameter(Mandatory=$true)]
         [int]$ItemTemplateID,
         
-        [Parameter(Mandatory=$false)]
-        [string]$ConnectionName = "CharConn"
+        [Parameter(Mandatory=$true)]
+        [string]$ConnectionName
     )
     
     try {
@@ -209,6 +209,36 @@ function Row-Exists {
                                      AccountID = $AccountID
                                      ItemTemplateID = $ItemTemplateID
                                  }
+        
+        # Return true if count is greater than 0
+        return ($result.count -gt 0)
+    }
+    catch {
+        Write-Error "Error checking row existence: $_" -ForegroundColor Red
+        return $false
+    }
+}
+########################################
+# Function to check if a row already exists in a table
+function Row-Exists {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$TableName,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$RowName,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$RowValue,
+        
+        [Parameter(Mandatory=$true)]
+        [string]$ConnectionName
+    )
+    
+    try {
+        $query = "SELECT COUNT(*) as count FROM $TableName WHERE $RowName = $RowValue;"
+        
+        $result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $query
         
         # Return true if count is greater than 0
         return ($result.count -gt 0)
@@ -249,6 +279,32 @@ function Check-Character {
 			Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
 		}
 ##########################
+}
+################################
+function Get-ItemNameById {
+    param(
+        [int]$ItemId
+    )
+    
+    if ($ItemId -le 0) {
+        return $ItemId
+    }
+
+    $Query = "SELECT name FROM item_template WHERE entry = @ItemId"
+    
+    try {
+        $Result = Invoke-SqlQuery -ConnectionName "WorldConn" -Query $Query -Parameters @{ ItemId = $ItemId }
+        if ($Result -and $Result.name) {
+            return $Result.name
+        } else {
+            Write-Warning "Item ID $ItemId not found in the database."
+            return $ItemId
+        }
+    }
+    catch {
+        Write-Warning "Failed to lookup item ID $ItemId : ${_}"
+        return $ItemId
+    }
 }
 ################################
 

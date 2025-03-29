@@ -18,7 +18,7 @@ function Backup-Character {
     
     Write-Host "`nBacking up character $characterName..." -ForegroundColor Yellow
     
-    # List of tables to back up
+########## List of tables to back up
     $tables = @(
         "characters",
         "character_account_data",
@@ -41,7 +41,7 @@ function Backup-Character {
         Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     }
     
-    # Pet Data
+########## Pet Data
     $petsData = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id, entry, level, name FROM character_pet WHERE owner = @owner" -Parameters @{ owner = $characterId }
     
     if ($petsData) {
@@ -59,24 +59,23 @@ function Backup-Character {
         Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     }
     
-    # Item Data
+########## Item Data
     Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     
-    # Mail Data
+########## Mail Data
     Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     
-    # Transmog Data
+########## Transmog Data
     Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     
-    # Reagent Bank Data
+########## Reagent Bank Data
     Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-    
+##########
     # Delete empty SQL files
     Get-ChildItem -Path $CharacterBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 }
-
 ########################################
 
 ########################################
