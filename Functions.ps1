@@ -67,7 +67,7 @@ function Backup-TableData {
         default { "Unknown_Gender" }
     }
 
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level - XP $XP - Money $Money - Honor $Honor"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
@@ -121,7 +121,7 @@ function Backup-TableData-Array {
     }
 
     # Create backup directory
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level - XP $XP - Money $Money - Honor $Honor"
+    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
         New-Item -Path $backupDirFull -ItemType Directory | Out-Null
     }
@@ -295,17 +295,16 @@ function Get-ItemNameById {
     try {
         $Result = Invoke-SqlQuery -ConnectionName "WorldConn" -Query $Query -Parameters @{ ItemId = $ItemId }
         if ($Result -and $Result.name) {
+            # Write-Host "Item ID $ItemId name found: $Result.name."
             return $Result.name
         } else {
-            Write-Warning "Item ID $ItemId not found in the database."
-            return $ItemId
+            # Write-Host "Item ID $ItemId not found in the database."
+            return "Unknown"
         }
     }
     catch {
-        Write-Warning "Failed to lookup item ID $ItemId : ${_}"
-        return $ItemId
+        # Write-Host "Failed to lookup item ID $ItemId : ${_}"
+        return "Unknown"
     }
 }
 ################################
-
-
