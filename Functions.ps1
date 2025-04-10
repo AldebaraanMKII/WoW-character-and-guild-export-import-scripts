@@ -47,25 +47,10 @@ function Backup-TableData {
         [string]$CurrentDate
     )
     
-    # Convert race/class/gender (same as before)
-    $Race = switch ($Race) {
-        1 { "Human" }; 2 { "Orc" }; 3 { "Dwarf" }
-        4 { "Night_Elf" }; 5 { "Undead" }; 6 { "Tauren" }
-        7 { "Gnome" }; 8 { "Troll" }; 10 { "Blood_Elf" }
-        11 { "Draenei" }; default { "Unknown_Race" }
-    }
-    
-    $Class = switch ($Class) {
-        1 { "Warrior" }; 2 { "Paladin" }; 3 { "Hunter" }
-        4 { "Rogue" }; 5 { "Priest" }; 6 { "Death_Knight" }
-        7 { "Shaman" }; 8 { "Mage" }; 9 { "Warlock" }
-        11 { "Druid" }; default { "Unknown_Class" }
-    }
-    
-    $Gender = switch ($Gender) {
-        0 { "Male" }; 1 { "Female" }
-        default { "Unknown_Gender" }
-    }
+    # Convert race/class/gender
+	$Race = GetCharacterRaceString -Race $Race
+	$Class = GetCharacterClassString -Class $Class
+	$Gender = GetCharacterGenderString -Gender $Gender
 
     $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
     if (-not (Test-Path $backupDirFull)) {
@@ -100,25 +85,10 @@ function Backup-TableData-Array {
         [string]$CurrentDate
     )
     
-    # Convert race/class/gender (same as above)
-    $Race = switch ($Race) {
-        1 { "Human" }; 2 { "Orc" }; 3 { "Dwarf" }
-        4 { "Night_Elf" }; 5 { "Undead" }; 6 { "Tauren" }
-        7 { "Gnome" }; 8 { "Troll" }; 10 { "Blood_Elf" }
-        11 { "Draenei" }; default { "Unknown_Race" }
-    }
-    
-    $Class = switch ($Class) {
-        1 { "Warrior" }; 2 { "Paladin" }; 3 { "Hunter" }
-        4 { "Rogue" }; 5 { "Priest" }; 6 { "Death_Knight" }
-        7 { "Shaman" }; 8 { "Mage" }; 9 { "Warlock" }
-        11 { "Druid" }; default { "Unknown_Class" }
-    }
-    
-    $Gender = switch ($Gender) {
-        0 { "Male" }; 1 { "Female" }
-        default { "Unknown_Gender" }
-    }
+    # Convert race/class/gender
+	$Race = GetCharacterRaceString -Race $Race
+	$Class = GetCharacterClassString -Class $Class
+	$Gender = GetCharacterGenderString -Gender $Gender
 
     # Create backup directory
     $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
@@ -307,4 +277,206 @@ function Get-ItemNameById {
         return "Unknown"
     }
 }
+################################
+
+################################
+function Get-MapNameById {
+    param(
+        [int]$MapId
+    )
+    
+    $Query = "SELECT Name FROM Maps WHERE ID = @MapId"
+    
+    try {
+		$result = Invoke-SQLiteQuery -DataSource $MapZoneDBFilePath -Query $Query -SqlParameters @{ MapId = $MapId }
+        if ($Result -and $Result.name) {
+            return $Result.name
+        } else {
+            return "Unknown"
+        }
+    }
+    catch {
+        return "Unknown"
+    }
+}
+################################
+
+################################
+function Get-ZoneNameById {
+    param(
+        [int]$ZoneId
+    )
+    
+    $Query = "SELECT Name FROM Zones WHERE ID = @ZoneId"
+    
+    try {
+		$result = Invoke-SQLiteQuery -DataSource $MapZoneDBFilePath -Query $Query -SqlParameters @{ ZoneId = $ZoneId }
+        if ($Result -and $Result.name) {
+            return $Result.name
+        } else {
+            return "Unknown"
+        }
+    }
+    catch {
+        return "Unknown"
+    }
+}
+################################
+
+######################################## Create character_info txt file
+function CreateCharacterInfoFile {
+    param(
+        [string]$backupDirFull,
+        [int]$CharacterId,
+        [int]$CharacterAccountId,
+        [string]$CharacterAccountName,
+        [string]$CharacterCreationDate,
+        [string]$CharacterName,
+        [string]$CharacterRaceString,
+        [string]$CharacterClassString,
+        [string]$CharacterGenderString,
+        [int]$CharacterLevel,
+        [int]$CharacterHonor,
+        [string]$CharacterMoneyConverted,
+        [int]$CharacterXP,
+        [int]$CharacterHealth,
+        [int]$CharacterMana,
+        [int]$CharacterSkin,
+        [int]$CharacterFace,
+        [int]$CharacterHairStyle,
+        [int]$CharacterHairColor,
+        [int]$CharacterFacialStyle,
+        [int]$CharacterBankSlots,
+        [int]$CharacterArenapoints,
+        [int]$CharacterTotalKills,
+        [string]$CharacterEquipmentCache,
+        [int]$CharacterAmmoId,
+        [int]$CharacterCurMap,
+        [int]$CharacterCurZone
+    )
+		
+	# Create the text file path
+	$CharacterInfoFilePath = Join-Path -Path $backupDirFull -ChildPath "character_info.txt"
+	
+	# Create the text file and write the character information
+	New-Item -ItemType File -Path $CharacterInfoFilePath -Force | Out-Null
+	
+	# Step 2: Split the string into an array
+	$CharacterEquipmentList = $CharacterEquipmentCache -split ' '
+	# Step 3: Remove all items with the value 0
+	$FilteredCharacterEquipmentList = $CharacterEquipmentList | Where-Object { $_ -ne 0 }
+	
+	# Iterate through each ItemID in the list
+	foreach ($ItemId in $FilteredCharacterEquipmentList) {
+		# Get the Item Name using the function
+		$ItemName = Get-ItemNameById -ItemId $ItemId
+		
+		# Format the result as "ItemName (ItemID)" and add it to the result list
+		$FormattedItemList += "$ItemName ($ItemId), "
+	}
+	
+	# Join all items in the list into a single line, separated by commas
+	$FormattedItemListLine = $FormattedItemList -join " "
+	
+	#Ammo Name and ID
+	$AmmoItemName = Get-ItemNameById -ItemId $CharacterAmmoId
+	$FormattedAmmoItem = "$AmmoItemName ($CharacterAmmoId)"
+	
+	#Get Map and Zone names
+	$CharacterCurMapName = Get-MapNameById -MapId $CharacterCurMap
+	$CharacterCurZoneName = Get-ZoneNameById -ZoneId $CharacterCurZone
+	
+	# Create the text file and write the character information
+	$Content = @(
+		"Account ID: $CharacterAccountId"
+		"Account Name: $CharacterAccountName"
+		"Creation Date: $CharacterCreationDate"
+		"ID: $CharacterId"
+		"Name: $CharacterName"
+		"Race: $CharacterRaceString"
+		"Class: $CharacterClassString"
+		"Gender: $CharacterGenderString"
+		"Level: $CharacterLevel"
+		"Honor Points: $CharacterHonor"
+		"Money: $CharacterMoneyConverted"
+		"XP: $CharacterXP"
+		"Health: $CharacterHealth"
+		"Mana: $CharacterMana"
+		"Skin: $CharacterSkin"
+		"Face: $CharacterFace"
+		"Hair Style: $CharacterHairStyle"
+		"Hair Color: $CharacterHairColor"
+		"Facial Style: $CharacterFacialStyle"
+		"Bank Slots: $CharacterBankSlots"
+		"Equipment Cache: $FormattedItemListLine"
+		"Ammo ID: $FormattedAmmoItem"
+		"Arena Points: $CharacterArenapoints"
+		"Total Kills: $CharacterTotalKills"
+		"Current Map: $CharacterCurMapName"
+		"Current Zone: $CharacterCurZoneName"
+	)
+	
+	$Content | Out-File -FilePath $CharacterInfoFilePath -Append
+}
+################################
+function GetCharacterRaceString {
+    param(
+        [int]$Race
+	)
+	
+	switch ($Race) {
+		1 { $RaceString = "Human" }
+		2 { $RaceString = "Orc" }
+		3 { $RaceString = "Dwarf" }
+		4 { $RaceString = "Night_Elf" }
+		5 { $RaceString = "Undead" }
+		6 { $RaceString = "Tauren" }
+		7 { $RaceString = "Gnome" }
+		8 { $RaceString = "Troll" }
+		10 { $RaceString = "Blood_Elf" }
+		11 { $RaceString = "Draenei" }
+		default { $RaceString = "Unknown_Race" }
+	}
+	
+	return $RaceString
+}
+################################
+function GetCharacterClassString {
+    param(
+        [int]$Class
+	)
+	
+	switch ($Class) {
+		1 { $ClassString = "Warrior" }
+		2 { $ClassString = "Paladin" }
+		3 { $ClassString = "Hunter" }
+		4 { $ClassString = "Rogue" }
+		5 { $ClassString = "Priest" }
+		6 { $ClassString = "Death_Knight" }
+		7 { $ClassString = "Shaman" }
+		8 { $ClassString = "Mage" }
+		9 { $ClassString = "Warlock" }
+		11 { $ClassString = "Druid" }
+		default { $ClassString = "Unknown_Class" }
+	}
+	
+	return $ClassString
+}
+################################
+function GetCharacterGenderString {
+    param(
+        [int]$Gender
+	)
+	
+	switch ($Gender) {
+		0 { $GenderString = "Male" }
+		1 { $GenderString = "Female" }
+		default { $GenderString = "Unknown_Gender" }
+	}
+	
+	return $GenderString
+}
+################################
+			
+			
 ################################

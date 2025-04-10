@@ -28,3 +28,6 @@ $mysqlPath = "E:\Games\WoW Server Files\My Repack\mysql\bin\mysql.exe"
 $CharacterBackupDir = "./character_data"
 # Backup directory for guild sqls
 $GuildBackupDir = "./guild_data"
+
+#Map and zone names
+$MapZoneDBFilePath = "./Map_Zone_Names.sqlite3"
