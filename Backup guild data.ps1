@@ -141,8 +141,8 @@ function Backup-Guild-Main {
               LEFT JOIN characters c ON g.leaderguid = c.guid"
     try {
         $guildData = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query
-
-        if ($guildData.Count -gt 0) {
+########################################
+        if ($guildData.ItemArray.Length -gt 0) {
             $exitScript = $false
             $foundGuild = $true
             while (-not $exitScript) {
@@ -160,10 +160,10 @@ function Backup-Guild-Main {
                 Write-Host "$($index + 1). Exit script" -ForegroundColor Green
 
                 $choice = Read-Host "`nType a number (1-$($index + 1))"
-
+########################################
                 if ($choice -match '^\d+$') {
                     $choice = [int]$choice
-
+########################################
                     if ($choice -ge 1 -and $choice -le $guildData.Count) {
                         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
                         $selectedGuild = $guildData[$choice - 1]
@@ -179,7 +179,7 @@ function Backup-Guild-Main {
 
                         $stopwatch.Stop()
                         Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
-
+########################################
                     } elseif ($choice -eq $index) {
                         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -196,26 +196,29 @@ function Backup-Guild-Main {
                                         -CreateDateConverted $CreateDateConverted `
                                         -BankMoneyConverted $BankMoneyConverted
                         }
-
                         $stopwatch.Stop()
                         Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
-
+########################################
                     } elseif ($choice -eq ($index + 1)) {
                         Write-Host "Exiting script..." -ForegroundColor Yellow
                         $exitScript = $true
+########################################
                     } else {
                         Write-Host "Invalid selection. Please try again." -ForegroundColor Red
                     }
+########################################
                 } else {
                     Write-Host "Invalid selection. Please try again." -ForegroundColor Red
                 }
             }
+########################################
         } else {
             Write-Host "No guilds found in the database." -ForegroundColor Red
             $exitScript = $true
         }
+########################################
     } catch {
-        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
         $exitScript = $true
     }
 	
