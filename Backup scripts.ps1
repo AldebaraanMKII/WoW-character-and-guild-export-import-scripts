@@ -2,9 +2,13 @@
 if (-not (Get-Module -ListAvailable -Name SimplySql)) {
     Install-Module -Name SimplySql -Force
 }
+if (-not (Get-Module -ListAvailable -Name PSSQLite)) {
+	Install-Module -Name PSSQLite -Force
+}
 ########################################
 # Import the module
 Import-Module SimplySql
+Import-Module PSSQLite
 ########################################
 . "./(Config) Backup scripts.ps1"	# import configuration
 . "./Functions.ps1"	# import functions
