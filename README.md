@@ -1,3 +1,5 @@
+This currently only supports azerothcore based servers.
+
 # Instructions
 1. Install Powershell 7
 2. Install SimplySQL and PSSQLite modules:
