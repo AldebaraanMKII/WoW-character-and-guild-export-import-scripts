@@ -1,4 +1,3 @@
-
 ########################################
 function Backup-Character {
     param (
@@ -157,46 +156,39 @@ function Backup-Character-Main {
 								New-Item -Path $backupDirFull -ItemType Directory | Out-Null
 							}
 							
-							CreateCharacterInfoFile -backupDirFull $backupDirFull `
-								-CharacterId $selectedCharacter.guid `
-								-CharacterAccountId $id.id `
-								-CharacterAccountName $userNameToSearch `
-								-CharacterCreationDate $selectedCharacter.creation_date `
-								-CharacterName $selectedCharacter.name `
-								-CharacterRaceString $CurCharRace `
-								-CharacterClassString $CurCharClass `
-								-CharacterGenderString $CurCharGender `
-								-CharacterLevel $selectedCharacter.level `
-								-CharacterHonor $selectedCharacter.totalHonorPoints `
-								-CharacterMoneyConverted $CurCharMoneyConverted `
-								-CharacterXP $selectedCharacter.xp `
-								-CharacterHealth $selectedCharacter.health `
-								-CharacterMana $selectedCharacter.power1 `
-								-CharacterSkin $selectedCharacter.skin `
-								-CharacterFace $selectedCharacter.face `
-								-CharacterHairStyle $selectedCharacter.hairStyle `
-								-CharacterHairColor $selectedCharacter.hairColor `
-								-CharacterFacialStyle $selectedCharacter.facialStyle `
-								-CharacterBankSlots $selectedCharacter.bankSlots `
-								-CharacterArenapoints $selectedCharacter.arenapoints `
-								-CharacterTotalKills $selectedCharacter.totalKills `
-								-CharacterEquipmentCache $selectedCharacter.equipmentCache `
-								-CharacterAmmoId $selectedCharacter.ammoId `
-								-CharacterCurMap $selectedCharacter.map `
-								-CharacterCurZone $selectedCharacter.zone
+							# Using splatting to avoid line continuation issues
+							$characterInfoParams = @{
+								backupDirFull = $backupDirFull
+								CharacterId = $selectedCharacter.guid
+								CharacterAccountId = $id.id
+								CharacterAccountName = $userNameToSearch
+								CharacterCreationDate = $selectedCharacter.creation_date
+								CharacterName = $selectedCharacter.name
+								CharacterRaceString = $CurCharRace
+								CharacterClassString = $CurCharClass
+								CharacterGenderString = $CurCharGender
+								CharacterLevel = $selectedCharacter.level
+								CharacterHonor = $selectedCharacter.totalHonorPoints
+								CharacterMoneyConverted = $CurCharMoneyConverted
+								CharacterXP = $selectedCharacter.xp
+								CharacterHealth = $selectedCharacter.health
+								CharacterMana = $selectedCharacter.power1
+								CharacterSkin = $selectedCharacter.skin
+								CharacterFace = $selectedCharacter.face
+								CharacterHairStyle = $selectedCharacter.hairStyle
+								CharacterHairColor = $selectedCharacter.hairColor
+								CharacterFacialStyle = $selectedCharacter.facialStyle
+								CharacterBankSlots = $selectedCharacter.bankSlots
+								CharacterArenapoints = $selectedCharacter.arenapoints
+								CharacterTotalKills = $selectedCharacter.totalKills
+								CharacterEquipmentCache = $selectedCharacter.equipmentCache
+								CharacterAmmoId = $selectedCharacter.ammoId
+								CharacterCurMap = $selectedCharacter.map
+								CharacterCurZone = $selectedCharacter.zone
+							}
+							CreateCharacterInfoFile @characterInfoParams
 #############################################################
-							Backup-Character -characterId $selectedCharacter.guid `
-										-characterName $selectedCharacter.name `
-										-accountID $id.id `
-										-Race $selectedCharacter.race `
-										-Class $selectedCharacter.class `
-										-Gender $selectedCharacter.gender `
-										-Level $selectedCharacter.level `
-										-XP $selectedCharacter.xp `
-										-Money $selectedCharacter.money `
-										-Honor $selectedCharacter.totalHonorPoints `
-										-AccountName $userNameToSearch `
-										-CurrentDate $CurrentDate
+							Backup-Character -characterId $selectedCharacter.guid -characterName $selectedCharacter.name -accountID $id.id -Race $selectedCharacter.race -Class $selectedCharacter.class -Gender $selectedCharacter.gender -Level $selectedCharacter.level -XP $selectedCharacter.xp -Money $selectedCharacter.money -Honor $selectedCharacter.totalHonorPoints -AccountName $userNameToSearch -CurrentDate $CurrentDate
 							$stopwatch.Stop()
 							Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
 						}
@@ -212,54 +204,47 @@ function Backup-Character-Main {
 								$CurCharClass = GetCharacterClassString -Class $character.class
 								$CurCharGender = GetCharacterGenderString -Gender $character.gender
 								
-								$CurCharName = $selectedCharacter.name
-								$CurCharLevel = $selectedCharacter.level
+								$CurCharName = $character.name
+								$CurCharLevel = $character.level
 								
 								$backupDirFull = "$CharacterBackupDir\$userNameToSearch\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
 								if (-not (Test-Path $backupDirFull)) {
 									New-Item -Path $backupDirFull -ItemType Directory | Out-Null
 								}
 								
-								CreateCharacterInfoFile -backupDirFull $backupDirFull `
-									-CharacterId $character.guid `
-									-CharacterAccountId $id `
-									-CharacterAccountName $userNameToSearch `
-									-CharacterCreationDate $character.creation_date `
-									-CharacterName $character.name `
-									-CharacterRaceString $CurCharRace `
-									-CharacterClassString $CurCharClass `
-									-CharacterGenderString $CurCharGender `
-									-CharacterLevel $character.level `
-									-CharacterHonor $character.totalHonorPoints `
-									-CharacterMoneyConverted $CurCharMoneyConverted `
-									-CharacterXP $character.xp `
-									-CharacterHealth $character.health `
-									-CharacterMana $character.power1 `
-									-CharacterSkin $character.skin `
-									-CharacterFace $character.face `
-									-CharacterHairStyle $character.hairStyle `
-									-CharacterHairColor $character.hairColor `
-									-CharacterFacialStyle $character.facialStyle `
-									-CharacterBankSlots $character.bankSlots `
-									-CharacterArenapoints $character.arenapoints `
-									-CharacterTotalKills $character.totalKills `
-									-CharacterEquipmentCache $character.equipmentCache `
-									-CharacterAmmoId $character.ammoId `
-									-CharacterCurMap $character.map `
-									-CharacterCurZone $character.zone
+								# Using splatting to avoid line continuation issues
+								$characterInfoParams = @{
+									backupDirFull = $backupDirFull
+									CharacterId = $character.guid
+									CharacterAccountId = $id.id
+									CharacterAccountName = $userNameToSearch
+									CharacterCreationDate = $character.creation_date
+									CharacterName = $character.name
+									CharacterRaceString = $CurCharRace
+									CharacterClassString = $CurCharClass
+									CharacterGenderString = $CurCharGender
+									CharacterLevel = $character.level
+									CharacterHonor = $character.totalHonorPoints
+									CharacterMoneyConverted = $CurCharMoneyConverted
+									CharacterXP = $character.xp
+									CharacterHealth = $character.health
+									CharacterMana = $character.power1
+									CharacterSkin = $character.skin
+									CharacterFace = $character.face
+									CharacterHairStyle = $character.hairStyle
+									CharacterHairColor = $character.hairColor
+									CharacterFacialStyle = $character.facialStyle
+									CharacterBankSlots = $character.bankSlots
+									CharacterArenapoints = $character.arenapoints
+									CharacterTotalKills = $character.totalKills
+									CharacterEquipmentCache = $character.equipmentCache
+									CharacterAmmoId = $character.ammoId
+									CharacterCurMap = $character.map
+									CharacterCurZone = $character.zone
+								}
+								CreateCharacterInfoFile @characterInfoParams
 #############################################################
-								Backup-Character -characterId $character.guid `
-											-characterName $character.name `
-											-accountID $id.id `
-											-Race $character.race `
-											-Class $character.class `
-											-Gender $character.gender `
-											-Level $character.level `
-											-XP $character.xp `
-											-Money $character.money `
-											-Honor $character.totalHonorPoints `
-											-AccountName $userNameToSearch `
-											-CurrentDate $CurrentDate
+								Backup-Character -characterId $character.guid -characterName $character.name -accountID $id.id -Race $character.race -Class $character.class -Gender $character.gender -Level $character.level -XP $character.xp -Money $character.money -Honor $character.totalHonorPoints -AccountName $userNameToSearch -CurrentDate $CurrentDate
 							}
 							$stopwatch.Stop()
 							Write-Host "All characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
