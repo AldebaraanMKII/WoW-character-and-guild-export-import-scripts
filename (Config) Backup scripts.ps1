@@ -25,9 +25,9 @@ $mysqldumpPath = "E:\Games\WoW Server Files\My Repack\mysql\bin\mysqldump.exe"
 $mysqlPath = "E:\Games\WoW Server Files\My Repack\mysql\bin\mysql.exe"
 
 # Backup directory for character sqls
-$CharacterBackupDir = "./character_data"
+$CharacterBackupDir = "$PSScriptRoot/character_data"
 # Backup directory for guild sqls
-$GuildBackupDir = "./guild_data"
+$GuildBackupDir = "$PSScriptRoot/guild_data"
 
 #Map and zone names
-$MapZoneDBFilePath = "./Map_Zone_Names.sqlite3"
+$MapZoneDBFilePath = "$PSScriptRoot/Map_Zone_Names.sqlite3"

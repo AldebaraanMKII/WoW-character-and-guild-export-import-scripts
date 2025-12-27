@@ -12,11 +12,6 @@ Import-Module PSSQLite
 ########################################
 . "./(Config) Backup scripts.ps1"	# import configuration
 . "./Functions.ps1"	# import functions
-# import scripts
-. "./Backup character data.ps1"	
-. "./Backup guild data.ps1"
-. "./Restore character data.ps1"
-. "./Restore guild data.ps1"
 ########################################
 try {
 	# Start logging
