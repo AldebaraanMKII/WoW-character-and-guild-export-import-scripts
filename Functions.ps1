@@ -1,4 +1,3 @@
-
 #region utility-functions
 function ConvertToGoldSilverCopper {
     param (
@@ -901,6 +900,9 @@ function Backup-Guild {
 
 ########################################
 function Backup-Guild-Main {
+    param (
+        [switch]$AllGuilds
+    )
 	# Open database connections
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
 
@@ -911,6 +913,24 @@ function Backup-Guild-Main {
         $guildData = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query
 ########################################
         if ($guildData.ItemArray.Length -gt 0) {
+            if ($AllGuilds) {
+                $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+                foreach ($guild in $guildData) {
+                    $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
+                    $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+                    Backup-Guild -GuildID $guild.guildid `
+                                -GuildName $guild.name `
+                                -LeaderGUID $guild.leaderguid `
+                                -CreateDate $guild.createdate `
+                                -BankMoney $guild.BankMoney `
+                                -LeaderName $guild.leader_name `
+                                -CreateDateConverted $CreateDateConverted `
+                                -BankMoneyConverted $BankMoneyConverted
+                }
+                $stopwatch.Stop()
+                Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+                return
+            }
             $exitScript = $false
             $foundGuild = $true
             while (-not $exitScript) {
@@ -2260,3 +2280,224 @@ function Restore-Guild-Main {
 ########################################
 
 
+function Backup-All-Accounts-Main {
+    # Open database connections
+    Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
+    Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
+    Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "WorldConn"
+
+    try {
+        $accounts = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id, username FROM account"
+        if ($accounts) {
+            Write-Host "Found $($accounts.Count) accounts. Starting backup process..." -ForegroundColor Green
+            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+            foreach ($account in $accounts) {
+                $accountId = $account.id
+                $accountName = $account.username
+                Write-Host "`nBacking up account: $accountName (ID: $accountId)" -ForegroundColor Yellow
+                
+                $backupDirFullAccount = "$CharacterBackupDir\$accountName"
+                if (-not (Test-Path $backupDirFullAccount)) {
+                    New-Item -Path $backupDirFullAccount -ItemType Directory | Out-Null
+                }
+
+                # Backup account details
+                $backupFile = "$backupDirFullAccount\_account.sql"
+                $whereClause = "id=$accountId"
+                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account`" > `"$backupFile`""
+                Invoke-Expression $mysqldumpCommand
+                
+                # Backup account access details
+                $backupFile = "$backupDirFullAccount\_account_access.sql"
+                $whereClause = "id=$accountId"
+                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
+                Invoke-Expression $mysqldumpCommand
+
+                $characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
+                    SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
+                    FROM characters 
+                    WHERE account = @id
+"@ -Parameters @{ id = $accountId }
+
+                if ($characterData) {
+                    Write-Host "Found $($characterData.Count) characters for account $accountName." -ForegroundColor Green
+                    foreach ($character in $characterData) {
+                        $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+                        $CurCharMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $character.money
+                        $CurCharRace = GetCharacterRaceString -Race $character.race
+                        $CurCharClass = GetCharacterClassString -Class $character.class
+                        $CurCharGender = GetCharacterGenderString -Gender $character.gender
+                        $CurCharName = $character.name
+                        $CurCharLevel = $character.level
+
+                        $backupDirFull = "$CharacterBackupDir\$accountName\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+                        if (-not (Test-Path $backupDirFull)) {
+                            New-Item -Path $backupDirFull -ItemType Directory | Out-Null
+                        }
+
+                        $characterInfoParams = @{
+                            backupDirFull = $backupDirFull
+                            CharacterId = $character.guid
+                            CharacterAccountId = $accountId
+                            CharacterAccountName = $accountName
+                            CharacterCreationDate = $character.creation_date
+                            CharacterName = $character.name
+                            CharacterRaceString = $CurCharRace
+                            CharacterClassString = $CurCharClass
+                            CharacterGenderString = $CurCharGender
+                            CharacterLevel = $character.level
+                            CharacterHonor = $character.totalHonorPoints
+                            CharacterMoneyConverted = $CurCharMoneyConverted
+                            CharacterXP = $character.xp
+                            CharacterHealth = $character.health
+                            CharacterMana = $character.power1
+                            CharacterSkin = $character.skin
+                            CharacterFace = $character.face
+                            CharacterHairStyle = $character.hairStyle
+                            CharacterHairColor = $character.hairColor
+                            CharacterFacialStyle = $character.facialStyle
+                            CharacterBankSlots = $character.bankSlots
+                            CharacterArenapoints = $character.arenapoints
+                            CharacterTotalKills = $character.totalKills
+                            CharacterEquipmentCache = $character.equipmentCache
+                            CharacterAmmoId = $character.ammoId
+                            CharacterCurMap = $character.map
+                            CharacterCurZone = $character.zone
+                        }
+                        CreateCharacterInfoFile @characterInfoParams
+                        Backup-Character -characterId $character.guid -characterName $character.name -accountID $accountId -Race $character.race -Class $character.class -Gender $character.gender -Level $character.level -XP $character.xp -Money $character.money -Honor $character.totalHonorPoints -AccountName $accountName -CurrentDate $CurrentDate
+                    }
+                } else {
+                    Write-Host "No characters found for account '$accountName'" -ForegroundColor Yellow
+                }
+            }
+            $stopwatch.Stop()
+            Write-Host "`nAll accounts and characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+        } else {
+            Write-Host "No accounts found in the database." -ForegroundColor Red
+        }
+    } catch {
+        Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        Close-SqlConnection -ConnectionName "AuthConn"
+        Close-SqlConnection -ConnectionName "CharConn"
+        Close-SqlConnection -ConnectionName "WorldConn"
+    }
+}
+
+function Restore-All-Accounts-Main {
+    # Create SimplySql connections
+    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
+    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
+
+    try {
+        $accountFolders = Get-ChildItem -Path $CharacterBackupDir -Directory
+        if ($accountFolders.Count -eq 0) {
+            Write-Host "No account backups found in '$CharacterBackupDir'." -ForegroundColor Red
+            return
+        }
+
+        Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Green
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+        foreach ($accountFolder in $accountFolders) {
+            $accountName = $accountFolder.Name
+            Write-Host "`nRestoring account: $accountName" -ForegroundColor Yellow
+
+            # Check if account exists
+            $accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName }
+            $accountId = $null
+            if ($accountResult) {
+                $accountId = $accountResult.id
+                Write-Host "Account '$accountName' already exists with ID $accountId." -ForegroundColor Green
+            } else {
+                Write-Host "Account '$accountName' does not exist. Creating it..." -ForegroundColor Yellow
+                $accountSqlFile = Join-Path $accountFolder.FullName "_account.sql"
+                if (Test-Path $accountSqlFile) {
+                    $sqlContent = Get-Content $accountSqlFile -Raw
+                    Execute-Query -Query $sqlContent -TableName "account" -ConnectionName "AuthConn"
+                    $accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName }
+                    $accountId = $accountResult.id
+                    Write-Host "Account '$accountName' created with ID $accountId." -ForegroundColor Green
+                } else {
+                    Write-Host "Could not find '_account.sql' for account '$accountName'. Skipping." -ForegroundColor Red
+                    continue
+                }
+                
+                $accountAccessSqlFile = Join-Path $accountFolder.FullName "_account_access.sql"
+                if (Test-Path $accountAccessSqlFile) {
+                    $sqlContent = Get-Content $accountAccessSqlFile -Raw
+                    Execute-Query -Query $sqlContent -TableName "account_access" -ConnectionName "AuthConn"
+                }
+            }
+
+            $characterFolders = Get-ChildItem -Path $accountFolder.FullName -Directory
+            if ($characterFolders.Count -eq 0) {
+                Write-Host "No character backups found for account '$accountName'." -ForegroundColor Yellow
+                continue
+            }
+
+            Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'."
+            foreach ($characterFolder in $characterFolders) {
+                Restore-Character -folder $characterFolder.Name -account $accountName -accountID $accountId
+            }
+        }
+        $stopwatch.Stop()
+        Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+
+    } catch {
+        Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        Close-SqlConnection -ConnectionName "AuthConn"
+        Close-SqlConnection -ConnectionName "CharConn"
+    }
+}
+
+function Backup-All-Guilds-Main-Wrapper {
+    Backup-Guild-Main -AllGuilds
+}
+
+function Restore-All-Guilds-Main {
+    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
+    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
+
+    try {
+        $guildFolders = Get-ChildItem -Path $GuildBackupDir -Directory
+        if ($guildFolders.Count -eq 0) {
+            Write-Host "No guild backups found in '$GuildBackupDir'." -ForegroundColor Red
+            return
+        }
+
+        Write-Host "Found $($guildFolders.Count) guild backups. Starting restore process..." -ForegroundColor Green
+        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
+        foreach ($folder in $guildFolders) {
+            $folderName = $folder.Name
+            $guildName = ($folderName -split " - ")[0]
+            $leaderName = ($folderName -split " - ")[1]
+
+            Write-Host "`nRestoring guild: $guildName, Leader: $leaderName" -ForegroundColor Yellow
+
+            $characterGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM characters WHERE name = @name" -Parameters @{ name = $leaderName }
+            if ($characterGuidResult) {
+                $characterGuid = $characterGuidResult.guid
+                $isGuildMember = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guid = @guid" -Parameters @{ guid = $characterGuid }
+                if ($isGuildMember) {
+                    Write-Host "Character '$leaderName' is already in a guild. Skipping restore for guild '$guildName'." -ForegroundColor Yellow
+                    continue
+                }
+                Restore-Guild -folder $folderName -character $leaderName -characterID $characterGuid -GuildName $guildName
+            } else {
+                Write-Host "Leader character '$leaderName' not found for guild '$guildName'. Skipping restore." -ForegroundColor Red
+            }
+        }
+        $stopwatch.Stop()
+        Write-Host "`nAll guilds restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+    } catch {
+        Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        Close-SqlConnection -ConnectionName "CharConn"
+        Close-SqlConnection -ConnectionName "WorldConn"
+    }
+}

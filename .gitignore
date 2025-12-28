@@ -1,0 +1,15 @@
+# Ignore all .log files
+*.log
+# Ignore all database files
+*.db
+*.sqlite
+*.sqlite3
+# Ignore all archive files
+*.7z
+*.zip
+*.rar
+
+*.sql
+*.txt
+
+

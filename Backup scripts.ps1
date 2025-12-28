@@ -26,9 +26,13 @@ try {
 		Write-Host "2. Backup guild(s)." -ForegroundColor Green
 		Write-Host "3. Restore character(s)." -ForegroundColor Green
 		Write-Host "4. Restore guild(s)." -ForegroundColor Green
-		Write-Host "5. Exit script" -ForegroundColor Green
+        Write-Host "5. Backup all accounts." -ForegroundColor Green
+        Write-Host "6. Restore all accounts." -ForegroundColor Green
+        Write-Host "7. Backup all guilds." -ForegroundColor Green
+        Write-Host "8. Restore all guilds." -ForegroundColor Green
+		Write-Host "9. Exit script" -ForegroundColor Green
 		
-		$choice = $(Write-Host "`nType a number (1-5):" -ForegroundColor green -NoNewLine; Read-Host) 
+		$choice = $(Write-Host "`nType a number (1-9):" -ForegroundColor green -NoNewLine; Read-Host) 
 ########################################
 		if ($choice -eq 1) {
 			Backup-Character-Main
@@ -41,8 +45,20 @@ try {
 ########################################
 		} elseif ($choice -eq 4){
 			Restore-Guild-Main
+########################################
+        } elseif ($choice -eq 5){
+            Backup-All-Accounts-Main
+########################################
+        } elseif ($choice -eq 6){
+            Restore-All-Accounts-Main
+########################################
+        } elseif ($choice -eq 7){
+            Backup-All-Guilds-Main-Wrapper
+########################################
+        } elseif ($choice -eq 8){
+            Restore-All-Guilds-Main
 ######################################## exit
-		} elseif ($choice -eq 5){
+		} elseif ($choice -eq 9){
 			exit
 ########################################
 		} else {
