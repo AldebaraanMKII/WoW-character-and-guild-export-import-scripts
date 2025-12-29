@@ -918,6 +918,9 @@ function Backup-Guild-Main {
 		if (-not ([string]::IsNullOrEmpty($GuildNameRegexFilter))) {
 			$guildData = $guildData | Where-Object { $_.name -match $GuildNameRegexFilter }
 		}
+		if (-not ([string]::IsNullOrEmpty($GuildNameRegexFilter))) {
+			$guildData = $guildData | Where-Object { $_.name -match $GuildNameRegexFilter }
+		}
 ########################################
         if ($guildData.ItemArray.Length -gt 0) {
             if ($AllGuilds) {
@@ -2331,6 +2334,9 @@ function Backup-All-Accounts-Main {
 "@ -Parameters @{ id = $accountId }
 
                 if ($characterData) {
+					if (-not ([string]::IsNullOrEmpty($CharacterNameRegexFilter))) {
+						$characterData = $characterData | Where-Object { $_.name -match $CharacterNameRegexFilter }
+					}
                     Write-Host "Found $($characterData.Count) characters for account $accountName." -ForegroundColor Green
                     foreach ($character in $characterData) {
                         $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
