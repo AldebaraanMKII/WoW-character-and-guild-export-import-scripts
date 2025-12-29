@@ -1,4 +1,3 @@
-
 # Define source connection details
 # source = database from which you will backup the characters/guilds from
 $SourceServerName = "127.0.0.1"
@@ -31,3 +30,8 @@ $GuildBackupDir = "$PSScriptRoot/guild_data"
 
 #Map and zone names
 $MapZoneDBFilePath = "$PSScriptRoot/Map_Zone_Names.sqlite3"
+
+# Regex filters
+$AccountNameRegexFilter = ""
+$CharacterNameRegexFilter = ""
+$GuildNameRegexFilter = ""

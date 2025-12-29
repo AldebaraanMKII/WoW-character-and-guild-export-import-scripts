@@ -572,8 +572,12 @@ function Backup-Character-Main {
 				FROM characters 
 				WHERE account = @id
 "@ -Parameters @{ id = $id.id }
-########################################
+
 			if ($characterData) {
+				if (-not ([string]::IsNullOrEmpty($CharacterNameRegexFilter))) {
+					$characterData = $characterData | Where-Object { $_.name -match $CharacterNameRegexFilter }
+				}
+
 				$exitScript = $false
 				while (-not $exitScript) {
 					Write-Host "`nFound $($characterData.Count) Characters." -ForegroundColor Green
@@ -911,6 +915,9 @@ function Backup-Guild-Main {
               LEFT JOIN characters c ON g.leaderguid = c.guid"
     try {
         $guildData = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query
+		if (-not ([string]::IsNullOrEmpty($GuildNameRegexFilter))) {
+			$guildData = $guildData | Where-Object { $_.name -match $GuildNameRegexFilter }
+		}
 ########################################
         if ($guildData.ItemArray.Length -gt 0) {
             if ($AllGuilds) {
@@ -2289,6 +2296,9 @@ function Backup-All-Accounts-Main {
     try {
         $accounts = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id, username FROM account"
         if ($accounts) {
+			if (-not ([string]::IsNullOrEmpty($AccountNameRegexFilter))) {
+				$accounts = $accounts | Where-Object { $_.username -match $AccountNameRegexFilter }
+			}
             Write-Host "Found $($accounts.Count) accounts. Starting backup process..." -ForegroundColor Green
             $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
