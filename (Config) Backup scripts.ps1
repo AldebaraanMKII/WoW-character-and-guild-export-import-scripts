@@ -32,6 +32,11 @@ $GuildBackupDir = "$PSScriptRoot/guild_data"
 $MapZoneDBFilePath = "$PSScriptRoot/Map_Zone_Names.sqlite3"
 
 # Regex filters
-$AccountNameRegexFilter = ""
+$AccountNameRegexFilter = "^(?!.*(RNDBOT|AHBOT)).*$"    #excludes both RNDBOT and AHBOT accounts
 $CharacterNameRegexFilter = ""
 $GuildNameRegexFilter = ""
+
+
+
+
+

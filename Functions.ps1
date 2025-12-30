@@ -2288,8 +2288,6 @@ function Restore-Guild-Main {
 ###################################################
 #endregion
 ########################################
-
-
 function Backup-All-Accounts-Main {
     # Open database connections
     Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
@@ -2401,7 +2399,7 @@ function Backup-All-Accounts-Main {
         Close-SqlConnection -ConnectionName "WorldConn"
     }
 }
-
+############################################################
 function Restore-All-Accounts-Main {
     # Create SimplySql connections
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
