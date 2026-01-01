@@ -61,7 +61,7 @@ function Backup-TableData {
     $whereClause = "$columnName=$value"
 	
 
-    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
+    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
     Invoke-Expression $mysqldumpCommand
 }
 #######################################
@@ -98,7 +98,7 @@ function Backup-TableData-Array {
     $valuesList = $values -join ","
     $whereClause = "$columnName IN ($valuesList)"
     
-    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
+    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
     Invoke-Expression $mysqldumpCommand
 
 	
@@ -146,7 +146,7 @@ function Execute-Query {
     )
 
     try {
-        # Write-Output "Query: $Query"
+        Write-Output "Query: $Query"
         Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query
         # Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
     } catch {
@@ -2316,13 +2316,13 @@ function Backup-All-Accounts-Main {
                 # Backup account details
                 $backupFile = "$backupDirFullAccount\_account.sql"
                 $whereClause = "id=$accountId"
-                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account`" > `"$backupFile`""
+                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account`" > `"$backupFile`""
                 Invoke-Expression $mysqldumpCommand
                 
                 # Backup account access details
                 $backupFile = "$backupDirFullAccount\_account_access.sql"
                 $whereClause = "id=$accountId"
-                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
+                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
                 Invoke-Expression $mysqldumpCommand
 
                 $characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
@@ -2404,7 +2404,7 @@ function Restore-All-Accounts-Main {
     # Create SimplySql connections
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
-
+####################################################################
     try {
         $accountFolders = Get-ChildItem -Path $CharacterBackupDir -Directory
         if ($accountFolders.Count -eq 0) {
@@ -2414,7 +2414,7 @@ function Restore-All-Accounts-Main {
 
         Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Green
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
+####################################################################
         foreach ($accountFolder in $accountFolders) {
             $accountName = $accountFolder.Name
             Write-Host "`nRestoring account: $accountName" -ForegroundColor Yellow
@@ -2422,30 +2422,113 @@ function Restore-All-Accounts-Main {
             # Check if account exists
             $accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName }
             $accountId = $null
+####################################################################
             if ($accountResult) {
                 $accountId = $accountResult.id
                 Write-Host "Account '$accountName' already exists with ID $accountId." -ForegroundColor Green
+####################################################################
             } else {
                 Write-Host "Account '$accountName' does not exist. Creating it..." -ForegroundColor Yellow
                 $accountSqlFile = Join-Path $accountFolder.FullName "_account.sql"
                 if (Test-Path $accountSqlFile) {
-                    $sqlContent = Get-Content $accountSqlFile -Raw
-                    Execute-Query -Query $sqlContent -TableName "account" -ConnectionName "AuthConn"
-                    $accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName }
-                    $accountId = $accountResult.id
+					
+					# Get the maximum GUID from the characters table
+					$maxIDResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT MAX(id) AS MaxID FROM account"
+					
+					# Extract the numeric value from the DataRow
+					if ($maxIDResult -and $maxIDResult.MaxID -ne [DBNull]::Value) {
+						$MaxID = $maxIDResult.MaxID
+					} else {
+						# If no records found, set maxGuid to 0
+						$MaxID = 0
+					}
+					
+					# Calculate the new GUID as the next sequential number
+					# $newID = $MaxID + 1
+					$accountId = $MaxID + 1
+####################################################################
+					# Read the content of the SQL file as a single string
+					$sqlContent = Get-Content -Path $accountSqlFile -Raw
+					
+					# Remove all occurrences of "_binary " 
+					# Edit: required so MySQL stores the exact bytes
+					# $sqlContent = $sqlContent -replace "_binary ", ""
+					
+					# Extract values inside parentheses
+					$pattern = "(?<=\().*?(?=\))"
+					$matches = [regex]::Matches($sqlContent, $pattern)
+					
+					# List to store modified rows
+					$modifiedRows = @()
+					
+					# Loop through each match
+					for ($i = 0; $i -lt $matches.Count; $i++) {
+						$match = $matches[$i].Value
+						
+						# Split the row into individual values
+						$values = $match -split ","
+						
+						# Modify the first value with the incrementing GUID
+						$values[0] = $accountId
+						
+						# Check there's less than 25 columns add another for the Flags column (column 18)
+						if ($values.Count -lt 25) {
+							# Insert integer 0 at index 17 (making it the new 18th element)
+							$values = $values[0..16] + 0 + $values[17..($values.Count - 1)]
+						}
+						# Recreate the modified row and store it
+						$modifiedRow = "(" + ($values -join ",") + ")"
+						$modifiedRows += $modifiedRow
+					}
+					
+					# Join the modified rows into the final SQL query
+					$modifiedSqlQuery = "INSERT INTO account VALUES " + ($modifiedRows -join ",") + ";"
+					
+					#Execute the query
+					Execute-Query -query "$modifiedSqlQuery" -tablename "account" -ConnectionName "AuthConn"
+####################################################################
+					$accountAccessSqlFile = Join-Path $accountFolder.FullName "_account_access.sql"
+					if (Test-Path $accountAccessSqlFile) {
+						# Read the content of the SQL file as a single string
+						$sqlContent = Get-Content -Path $accountAccessSqlFile -Raw
+						
+						# Extract values inside parentheses
+						$pattern = "(?<=\().*?(?=\))"
+						$matches = [regex]::Matches($sqlContent, $pattern)
+						
+						# List to store modified rows
+						$modifiedRows = @()
+						
+						# Loop through each match
+						for ($i = 0; $i -lt $matches.Count; $i++) {
+							$match = $matches[$i].Value
+							
+							# Split the row into individual values
+							$values = $match -split ","
+							
+							# Modify the first value with the incrementing GUID
+							$values[0] = $accountId
+							
+							# Recreate the modified row and store it
+							$modifiedRow = "(" + ($values -join ",") + ")"
+							$modifiedRows += $modifiedRow
+						}
+						
+						# Join the modified rows into the final SQL query
+						$modifiedSqlQuery = "INSERT INTO account_access VALUES " + ($modifiedRows -join ",") + ";"
+						
+						#Execute the query
+						Execute-Query -query "$modifiedSqlQuery" -tablename "account_access" -ConnectionName "AuthConn"
+                    }
                     Write-Host "Account '$accountName' created with ID $accountId." -ForegroundColor Green
+####################################################################
                 } else {
                     Write-Host "Could not find '_account.sql' for account '$accountName'. Skipping." -ForegroundColor Red
                     continue
                 }
                 
-                $accountAccessSqlFile = Join-Path $accountFolder.FullName "_account_access.sql"
-                if (Test-Path $accountAccessSqlFile) {
-                    $sqlContent = Get-Content $accountAccessSqlFile -Raw
-                    Execute-Query -Query $sqlContent -TableName "account_access" -ConnectionName "AuthConn"
-                }
             }
-
+####################################################################
             $characterFolders = Get-ChildItem -Path $accountFolder.FullName -Directory
             if ($characterFolders.Count -eq 0) {
                 Write-Host "No character backups found for account '$accountName'." -ForegroundColor Yellow
@@ -2459,7 +2542,7 @@ function Restore-All-Accounts-Main {
         }
         $stopwatch.Stop()
         Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
-
+####################################################################
     } catch {
         Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
     } finally {
@@ -2467,11 +2550,11 @@ function Restore-All-Accounts-Main {
         Close-SqlConnection -ConnectionName "CharConn"
     }
 }
-
+####################################################################
 function Backup-All-Guilds-Main-Wrapper {
     Backup-Guild-Main -AllGuilds
 }
-
+####################################################################
 function Restore-All-Guilds-Main {
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
