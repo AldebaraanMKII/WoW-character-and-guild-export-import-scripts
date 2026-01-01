@@ -23,11 +23,11 @@ try {
 		Write-Host "`nWoW Backup Scripts" -ForegroundColor Green
 		Write-Host "`nSelect a option:" -ForegroundColor Green
 		Write-Host "1. Backup character(s)." -ForegroundColor Green
-		Write-Host "2. Backup guild(s)." -ForegroundColor Green
-		Write-Host "3. Restore character(s)." -ForegroundColor Green
-		Write-Host "4. Restore guild(s)." -ForegroundColor Green
-        Write-Host "5. Backup all accounts." -ForegroundColor Green
-        Write-Host "6. Restore all accounts." -ForegroundColor Green
+		Write-Host "2. Restore character(s)." -ForegroundColor Green
+        Write-Host "3. Backup all accounts and characters." -ForegroundColor Green
+        Write-Host "4. Restore all accounts and characters." -ForegroundColor Green
+		Write-Host "5. Backup guild(s)." -ForegroundColor Green
+		Write-Host "6. Restore guild(s)." -ForegroundColor Green
         Write-Host "7. Backup all guilds." -ForegroundColor Green
         Write-Host "8. Restore all guilds." -ForegroundColor Green
 		Write-Host "9. Exit script" -ForegroundColor Green
@@ -38,19 +38,19 @@ try {
 			Backup-Character-Main
 ########################################
 		} elseif ($choice -eq 2){
-			Backup-Guild-Main
-########################################
-		} elseif ($choice -eq 3){
 			Restore-Character-Main
 ########################################
-		} elseif ($choice -eq 4){
-			Restore-Guild-Main
-########################################
-        } elseif ($choice -eq 5){
+        } elseif ($choice -eq 3){
             Backup-All-Accounts-Main
 ########################################
-        } elseif ($choice -eq 6){
+        } elseif ($choice -eq 4){
             Restore-All-Accounts-Main
+################################################################################
+		} elseif ($choice -eq 5){
+			Backup-Guild-Main
+########################################
+		} elseif ($choice -eq 6){
+			Restore-Guild-Main
 ########################################
         } elseif ($choice -eq 7){
             Backup-All-Guilds-Main-Wrapper
