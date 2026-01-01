@@ -44,9 +44,8 @@ Paths to executables is the path to the mysql executables, which are required to
 
 6. If you`re backing up characters/guilds, open the MySQL database that contain those characters/guilds.
 7. If you`re restoring characters/guilds, open the MySQL database that you want to transfer them to.
-8. Go into the folder you extracted the scripts to, right click > PowerShell 7 > Open Here
-9. type the name of the script like this: ./"Backup scripts.ps1"
-10. Follow the instructions in the console.
+8. Run "Backup scripts.ps1"
+9. Follow the instructions in the console.
 
 
 IMPORTANT: Make sure only the mysql database is open when you export/import your characters or guild! Trying to export/import while the auth/world server is running can lead to issues, like several items missing from the character inventory or duplicate entries in the database! 
