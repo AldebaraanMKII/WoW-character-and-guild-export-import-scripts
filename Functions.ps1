@@ -1914,7 +1914,11 @@ function Restore-Guild {
 		# Write-Host "`nModified SQL: $modifiedSqlQuery"
 		
 		#Execute the query
-		Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
+		if (Table-Exists -TableName "guild_member" -ConnectionName "CharConn") {
+			Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
+		} else {
+			Write-Host "Table 'guild_member' does not exist, skipping restore for this table." -ForegroundColor Red
+		}
 		
 ############## PROCESS TABLES IN $TABLES ARRAY - alter guildid[0]
 		# Array of tables to restore
@@ -1952,125 +1956,7 @@ function Restore-Guild {
 			$sqlFilePath = "$GuildBackupDir\$folder\$table.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
-				# Read the contents of the .sql file
-				$sqlContent = Get-Content -Path $sqlFilePath -Raw
-				
-				# Extract values inside parentheses
-				$pattern = "(?<=\().*?(?=\))"
-				$matches = [regex]::Matches($sqlContent, $pattern)
-				
-				# List to store modified rows
-				$modifiedRows = @()
-				
-				# Loop through each match
-				for ($i = 0; $i -lt $matches.Count; $i++) {
-					$match = $matches[$i].Value
-					
-					# Split the row into individual values
-					$values = $match -split ","
-					
-					# Modify the first value
-					if ($columnIndex1 -ge 0){
-						$values[$columnIndex1] = $columnIndex1Value
-					}
-					
-					# Modify the second value
-					if ($columnIndex2 -ge 0){
-						$values[$columnIndex2] = $columnIndex2Value
-					}
-					
-					# Modify the third value
-					if ($columnIndex3 -ge 0){
-						$values[$columnIndex3] = $columnIndex3Value
-					}
-					
-					# Recreate the modified row and store it
-					$modifiedRow = "(" + ($values -join ",") + ")"
-					$modifiedRows += $modifiedRow
-				}
-				
-				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO $table VALUES " + ($modifiedRows -join ",") + ";"
-				
-				# Output the modified SQL to verify
-				# Write-Host "`nModified SQL: $modifiedSqlQuery"
-				
-				#Execute the query
-				Execute-Query -query $modifiedSqlQuery -tablename $table -ConnectionName "CharConn"
-			}
-		}	
-############################ PROCESS ITEM_INSTANCE - alter guid[0] taking into account existing items
-			$sqlFilePath = "$GuildBackupDir\$folder\item_instance.sql"
-			
-			if (Test-Path -Path $sqlFilePath) {
-				# Get the maximum GUID from the characters table
-				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance"
-				
-				# Extract the numeric value from the DataRow and check for DBNull
-				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-					$maxGuid = $maxGuidResult.MaxGuid
-				} else {
-					# If no records found or value is DBNull, set maxGuid to 0
-					$maxGuid = 0
-				}
-				
-				#assign new guid to highest value in column guid + 1
-				$newItemGuid = $maxGuid + 1
-				
-				# Read the contents of the .sql file
-				$sqlContent = Get-Content -Path $sqlFilePath -Raw
-				
-				# Initialize the guidMapping as an ArrayList for dynamic addition
-				$guidMappingpItems = [System.Collections.ArrayList]::new()
-
-				# Extract values inside parentheses
-				$pattern = "(?<=\().*?(?=\))"
-				$matches = [regex]::Matches($sqlContent, $pattern)
-			
-				# List to store modified rows
-				$modifiedRows = @()
-			
-				# Loop through each match
-				for ($i = 0; $i -lt $matches.Count; $i++) {
-					$match = $matches[$i].Value
-					
-					# Split the row into individual values
-					$values = $match -split ","
-					
-					# Get the old GUID (first value), trim it for safety in case of spaces
-					$oldGuid = $values[0].Trim()
-				
-					# Modify the first value with the incrementing GUID
-					$newItemGuidValue = $newItemGuid + $i
-					$values[0] = $newItemGuidValue
-				
-					# Store the old and new GUIDs in the array
-					$guidMappingpItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
-
-					# Modify the third value with the new GUID
-					$values[2] = $newGuid
-					
-					# Recreate the modified row and store it
-					$modifiedRow = "(" + ($values -join ",") + ")"
-					$modifiedRows += $modifiedRow
-				}
-			
-				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
-				
-				# Output the array to verify
-				# Write-Host $guidMappingpItems
-				
-				# Output the modified SQL to verify
-				# Write-Host "`nModified SQL: $modifiedSqlQuery"
-				
-				#Execute the query
-				Execute-Query -query $modifiedSqlQuery -tablename "item_instance" -ConnectionName "CharConn"
-				
-############################ PROCESS GUILD_BANK_ITEM - alter guidid[0] and item_guid[3]
-				$sqlFilePath = "$GuildBackupDir\$folder\guild_bank_item.sql"
-				
-				if (Test-Path -Path $sqlFilePath) {
+				if (Table-Exists -TableName $table -ConnectionName "CharConn") {
 					# Read the contents of the .sql file
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
 					
@@ -2080,7 +1966,7 @@ function Restore-Guild {
 					
 					# List to store modified rows
 					$modifiedRows = @()
-				
+					
 					# Loop through each match
 					for ($i = 0; $i -lt $matches.Count; $i++) {
 						$match = $matches[$i].Value
@@ -2088,100 +1974,46 @@ function Restore-Guild {
 						# Split the row into individual values
 						$values = $match -split ","
 						
-###################### THIS IS FOR ITEM_GUID
-						# Get the current value in the target column (adjust for 0-based index)
-						$currentValue = $values[3]
-						
-						# Check if the current value matches an old GUID in the mapping
-						$matchingGuid = $guidMappingpItems | Where-Object { $_.OldGuid -eq $currentValue }
-						
-						# If a match is found, replace the old GUID with the new GUID
-						if ($matchingGuid) {
-							$values[3] = $matchingGuid.NewGuid
+						# Modify the first value
+						if ($columnIndex1 -ge 0){
+							$values[$columnIndex1] = $columnIndex1Value
 						}
-###################### THIS IS FOR GUILD GUID
-						$values[0] = $newGuid
-########################################
+						
+						# Modify the second value
+						if ($columnIndex2 -ge 0){
+							$values[$columnIndex2] = $columnIndex2Value
+						}
+						
+						# Modify the third value
+						if ($columnIndex3 -ge 0){
+							$values[$columnIndex3] = $columnIndex3Value
+						}
+						
 						# Recreate the modified row and store it
 						$modifiedRow = "(" + ($values -join ",") + ")"
 						$modifiedRows += $modifiedRow
 					}
-				
+					
 					# Join the modified rows into the final SQL query
-					$modifiedSqlQuery = "INSERT INTO `guild_bank_item` VALUES " + ($modifiedRows -join ",") + ";"
-			
+					$modifiedSqlQuery = "INSERT INTO $table VALUES " + ($modifiedRows -join ",") + ";"
+					
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					
 					#Execute the query
-					Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_item" -ConnectionName "CharConn"
+					Execute-Query -query $modifiedSqlQuery -tablename $table -ConnectionName "CharConn"
+				} else {
+					Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Red
 				}
-########################################
 			}
-########################################
-
-
-######################################## PROCESS GUILD_HOUSE - alter id[0] taking into account existing items and guild[1]
-			$sqlFilePath = "$GuildBackupDir\$folder\guild_house.sql"
+		}	
+############################ PROCESS ITEM_INSTANCE - alter guid[0] taking into account existing items
+			$sqlFilePath = "$GuildBackupDir\$folder\item_instance.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
-				# Get the maximum GUID from the characters table
-				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxGuid FROM guild_house"
-				
-				# Extract the numeric value from the DataRow and check for DBNull
-				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-					$maxGuid = $maxGuidResult.MaxGuid
-				} else {
-					# If no records found or value is DBNull, set maxGuid to 23
-					$maxGuid = 23
-				}
-				
-				#assign new guid to highest value in column guid + 24
-				$newRowID = $maxGuid + 1
-				
-				# Read the contents of the .sql file
-				$sqlContent = Get-Content -Path $sqlFilePath -Raw
-				
-				# Extract values inside parentheses
-				$pattern = "(?<=\().*?(?=\))"
-				$matches = [regex]::Matches($sqlContent, $pattern)
-			
-				# List to store modified rows
-				$modifiedRows = @()
-			
-				# Loop through each match
-				for ($i = 0; $i -lt $matches.Count; $i++) {
-					$match = $matches[$i].Value
-					
-					# Split the row into individual values
-					$values = $match -split ","
-					
-					# Modify the first value with the incrementing GUID
-					$newRowIDValue = $newRowID + $i
-					$values[0] = $newRowIDValue
-					
-					# Modify the second row value with the new GUID
-					$values[1] = $newGuid
-					
-					# Recreate the modified row and store it
-					$modifiedRow = "(" + ($values -join ",") + ")"
-					$modifiedRows += $modifiedRow
-				}
-			
-				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `guild_house` VALUES " + ($modifiedRows -join ",") + ";"
-				
-				# Output the modified SQL to verify
-				# Write-Host "`nModified SQL: $modifiedSqlQuery"
-				
-				#Execute the query
-				Execute-Query -query $modifiedSqlQuery -tablename "guild_house" -ConnectionName "CharConn"
-######################################## PROCESS CREATURE (this is for guild house NPCs) - alter guid[0] taking into account existing creatures
-				$sqlFilePath = "$GuildBackupDir\$folder\creature.sql"
-				
-				if (Test-Path -Path $sqlFilePath) {
+				if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
 					# Get the maximum GUID from the characters table
-					$maxGuidResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(guid) AS MaxGuid FROM creature"
+					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance"
 					
 					# Extract the numeric value from the DataRow and check for DBNull
 					if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
@@ -2192,7 +2024,137 @@ function Restore-Guild {
 					}
 					
 					#assign new guid to highest value in column guid + 1
-					$newCreatureGuid = $maxGuid + 1
+					$newItemGuid = $maxGuid + 1
+					
+					# Read the contents of the .sql file
+					$sqlContent = Get-Content -Path $sqlFilePath -Raw
+					
+					# Initialize the guidMapping as an ArrayList for dynamic addition
+					$guidMappingpItems = [System.Collections.ArrayList]::new()
+
+					# Extract values inside parentheses
+					$pattern = "(?<=\().*?(?=\))"
+					$matches = [regex]::Matches($sqlContent, $pattern)
+				
+					# List to store modified rows
+					$modifiedRows = @()
+				
+					# Loop through each match
+					for ($i = 0; $i -lt $matches.Count; $i++) {
+						$match = $matches[$i].Value
+						
+						# Split the row into individual values
+						$values = $match -split ","
+						
+						# Get the old GUID (first value), trim it for safety in case of spaces
+						$oldGuid = $values[0].Trim()
+					
+						# Modify the first value with the incrementing GUID
+						$newItemGuidValue = $newItemGuid + $i
+						$values[0] = $newItemGuidValue
+					
+						# Store the old and new GUIDs in the array
+						$guidMappingpItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
+
+						# Modify the third value with the new GUID
+						$values[2] = $newGuid
+						
+						# Recreate the modified row and store it
+						$modifiedRow = "(" + ($values -join ",") + ")"
+						$modifiedRows += $modifiedRow
+					}
+				
+					# Join the modified rows into the final SQL query
+					$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
+					
+					# Output the array to verify
+					# Write-Host $guidMappingpItems
+					
+					# Output the modified SQL to verify
+					# Write-Host "`nModified SQL: $modifiedSqlQuery"
+					
+					#Execute the query
+					Execute-Query -query $modifiedSqlQuery -tablename "item_instance" -ConnectionName "CharConn"
+					
+################################ PROCESS GUILD_BANK_ITEM - alter guidid[0] and item_guid[3]
+					$sqlFilePath = "$GuildBackupDir\$folder\guild_bank_item.sql"
+					
+					if (Test-Path -Path $sqlFilePath) {
+						if (Table-Exists -TableName "guild_bank_item" -ConnectionName "CharConn") {
+							# Read the contents of the .sql file
+							$sqlContent = Get-Content -Path $sqlFilePath -Raw
+							
+							# Extract values inside parentheses
+							$pattern = "(?<=\().*?(?=\))"
+							$matches = [regex]::Matches($sqlContent, $pattern)
+							
+							# List to store modified rows
+							$modifiedRows = @()
+						
+							# Loop through each match
+							for ($i = 0; $i -lt $matches.Count; $i++) {
+								$match = $matches[$i].Value
+								
+								# Split the row into individual values
+								$values = $match -split ","
+								
+############################## THIS IS FOR ITEM_GUID
+								# Get the current value in the target column (adjust for 0-based index)
+								$currentValue = $values[3]
+								
+								# Check if the current value matches an old GUID in the mapping
+								$matchingGuid = $guidMappingpItems | Where-Object { $_.OldGuid -eq $currentValue }
+								
+								# If a match is found, replace the old GUID with the new GUID
+								if ($matchingGuid) {
+									$values[3] = $matchingGuid.NewGuid
+								}
+############################## THIS IS FOR GUILD GUID
+								$values[0] = $newGuid
+################################################
+								# Recreate the modified row and store it
+								$modifiedRow = "(" + ($values -join ",") + ")"
+								$modifiedRows += $modifiedRow
+							}
+						
+							# Join the modified rows into the final SQL query
+							$modifiedSqlQuery = "INSERT INTO `guild_bank_item` VALUES " + ($modifiedRows -join ",") + ";"
+					
+							# Output the modified SQL to verify
+							# Write-Host "`nModified SQL: $modifiedSqlQuery"
+							
+							#Execute the query
+							Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_item" -ConnectionName "CharConn"
+						} else {
+							Write-Host "Table 'guild_bank_item' does not exist, skipping restore for this table." -ForegroundColor Red
+						}
+					}
+############################################
+				} else {
+					Write-Host "Table 'item_instance' does not exist, skipping restore for this table." -ForegroundColor Red
+				}
+			}
+########################################
+
+
+######################################## PROCESS GUILD_HOUSE - alter id[0] taking into account existing items and guild[1]
+			$sqlFilePath = "$GuildBackupDir\$folder\guild_house.sql"
+			
+			if (Test-Path -Path $sqlFilePath) {
+				if (Table-Exists -TableName "guild_house" -ConnectionName "CharConn") {
+					# Get the maximum GUID from the characters table
+					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxGuid FROM guild_house"
+					
+					# Extract the numeric value from the DataRow and check for DBNull
+					if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
+						$maxGuid = $maxGuidResult.MaxGuid
+					} else {
+						# If no records found or value is DBNull, set maxGuid to 23
+						$maxGuid = 23
+					}
+					
+					#assign new guid to highest value in column guid + 24
+					$newRowID = $maxGuid + 1
 					
 					# Read the contents of the .sql file
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -2212,24 +2174,86 @@ function Restore-Guild {
 						$values = $match -split ","
 						
 						# Modify the first value with the incrementing GUID
-						$newCreatureGuidValue = $newCreatureGuid + $i
-						$values[0] = $newCreatureGuidValue
-					
+						$newRowIDValue = $newRowID + $i
+						$values[0] = $newRowIDValue
+						
+						# Modify the second row value with the new GUID
+						$values[1] = $newGuid
+						
 						# Recreate the modified row and store it
 						$modifiedRow = "(" + ($values -join ",") + ")"
 						$modifiedRows += $modifiedRow
 					}
 				
 					# Join the modified rows into the final SQL query
-					$modifiedSqlQuery = "INSERT INTO `creature` VALUES " + ($modifiedRows -join ",") + ";"
+					$modifiedSqlQuery = "INSERT INTO `guild_house` VALUES " + ($modifiedRows -join ",") + ";"
 					
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					
 					#Execute the query
-					Execute-Query -query $modifiedSqlQuery -tablename "creature" -ConnectionName "WorldConn"
+					Execute-Query -query $modifiedSqlQuery -tablename "guild_house" -ConnectionName "CharConn"
+############################################ PROCESS CREATURE (this is for guild house NPCs) - alter guid[0] taking into account existing creatures
+					$sqlFilePath = "$GuildBackupDir\$folder\creature.sql"
+					
+					if (Test-Path -Path $sqlFilePath) {
+						if (Table-Exists -TableName "creature" -ConnectionName "WorldConn") {
+							# Get the maximum GUID from the characters table
+							$maxGuidResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(guid) AS MaxGuid FROM creature"
+							
+							# Extract the numeric value from the DataRow and check for DBNull
+							if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
+								$maxGuid = $maxGuidResult.MaxGuid
+							} else {
+								# If no records found or value is DBNull, set maxGuid to 0
+								$maxGuid = 0
+							}
+							
+							#assign new guid to highest value in column guid + 1
+							$newCreatureGuid = $maxGuid + 1
+							
+							# Read the contents of the .sql file
+							$sqlContent = Get-Content -Path $sqlFilePath -Raw
+							
+							# Extract values inside parentheses
+							$pattern = "(?<=\().*?(?=\))"
+							$matches = [regex]::Matches($sqlContent, $pattern)
+						
+							# List to store modified rows
+							$modifiedRows = @()
+						
+							# Loop through each match
+							for ($i = 0; $i -lt $matches.Count; $i++) {
+								$match = $matches[$i].Value
+								
+								# Split the row into individual values
+								$values = $match -split ","
+								
+								# Modify the first value with the incrementing GUID
+								$newCreatureGuidValue = $newCreatureGuid + $i
+								$values[0] = $newCreatureGuidValue
+							
+								# Recreate the modified row and store it
+								$modifiedRow = "(" + ($values -join ",") + ")"
+								$modifiedRows += $modifiedRow
+							}
+						
+							# Join the modified rows into the final SQL query
+							$modifiedSqlQuery = "INSERT INTO `creature` VALUES " + ($modifiedRows -join ",") + ";"
+							
+							# Output the modified SQL to verify
+							# Write-Host "`nModified SQL: $modifiedSqlQuery"
+							
+							#Execute the query
+							Execute-Query -query $modifiedSqlQuery -tablename "creature" -ConnectionName "WorldConn"
+						} else {
+							Write-Host "Table 'creature' does not exist, skipping restore for this table." -ForegroundColor Red
+						}
+					}
+############################################
+				} else {
+					Write-Host "Table 'guild_house' does not exist, skipping restore for this table." -ForegroundColor Red
 				}
-########################################
 			}
 ########################################
 			$stopwatch.Stop()
