@@ -146,7 +146,7 @@ function Execute-Query {
     )
 
     try {
-        Write-Output "Query: $Query"
+        # Write-Output "Query: $Query"
         Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query
         # Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
     } catch {
