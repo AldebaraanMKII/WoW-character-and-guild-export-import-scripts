@@ -147,7 +147,7 @@ function Execute-Query {
 
     try {
         # Write-Output "Query: $Query"
-        Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query
+        Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query | Out-Null
         # Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
     } catch {
         Write-Output "($TableName) An error occurred: $_" -ForegroundColor Red
