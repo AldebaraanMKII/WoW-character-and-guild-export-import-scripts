@@ -801,7 +801,8 @@ function Backup-Guild {
         [string]$BankMoney,
         [string]$LeaderName,
         [string]$CreateDateConverted,
-        [string]$BankMoneyConverted
+        [string]$BankMoneyConverted,
+        [string]$CurrentDate
     )
 
     Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Yellow
@@ -817,7 +818,7 @@ function Backup-Guild {
     )
 
     foreach ($table in $tables) {
-        $backupDirFull = "$GuildBackupDir\$GuildName - $LeaderName"
+        $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
         if (-not (Test-Path $backupDirFull)) {
             New-Item -Path $backupDirFull -ItemType Directory | Out-Null
         }
@@ -949,6 +950,7 @@ function Backup-Guild-Main {
                 foreach ($guild in $guildData) {
                     $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
                     $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+                    $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
                     Backup-Guild -GuildID $guild.guildid `
                                 -GuildName $guild.name `
                                 -LeaderGUID $guild.leaderguid `
@@ -956,7 +958,8 @@ function Backup-Guild-Main {
                                 -BankMoney $guild.BankMoney `
                                 -LeaderName $guild.leader_name `
                                 -CreateDateConverted $CreateDateConverted `
-                                -BankMoneyConverted $BankMoneyConverted
+                                -BankMoneyConverted $BankMoneyConverted `
+                                -CurrentDate $CurrentDate
                 }
                 $stopwatch.Stop()
                 Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
@@ -987,6 +990,7 @@ function Backup-Guild-Main {
                         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
                         $selectedGuild = $guildData[$choice - 1]
 
+                        $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
                         Backup-Guild -GuildID $selectedGuild.guildid `
                                     -GuildName $selectedGuild.name `
                                     -LeaderGUID $selectedGuild.leaderguid `
@@ -994,7 +998,8 @@ function Backup-Guild-Main {
                                     -BankMoney $selectedGuild.BankMoney `
                                     -LeaderName $selectedGuild.leader_name `
                                     -CreateDateConverted $CreateDateConverted `
-                                    -BankMoneyConverted $BankMoneyConverted
+                                    -BankMoneyConverted $BankMoneyConverted `
+                                    -CurrentDate $CurrentDate
 
                         $stopwatch.Stop()
                         Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
