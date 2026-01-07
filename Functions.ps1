@@ -251,7 +251,7 @@ function Check-Character {
 			
 			if ($GuidResult) {
 				$guid = $GuidResult.guid
-				Write-Host "`nID for username '$characterNameToSearch': $guid" -ForegroundColor Yellow
+				Write-Host "`nID for username '$characterNameToSearch': $guid" -ForegroundColor Cyan
 				return $guid
 #########################
 			#found no character with that name
@@ -507,7 +507,7 @@ function Backup-Character {
         [string]$CurrentDate
     )
     
-    Write-Host "`nBacking up character $characterName..." -ForegroundColor Yellow
+    Write-Host "`nBacking up character $characterName..." -ForegroundColor Cyan
     
 ########## List of tables to back up
     $tables = @(
@@ -538,7 +538,7 @@ function Backup-Character {
     if ($petsData) {
         foreach ($pet in $petsData) {
             $petEntryName = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT name FROM creature_template WHERE entry = @PetEntry" -Parameters @{ PetEntry = $pet.entry }
-            Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Yellow
+            Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Cyan
         }
         
         Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
@@ -585,13 +585,13 @@ function Backup-Character-Main {
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 
     try {
-		Write-Host "(Press CTRL + C to exit)" -ForegroundColor Yellow
+		Write-Host "(Press CTRL + C to exit)" -ForegroundColor Cyan
 		$userNameToSearch = Read-Host "`nEnter account name"
 		
 		$id = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $userNameToSearch }
 ########################################
 		if ($id) {
-			Write-Host "`nID for username '$userNameToSearch': $($id.id)" -ForegroundColor Yellow
+			Write-Host "`nID for username '$userNameToSearch': $($id.id)" -ForegroundColor Cyan
 			
 			$characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
 				SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
@@ -810,7 +810,7 @@ function Backup-Guild {
         [string]$CurrentDate
     )
 
-    Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Yellow
+    Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Cyan
     $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
 		
 ########### Create guild_members.json
@@ -1134,7 +1134,7 @@ function Restore-Character {
 		# Output the modified SQL to verify
 		  # Write-Output "`nModified SQL: $modifiedSqlQuery"
 		
-		Write-Host "`nRestoring character $characterName" -ForegroundColor Yellow
+		Write-Host "`nRestoring character $characterName" -ForegroundColor Cyan
 
 		#Execute the query
 		if (Table-Exists -TableName "characters" -ConnectionName "CharConn") {
@@ -1165,7 +1165,7 @@ function Restore-Character {
 			@("character_settings", 0)          #new 27-12-2025
 		)
 		
-		Write-Host "Importing character data..." -ForegroundColor Yellow
+		Write-Host "Importing character data..." -ForegroundColor Cyan
 		# Loop through each table in the array
 		foreach ($entry in $tables) {
 			# Extract the table name and the column number
@@ -1257,7 +1257,7 @@ function Restore-Character {
 			
 			if (Test-Path -Path $sqlFilePath) {
 				if (Table-Exists -TableName "character_pet" -ConnectionName "CharConn") {
-					Write-Host "Importing pet data..." -ForegroundColor Yellow
+					Write-Host "Importing pet data..." -ForegroundColor Cyan
 					
 					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM character_pet"
 					
@@ -1393,7 +1393,7 @@ function Restore-Character {
 		
 		if (Test-Path -Path $sqlFilePath) {
 			if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
-				Write-Host "Importing character items..." -ForegroundColor Yellow
+				Write-Host "Importing character items..." -ForegroundColor Cyan
 				
 				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance"
 
@@ -1532,7 +1532,7 @@ function Restore-Character {
 				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "custom_transmogrification" -ConnectionName "CharConn") {
-						Write-Host "Importing transmog item data..." -ForegroundColor Yellow
+						Write-Host "Importing transmog item data..." -ForegroundColor Cyan
 						# Read the contents of the .sql file
 						$sqlContent = Get-Content -Path $sqlFilePath -Raw
 						
@@ -1588,7 +1588,7 @@ function Restore-Character {
 					
 					if (Test-Path -Path $sqlFilePath) {
 						if (Table-Exists -TableName "custom_transmogrification_sets" -ConnectionName "CharConn") {
-							Write-Host "Importing transmog sets..." -ForegroundColor Yellow
+							Write-Host "Importing transmog sets..." -ForegroundColor Cyan
 							
 							# Get the maximum PresetID from the database
 							$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(PresetID) AS MaxPresetID FROM custom_transmogrification_sets"
@@ -1651,7 +1651,7 @@ function Restore-Character {
 					
 					if (Test-Path -Path $sqlFilePath) {
 						if (Table-Exists -TableName "custom_unlocked_appearances" -ConnectionName "CharConn") {
-							Write-Host "Importing transmog unlocked appearances..." -ForegroundColor Yellow
+							Write-Host "Importing transmog unlocked appearances..." -ForegroundColor Cyan
 							# Read the contents of the .sql file
 							$sqlContent = Get-Content -Path $sqlFilePath -Raw
 							
@@ -1706,7 +1706,7 @@ function Restore-Character {
 				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "character_equipmentsets" -ConnectionName "CharConn") {
-						Write-Host "Importing character equipment sets..." -ForegroundColor Yellow
+						Write-Host "Importing character equipment sets..." -ForegroundColor Cyan
 						
 						$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(setguid) AS MaxSetguid FROM character_equipmentsets"
 
@@ -1807,7 +1807,7 @@ function Restore-Character-Main {
 	}
 	
 	# Display the menu with formatted output
-	Write-Host "`nPlease select a character by typing the corresponding number:`n" -ForegroundColor Yellow
+	Write-Host "`nPlease select a character by typing the corresponding number:`n" -ForegroundColor Cyan
 	for ($i = 0; $i -lt $characterFolders.Count; $i++) {
 		$accountFolder = $characterFolders[$i].Parent.Name
 		$folderName = $characterFolders[$i].Name
@@ -1824,7 +1824,7 @@ function Restore-Character-Main {
 		$selectedCharacters = $true
 		
 		$selectedFolder = $characterFolders[$selection - 1]
-		Write-Host "`nYou selected: ($($selectedFolder.Parent.Name)) $($selectedFolder.Name)" -ForegroundColor Yellow
+		Write-Host "`nYou selected: ($($selectedFolder.Parent.Name)) $($selectedFolder.Name)" -ForegroundColor Cyan
 	}
 	# All
 	elseif ($selection -eq ($characterFolders.Count + 1).ToString()) {
@@ -1851,7 +1851,7 @@ function Restore-Character-Main {
 	
 			if ($UsernameID) {
 				$AccountId = $UsernameID.id
-				Write-Host "`nID for username '$userNameToSearch': $AccountId" -ForegroundColor Yellow
+				Write-Host "`nID for username '$userNameToSearch': $AccountId" -ForegroundColor Cyan
 				#1
 				if ($selectedCharacters -eq $true){
 				$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -1865,7 +1865,7 @@ function Restore-Character-Main {
 				#All
 				elseif ($selectedCharactersAll -eq $true){
 				$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-				Write-Host "`nImporting up all characters from list." -ForegroundColor Yellow
+				Write-Host "`nImporting up all characters from list." -ForegroundColor Cyan
 				
 				foreach ($folder in $characterFolders) {
 					# Write-Host "folder is: $folder.Name"
@@ -1911,7 +1911,7 @@ function Restore-Guild {
 	if (Test-Path -Path $sqlFilePath) {
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		
-		Write-Host "`nRestoring guild $GuildName..." -ForegroundColor Yellow
+		Write-Host "`nRestoring guild $GuildName..." -ForegroundColor Cyan
 		# Write-Host "The file exists: $sqlFilePath"
 ############################
 		# Get the maximum guildid from the characters table
@@ -2002,7 +2002,12 @@ function Restore-Guild {
                     $values[0] = $newGuildID
                     $values[1] = $guidMapping[$oldMemberGuid]
                     $modifiedRows += "(" + ($values -join ",") + ")"
-                }
+				#else set it as guild leader ID
+                } else {
+                    $values[0] = $newGuildID
+                    $values[1] = $characterID
+                    $modifiedRows += "(" + ($values -join ",") + ")"
+				}
             }
             if ($modifiedRows.Count -gt 0) {
                 $modifiedSqlQuery = "INSERT INTO `guild_member` VALUES " + ($modifiedRows -join ",") + ";"
@@ -2023,7 +2028,12 @@ function Restore-Guild {
                     $values[0] = $newGuildID
                     $values[4] = $guidMapping[$oldPlayerGuid]
                     $modifiedRows += "(" + ($values -join ",") + ")"
-                }
+				#else set it as guild leader ID
+                } else {
+                    $values[0] = $newGuildID
+                    $values[4] = $characterID
+                    $modifiedRows += "(" + ($values -join ",") + ")"
+				}
             }
             if ($modifiedRows.Count -gt 0) {
                 $modifiedSqlQuery = "INSERT INTO `guild_bank_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
@@ -2048,10 +2058,18 @@ function Restore-Guild {
                     $values[0] = $newGuildID
                     if ($guid1Exists) {
                         $values[3] = $guidMapping[$oldPlayerGuid1]
-                    }
+					#else set it as guild leader ID
+					} else {
+                        $values[3] = $characterID
+					}
+					
                     if ($guid2Exists) {
                         $values[4] = $guidMapping[$oldPlayerGuid2]
-                    }
+					#else set it as guild leader ID
+					} else {
+                        $values[4] = $characterID
+					}
+					
                     $modifiedRows += "(" + ($values -join ",") + ")"
                 }
             }
@@ -2072,6 +2090,15 @@ function Restore-Guild {
 				$oldMemberGuid = $values[0]
 				if ($guidMapping.ContainsKey($oldMemberGuid)) {
 					$values[0] = $guidMapping[$oldMemberGuid]
+					$modifiedRows += "(" + ($values -join ",") + ")"
+					
+					if ($modifiedRows.Count -gt 0) {
+						$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
+						Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
+					}
+				#else set it as guild leader ID
+				} else {
+					$values[0] = $characterID
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
 					if ($modifiedRows.Count -gt 0) {
@@ -2364,7 +2391,7 @@ function Restore-Guild-Main {
 	}
 	
 	# Display the menu with formatted output
-	Write-Host "`nPlease select a guild by typing the corresponding number:`n" -ForegroundColor Yellow
+	Write-Host "`nPlease select a guild by typing the corresponding number:`n" -ForegroundColor Cyan
 	for ($i = 0; $i -lt $guildFolders.Count; $i++) {
 		# $accountFolder = $guildFolders[$i].Parent.Name
 		$folderName = $guildFolders[$i].Name
@@ -2383,7 +2410,7 @@ function Restore-Guild-Main {
 		$selectedFolder = $guildFolders[$selection - 1].Name
 		
 		$GuildName = ($selectedFolder -split " - ")[0]
-		Write-Host "`nYou selected: $GuildName" -ForegroundColor Yellow
+		Write-Host "`nYou selected: $GuildName" -ForegroundColor Cyan
 	}
 	# All
 	elseif ($selection -eq ($guildFolders.Count + 1).ToString()) {
@@ -2402,7 +2429,7 @@ function Restore-Guild-Main {
 ################ 	CHARACTER(S) SELECTED		
 ########################## 1
 		if ($selectedGuild -eq $true) {
-			Write-Host "`nThe script requires a character name to transfer the guild $GuildName to (case sensitive)." -ForegroundColor Yellow
+			Write-Host "`nThe script requires a character name to transfer the guild $GuildName to (case sensitive)." -ForegroundColor Cyan
 			# Prompt for account name
 			$characterNameToSearch = Read-Host "Enter character name"
 			
@@ -2430,7 +2457,7 @@ function Restore-Guild-Main {
 			$selectedFolder = $folder.Name
 			$GuildName = ($selectedFolder -split " - ")[0]
 			
-			Write-Host "`nThe script requires a character name to transfer the guild $GuildName to." -ForegroundColor Yellow
+			Write-Host "`nThe script requires a character name to transfer the guild $GuildName to." -ForegroundColor Cyan
 			# Prompt for account name
 			$characterNameToSearch = Read-Host "Enter character name"
 			
@@ -2470,7 +2497,7 @@ function Backup-All-Accounts-Main {
             foreach ($account in $accounts) {
                 $accountId = $account.id
                 $accountName = $account.username
-                Write-Host "`nBacking up account: $accountName (ID: $accountId)" -ForegroundColor Yellow
+                Write-Host "`nBacking up account: $accountName (ID: $accountId)" -ForegroundColor Cyan
                 
                 $backupDirFullAccount = "$CharacterBackupDir\$accountName"
                 if (-not (Test-Path $backupDirFullAccount)) {
@@ -2581,7 +2608,7 @@ function Restore-All-Accounts-Main {
 ####################################################################
         foreach ($accountFolder in $accountFolders) {
             $accountName = $accountFolder.Name
-            Write-Host "`nRestoring account: $accountName" -ForegroundColor Yellow
+            Write-Host "`nRestoring account: $accountName" -ForegroundColor Cyan
 
             # Check if account exists
             $accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName }
@@ -2738,7 +2765,7 @@ function Restore-All-Guilds-Main {
             $guildName = ($folderName -split " - ")[0]
             $leaderName = ($folderName -split " - ")[1]
 
-            Write-Host "`nRestoring guild: $guildName, Leader: $leaderName" -ForegroundColor Yellow
+            Write-Host "`nRestoring guild: $guildName, Leader: $leaderName" -ForegroundColor Cyan
 
             $characterGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM characters WHERE name = @name" -Parameters @{ name = $leaderName }
             if ($characterGuidResult) {
