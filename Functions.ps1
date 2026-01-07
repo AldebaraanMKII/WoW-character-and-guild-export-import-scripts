@@ -557,14 +557,19 @@ function Backup-Character {
     Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
     
 ########## Transmog Data
-    Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-    Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-    Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-    
+	if (Table-Exists -TableName "custom_transmogrification" -ConnectionName "CharConn") {
+		Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	}
 ########## Reagent Bank Data
-    Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	if (Table-Exists -TableName "custom_reagent_bank" -ConnectionName "CharConn") {
+		Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	}
 ########## Character Settings data
-    Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	if (Table-Exists -TableName "character_settings" -ConnectionName "CharConn") {
+		Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	}
 ##########
     # Delete empty SQL files
     Get-ChildItem -Path $CharacterBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
@@ -870,7 +875,7 @@ function Backup-Guild {
 	}
 	
 ########### Guild House Data
-	try {
+	if (Table-Exists -TableName "guild_house" -ConnectionName "CharConn") {
 		$GuildGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id FROM guild_house WHERE guild = @GuildID" -Parameters @{GuildID = $GuildID}
 		if ($GuildGuids.Count -gt 0) {
 			# Extract id values from DataRow objects
@@ -894,8 +899,6 @@ function Backup-Guild {
 				}
 			}
 		}
-	} catch {
-		Write-Host "Error backing up guild_house table: $_" -ForegroundColor Red
 	}
 ########### Handle creature_respawn table
 
