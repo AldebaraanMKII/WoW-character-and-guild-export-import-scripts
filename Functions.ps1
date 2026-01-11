@@ -813,6 +813,10 @@ function Backup-Guild {
     Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Cyan
     $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
 		
+	# Ensure backup directory exists 
+	if (-not (Test-Path $backupDirFull)) { 
+		New-Item -ItemType Directory -Path $backupDirFull -Force | Out-Null 
+	}
 ########### Create guild_members.json
     $memberGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID}
     $memberMapping = @{}
@@ -825,7 +829,7 @@ function Backup-Guild {
         }
     }
     $memberMappingJson = $memberMapping | ConvertTo-Json
-    $memberMappingJson | Out-File -FilePath "$backupDirFull\guild_members.json" -Encoding utf8
+    $memberMappingJson | Out-File -FilePath "$($backupDirFull)\guild_members.json" -Encoding utf8
 	
 ########### List of tables to back up
     $tables = @(
