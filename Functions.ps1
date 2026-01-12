@@ -1111,7 +1111,7 @@ function Restore-Character {
 			
 			# List to store modified rows
 			$modifiedRows = @()
-			
+############################################
 			# Loop through each match
 			for ($i = 0; $i -lt $matches.Count; $i++) {
 				$match = $matches[$i].Value
@@ -1135,13 +1135,19 @@ function Restore-Character {
 			
 			# Join the modified rows into the final SQL query
 			$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
-			
-			# Output the modified SQL to verify
-			# Write-Output "`nModified SQL: $modifiedSqlQuery"
-			
+############################################
+			# check if character exists first, if yes return
+			$result = Check-Character -characterNameToSearch $characterName
+			if ($result) {
+				Write-Host "`nCharacter $($characterName) already exists in database! Skipping..." -ForegroundColor Yellow
+				return
+			}
+############################################
 			Write-Host "`nRestoring character $($characterName)..." -ForegroundColor Cyan
 	
-			#Execute the query
+			# Output the modified SQL to verify
+			# Write-Output "`nModified SQL: $modifiedSqlQuery"
+			# Execute the query
 			Execute-Query -query "$modifiedSqlQuery" -tablename "characters" -ConnectionName "CharConn"
 ############################################ PROCESS TABLES IN $TABLES ARRAY
 			# Array of tables to restore
