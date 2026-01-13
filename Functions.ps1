@@ -432,6 +432,7 @@ function Backup-Character {
     $tables = @(
         "characters",
         "character_account_data",
+        "character_achievement", 	#fixed achivements not being restored
         "character_achievement_progress",
         "character_action",
         "character_aura",
@@ -1076,6 +1077,7 @@ function Restore-Character {
 			# format is tablename, column
 			$tables = @(
 				@("character_account_data", 0),
+				@("character_achievement", 0),		#fix achievements not being restored
 				@("character_achievement_progress", 0),
 				@("character_action", 0),
 				@("character_aura", 0),
