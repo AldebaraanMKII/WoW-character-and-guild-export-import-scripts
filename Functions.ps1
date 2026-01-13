@@ -1228,6 +1228,7 @@ function Restore-Character {
 					}
 				}
 ############################################ PROCESS PET TABLES
+				#region Pet Tables
 				$sqlFilePath = "$CharacterBackupDir\*\$folder\character_pet.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
@@ -1361,7 +1362,9 @@ function Restore-Character {
 						Write-Host "Table 'character_pet' does not exist, skipping restore for this table." -ForegroundColor Red
 					}
 				}
+				#endregion
 ############################################ PROCESS ITEM_INSTANCE - guid[0], owner_guid[2]
+			#region ITEM_INSTANCE
 			$sqlFilePath = "$CharacterBackupDir\*\$folder\item_instance.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
@@ -1499,6 +1502,7 @@ function Restore-Character {
 ############################################ 
 	
 ############################################ PROCESS CUSTOM_TRANSMOGRIFICATION - GUID[0], Owner[2]
+					#region TRANSMOG
 					$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_transmogrification.sql"
 					
 					if (Test-Path -Path $sqlFilePath) {
@@ -1672,6 +1676,7 @@ function Restore-Character {
 								Write-Host "Table 'custom_unlocked_appearances' does not exist, skipping restore for this table." -ForegroundColor Red
 							}
 						}
+						#endregion
 ############################################ END TRANSMOG BRACKET
 					}
 ############################################ 
@@ -1744,6 +1749,7 @@ function Restore-Character {
 				}
 #################################### END ITEM BRACKET
 			}
+			#endregion
 			Write-Host "Character $($characterName) restored!" -ForegroundColor Green
 #################################################
 		} else {
