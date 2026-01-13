@@ -1836,7 +1836,15 @@ function Restore-Guild {
         [string]$GuildName
     )
 	
-		
+	#Check if guild exists
+	$Query = "SELECT guildid FROM guild WHERE name = $GuildName;"
+	$ValueColumn = "guildid"
+	$ConnectionName = "CharConn"
+	$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+	if ($result) {
+		Write-Host "Guild $GuildName already exists in database. Skipping..." -ForegroundColor Yellow
+		return
+	}
 ############## PROCESS GUILD.SQL - alter guildid[0] and leaderguid[2]
 	# Write-Host "folder is $folder"
 	$sqlFilePath = "$GuildBackupDir\$folder\guild.sql"
