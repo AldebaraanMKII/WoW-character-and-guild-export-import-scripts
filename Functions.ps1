@@ -445,7 +445,21 @@ function Backup-Character {
         "character_spell",
         "character_talent",
         "character_inventory",
-        "character_equipmentsets"
+        "character_equipmentsets",
+		################## new 13-01-2026
+		"character_arena_stats",
+		"character_banned",
+		"character_battleground_random",
+		"character_brew_of_the_month",
+		"character_entry_point",
+		"character_instance",
+		"character_queststatus_daily",
+		"character_queststatus_weekly",
+		"character_queststatus_monthly",
+		"character_queststatus_seasonal",
+		"character_spell_cooldown",
+		"character_stats"
+		##################
     )
     
     foreach ($table in $tables) {
@@ -489,6 +503,14 @@ function Backup-Character {
 ########## Character Settings data
 	if (Table-Exists -TableName "character_settings" -ConnectionName "CharConn") {
 		Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	}
+########## Beast Master 
+	if (Table-Exists -TableName "beastmaster_tamed_pets" -ConnectionName "CharConn") {
+		Backup-TableData -tableName "beastmaster_tamed_pets" -tableNameFile "beastmaster_tamed_pets" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+	}
+########## Improved Bank
+	if (Table-Exists -TableName "mod_improved_bank" -ConnectionName "CharConn") {
+		Backup-TableData -tableName "mod_improved_bank" -tableNameFile "mod_improved_bank" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
 	}
 ##########
     # Delete empty SQL files
@@ -1074,24 +1096,40 @@ function Restore-Character {
 			Execute-Query -query "$modifiedSqlQuery" -tablename "characters" -ConnectionName "CharConn"
 ############################################ PROCESS TABLES IN $TABLES ARRAY
 			# Array of tables to restore
-			# format is tablename, column
+			# format is tablename, column index 1, column value 1, column index 2, column value 2, column index 3, column value 3
 			$tables = @(
-				@("character_account_data", 0),
-				@("character_achievement", 0),		#fix achievements not being restored
-				@("character_achievement_progress", 0),
-				@("character_action", 0),
-				@("character_aura", 0),
-				@("character_glyphs", 0),
-				@("character_queststatus", 0),
-				@("character_queststatus_rewarded", 0),
-				@("character_reputation", 0),
-				@("character_skills", 0),
-				@("character_spell", 0),
-				@("character_talent", 0),
-				@("mail_sender", 4),
-				@("mail_receiver", 5),
-				@("custom_reagent_bank", 0),          #new
-				@("character_settings", 0)          #new 27-12-2025
+				@("character_account_data", 0, $newGuid, -1, -1, -1, -1),
+				@("character_achievement", 0, $newGuid, -1, -1, -1, -1),		#fix achievements not being restored
+				@("character_achievement_progress", 0, $newGuid, -1, -1, -1, -1),
+				@("character_action", 0, $newGuid, -1, -1, -1, -1),
+				@("character_aura", 0, $newGuid, -1, -1, -1, -1),
+				@("character_glyphs", 0, $newGuid, -1, -1, -1, -1),
+				@("character_queststatus", 0, $newGuid, -1, -1, -1, -1),
+				@("character_queststatus_rewarded", 0, $newGuid, -1, -1, -1, -1),
+				@("character_reputation", 0, $newGuid, -1, -1, -1, -1),
+				@("character_skills", 0, $newGuid, -1, -1, -1, -1),
+				@("character_spell", 0, $newGuid, -1, -1, -1, -1),
+				@("character_talent", 0, $newGuid, -1, -1, -1, -1),
+				@("mail_sender", 4, $newGuid, -1, -1, -1, -1),
+				@("mail_receiver", 5, $newGuid, -1, -1, -1, -1),
+				@("custom_reagent_bank", 0, $newGuid, -1, -1, -1, -1),          #new
+				@("character_settings", 0, $newGuid, -1, -1, -1, -1),          #new 27-12-2025
+				################ new 13-01-2026
+				@("character_arena_stats", 0, $newGuid, -1, -1, -1, -1),
+				@("character_banned", 0, $newGuid, -1, -1, -1, -1),
+				@("character_battleground_random", 0, $newGuid, -1, -1, -1, -1),
+				@("character_brew_of_the_month", 0, $newGuid, -1, -1, -1, -1),
+				@("character_entry_point", 0, $newGuid, -1, -1, -1, -1),
+				@("character_instance", 0, $newGuid, -1, -1, -1, -1),
+				@("character_queststatus_daily", 0, $newGuid, -1, -1, -1, -1),
+				@("character_queststatus_weekly", 0, $newGuid, -1, -1, -1, -1),
+				@("character_queststatus_monthly", 0, $newGuid, -1, -1, -1, -1),
+				@("character_queststatus_seasonal", 0, $newGuid, -1, -1, -1, -1),
+				@("character_spell_cooldown", 0, $newGuid, -1, -1, -1, -1),
+				@("character_stats", 0, $newGuid, -1, -1, -1, -1)
+				@("beastmaster_tamed_pets", 0, $newGuid, -1, -1, -1, -1)
+				@("mod_improved_bank", 1, $newGuid, 2, $accountID, -1, -1)
+				################
 			)
 			
 			Write-Host "Importing character data..." -ForegroundColor Cyan
@@ -1099,7 +1137,6 @@ function Restore-Character {
 			foreach ($entry in $tables) {
 				# Extract the table name and the column number
 				$table = $entry[0]
-				$columnIndex = $entry[1]
 	
 				# Path to the .sql file
 				$sqlFilePath = "$CharacterBackupDir\*\$folder\$table.sql"
@@ -1114,18 +1151,27 @@ function Restore-Character {
 						$pattern = "(?<=\().*?(?=\))"
 						
 						# Replace function
-						$modifiedSqlQuery = [regex]::Replace($sqlContent, $pattern, { 
-							param($match) 
-							
+						$modifiedSqlQuery = [regex]::Replace($sqlContent, $pattern, {
+							param($match)
+						
 							# Split the row into values
 							$values = $match.Value -split ","
-							
-							# Replace the value at the target column index
-							$values[$columnIndex] = $newGuid
-							
+						
+							# Loop through column/value pairs (index 1/2, 3/4, 5/6 in $entry)
+							for ($i = 1; $i -lt $entry.Count; $i += 2) {
+								$colIndex = $entry[$i]
+								$colValue = $entry[$i + 1]
+						
+								if ($colIndex -ne -1 -and $colValue -ne -1) {
+									# Replace the value at the target column index
+									$values[$colIndex] = $colValue
+								}
+							}
+						
 							# Join back the modified values
 							return ($values -join ",")
 						})
+
 						
 						# Output the modified SQL to verify
 						# Write-Host "`nModified SQL: $modifiedSqlQuery"
