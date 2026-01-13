@@ -135,68 +135,6 @@ function Execute-Query {
     }
 }
 ########################################
-# Function to check if a row already exists in a table (custom-unlocked-appearances)
-function Row-Exists-custom-unlocked-appearances {
-    param (
-        [Parameter(Mandatory=$true)]
-        [int]$AccountID,
-        
-        [Parameter(Mandatory=$true)]
-        [int]$ItemTemplateID,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$ConnectionName
-    )
-    
-    try {
-        $query = "SELECT COUNT(*) as count FROM custom_unlocked_appearances WHERE account_id = @AccountID AND item_template_id = @ItemTemplateID;"
-        
-        $result = Invoke-SqlQuery -ConnectionName $ConnectionName `
-                                 -Query $query `
-                                 -Parameters @{
-                                     AccountID = $AccountID
-                                     ItemTemplateID = $ItemTemplateID
-                                 }
-        
-        # Return true if count is greater than 0
-        return ($result.count -gt 0)
-    }
-    catch {
-        Write-Error "Error checking row existence: $_" -ForegroundColor Red
-        return $false
-    }
-}
-########################################
-# Function to check if a row already exists in a table
-function Row-Exists {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$TableName,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$RowName,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$RowValue,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$ConnectionName
-    )
-    
-    try {
-        $query = "SELECT COUNT(*) as count FROM $TableName WHERE $RowName = $RowValue;"
-        
-        $result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $query
-        
-        # Return true if count is greater than 0
-        return ($result.count -gt 0)
-    }
-    catch {
-        Write-Error "Error checking row existence: $_" -ForegroundColor Red
-        return $false
-    }
-}
-########################################
 # Function to check if a table exists
 function Table-Exists {
     param (
@@ -1657,12 +1595,17 @@ function Restore-Character {
 									$itemTemplateID = $values[1]
 							
 									# Check if the row already exists in the database
-									if (-not (Row-Exists-custom-unlocked-appearances -accountID $accountID -itemTemplateID $itemTemplateID -ConnectionName "CharConn")) {
-											$values[0] = $accountID # Update this with the appropriate variable for the new account ID
-							
-											# Recreate the modified row and store it
-											$modifiedRow = "(" + ($values -join ",") + ")"
-											$modifiedRows += $modifiedRow
+									$Query = "SELECT COUNT(*) as count FROM custom_unlocked_appearances WHERE account_id = $AccountID AND item_template_id = $ItemTemplateID;"
+									$ValueColumn = "count"
+									$ConnectionName = "CharConn"
+									$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+					
+									if (-not ($result)) {
+										$values[0] = $accountID # Update this with the appropriate variable for the new account ID
+										
+										# Recreate the modified row and store it
+										$modifiedRow = "(" + ($values -join ",") + ")"
+										$modifiedRows += $modifiedRow
 									}
 								}
 								
@@ -2434,7 +2377,10 @@ function Restore-Guild-Main {
             $characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($characterGuid){
 				#check if character already is a member of a guild
-				$FoundRow = Row-Exists -TableName "guild_member" -RowName "guid" -RowValue $characterGuid -ConnectionName "CharConn"
+				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = $characterGuid;"
+				$ValueColumn = "count"
+				$ConnectionName = "CharConn"
+				$FoundRow = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 				if ($FoundRow){
 					Write-Host "Character $characterNameToSearch already is a member of a guild. Try again." -ForegroundColor Red
 				} else {
@@ -2443,8 +2389,6 @@ function Restore-Guild-Main {
 			} else {
 				Write-Host "Character name not found in database. Try again." -ForegroundColor Red
 			}
-			
-			
 		}
 ########################### All
 		elseif ($selectedGuildAll -eq $true) {
