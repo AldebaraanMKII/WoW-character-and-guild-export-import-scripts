@@ -104,25 +104,6 @@ function Backup-TableData-Array {
 	
 }
 ########################################
-function GetCharacterData {
-    param (
-        [int]$CharacterID,
-        [string]$TableName,
-        [string]$ColumnNameToGetValue,
-        [string]$ColumnNameToSearchForID
-    )
-
-    try {
-        $query = "SELECT $ColumnNameToGetValue FROM $TableName WHERE $ColumnNameToSearchForID = @CharacterID"
-        $result = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query -Parameters @{CharacterID = $CharacterID}
-        return $result
-    }
-    catch {
-        Write-Host "Error fetching character data: $_" -ForegroundColor Red
-        return $null
-    }
-}
-########################################
 function ConvertFromUnixTime {
     param (
         [int64]$unixTime
@@ -237,29 +218,29 @@ function Table-Exists {
     }
 }
 ########################################
-function Check-Character {
+function Check-Value-in-DB {
     param (
-        [string]$characterNameToSearch
+        [string]$Query,
+        [string]$ValueColumn,
+        [string]$ConnectionName
     )
-		# Query to find guid based on username
-		$query = "SELECT guid FROM characters WHERE name = @characterNameToSearch;"
-		
-		$guid = $null
+	
+		$value = $null
 		try {
-			# Get the maximum GUID from the characters table
-			$GuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query -Parameters @{characterNameToSearch = $characterNameToSearch}
+		    # Write-Host "Query: $Query" -ForegroundColor Cyan
+			$Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			
-			if ($GuidResult) {
-				$guid = $GuidResult.guid
-				Write-Host "ID for username '$characterNameToSearch': $guid" -ForegroundColor Cyan
-				return $guid
+			if ($Result) {
+				$value = $Result.$ValueColumn
+				# Write-Host "ID for username '$characterNameToSearch': $guid" -ForegroundColor Cyan
+				return $value
 #########################
-			#found no character with that name
+			#found no value
 			} else {
-				Write-Host "`nNo character found with name '$characterNameToSearch'" -ForegroundColor Red
+				# Write-Host "`nNo character found with name '$characterNameToSearch'" -ForegroundColor Red
 				return $null
 			}
-			$reader.Close()
+			# $reader.Close()
 ##########################
 		} catch {
 			Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Red
@@ -1137,7 +1118,10 @@ function Restore-Character {
 			$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
 			# check if character exists first, if yes return
-			$result = Check-Character -characterNameToSearch $characterName
+			$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+			$ValueColumn = "guid"
+			$ConnectionName = "CharConn"
+			$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($result) {
 				Write-Host "`nCharacter $($characterName) already exists in database! Skipping..." -ForegroundColor Yellow
 				return
@@ -1940,7 +1924,12 @@ function Restore-Guild {
             foreach ($property in $guildMembersJson.psobject.Properties) {
                 $oldGuid = $property.Name
                 $characterName = $property.Value
-                $newCharGuid = Check-Character -characterNameToSearch $characterName
+				
+				# check if character exists first
+				$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+				$ValueColumn = "guid"
+				$ConnectionName = "CharConn"
+                $newCharGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
                 if ($newCharGuid) {
                     $guidMapping[$oldGuid] = $newCharGuid
                 } else {
@@ -2438,8 +2427,11 @@ function Restore-Guild-Main {
 			# Prompt for account name
 			$characterNameToSearch = Read-Host "Enter character name"
 			
-			$characterGuid = Check-Character -characterNameToSearch $characterNameToSearch
-			
+			# check if character exists first
+			$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
+			$ValueColumn = "guid"
+			$ConnectionName = "CharConn"
+            $characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($characterGuid){
 				#check if character already is a member of a guild
 				$FoundRow = Row-Exists -TableName "guild_member" -RowName "guid" -RowValue $characterGuid -ConnectionName "CharConn"
@@ -2459,20 +2451,23 @@ function Restore-Guild-Main {
 			Write-Host "`nImporting up all guilds from list."
 			
 			foreach ($folder in $guildFolders) {
-			$selectedFolder = $folder.Name
-			$GuildName = ($selectedFolder -split " - ")[0]
-			
-			Write-Host "`nThe script requires a character name to transfer the guild $GuildName to." -ForegroundColor Cyan
-			# Prompt for account name
-			$characterNameToSearch = Read-Host "Enter character name"
-			
-			$characterGuid = Check-Character -characterNameToSearch $characterNameToSearch
-	
-			if ($characterGuid){
-				Restore-Guild -folder $folder.Name -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName
-			} else {
-				Write-Host "Character name not found in database. Try again." -ForegroundColor Red
-			}
+				$selectedFolder = $folder.Name
+				$GuildName = ($selectedFolder -split " - ")[0]
+				
+				Write-Host "`nThe script requires a character name to transfer the guild $GuildName to." -ForegroundColor Cyan
+				# Prompt for account name
+				$characterNameToSearch = Read-Host "Enter character name"
+				
+				# check if character exists first
+				$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
+				$ValueColumn = "guid"
+				$ConnectionName = "CharConn"
+				$characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+				if ($characterGuid){
+					Restore-Guild -folder $folder.Name -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName
+				} else {
+					Write-Host "Character name not found in database. Try again." -ForegroundColor Red
+				}
 			}
 		}
 ################################################
