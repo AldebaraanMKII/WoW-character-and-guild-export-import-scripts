@@ -2454,6 +2454,8 @@ function Restore-Guild-Main {
 }
 ###################################################
 #endregion
+########################################
+#region All-Accounts
 ################################################################################
 function Backup-All-Accounts-Main {
     # Open database connections
@@ -2768,11 +2770,15 @@ function Restore-All-Accounts-Main {
     }
 }
 ####################################################################
+#endregion
+########################################
+#region All-Guilds
+########################################
 function Backup-All-Guilds-Main-Wrapper {
     Backup-Guild-Main -AllGuilds
 	[console]::beep()
 }
-####################################################################
+########################################
 function Restore-All-Guilds-Main {
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
@@ -2854,4 +2860,6 @@ function Restore-All-Guilds-Main {
 		[console]::beep()
     }
 }
-###################################################
+########################################
+#endregion
+########################################
