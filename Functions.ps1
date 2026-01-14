@@ -1115,7 +1115,7 @@ function Restore-Character {
 				@("beastmaster_tamed_pets", 0, $newGuid, -1, -1, -1, -1),
 				@("mod_improved_bank", 1, $newGuid, 2, $accountID, -1, -1),
 				################ new 14-01-2026
-				@("battleground_deserters", 1, $newGuid, -1, -1, -1, -1)
+				@("battleground_deserters", 0, $newGuid, -1, -1, -1, -1)
 				####################
 			)
 			
