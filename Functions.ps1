@@ -2594,6 +2594,7 @@ function Backup-All-Accounts-Main {
         Close-SqlConnection -ConnectionName "AuthConn"
         Close-SqlConnection -ConnectionName "CharConn"
         Close-SqlConnection -ConnectionName "WorldConn"
+		[console]::beep()
     }
 }
 ############################################################
@@ -2745,11 +2746,13 @@ function Restore-All-Accounts-Main {
     } finally {
         Close-SqlConnection -ConnectionName "AuthConn"
         Close-SqlConnection -ConnectionName "CharConn"
+		[console]::beep()
     }
 }
 ####################################################################
 function Backup-All-Guilds-Main-Wrapper {
     Backup-Guild-Main -AllGuilds
+	[console]::beep()
 }
 ####################################################################
 function Restore-All-Guilds-Main {
@@ -2795,6 +2798,7 @@ function Restore-All-Guilds-Main {
     } finally {
         Close-SqlConnection -ConnectionName "CharConn"
         Close-SqlConnection -ConnectionName "WorldConn"
+		[console]::beep()
     }
 }
 ###################################################
