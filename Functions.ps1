@@ -147,7 +147,7 @@ function Check-Value-in-DB {
 	
 		$value = $null
 		try {
-		    Write-Host "Query: $Query" -ForegroundColor Cyan
+		    # Write-Host "Query: $Query" -ForegroundColor Cyan
 			$Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			
 			if ($Result) {
