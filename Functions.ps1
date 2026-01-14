@@ -147,7 +147,7 @@ function Check-Value-in-DB {
 	
 		$value = $null
 		try {
-		    # Write-Host "Query: $Query" -ForegroundColor Cyan
+		    Write-Host "Query: $Query" -ForegroundColor Cyan
 			$Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			
 			if ($Result) {
@@ -570,7 +570,7 @@ function Backup-Character-Main {
 							$CurCharName = $selectedCharacter.name
 							$CurCharLevel = $selectedCharacter.level
 							
-							$backupDirFull = "$CharacterBackupDir\$userNameToSearch\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+							$backupDirFull = "$CharacterBackupDir\single_backups\$userNameToSearch\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
 							if (-not (Test-Path $backupDirFull)) {
 								New-Item -Path $backupDirFull -ItemType Directory | Out-Null
 							}
@@ -626,7 +626,7 @@ function Backup-Character-Main {
 								$CurCharName = $character.name
 								$CurCharLevel = $character.level
 								
-								$backupDirFull = "$CharacterBackupDir\$userNameToSearch\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+								$backupDirFull = "$CharacterBackupDir\single_backups\$userNameToSearch\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
 								if (-not (Test-Path $backupDirFull)) {
 									New-Item -Path $backupDirFull -ItemType Directory | Out-Null
 								}
@@ -717,21 +717,15 @@ function Backup-Guild {
     param (
         [int]$GuildID,
         [string]$GuildName,
-        [int]$LeaderGUID,
-        [string]$CreateDate,
-        [string]$BankMoney,
-        [string]$LeaderName,
-        [string]$CreateDateConverted,
-        [string]$BankMoneyConverted,
-        [string]$CurrentDate
+        [string]$BackupDir
     )
 
     Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Cyan
-    $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
+    # $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
 		
 	# Ensure backup directory exists 
-	if (-not (Test-Path $backupDirFull)) { 
-		New-Item -ItemType Directory -Path $backupDirFull -Force | Out-Null 
+	if (-not (Test-Path $BackupDir)) { 
+		New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null 
 	}
 ########### Create guild_members.json
     $memberGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID}
@@ -745,7 +739,7 @@ function Backup-Guild {
         }
     }
     $memberMappingJson = $memberMapping | ConvertTo-Json
-    $memberMappingJson | Out-File -FilePath "$($backupDirFull)\guild_members.json" -Encoding utf8
+    $memberMappingJson | Out-File -FilePath "$($BackupDir)\guild_members.json" -Encoding utf8
 	
 ########### List of tables to back up
     $tables = @(
@@ -758,11 +752,11 @@ function Backup-Guild {
     )
 
     foreach ($table in $tables) {
-        if (-not (Test-Path $backupDirFull)) {
-            New-Item -Path $backupDirFull -ItemType Directory | Out-Null
+        if (-not (Test-Path $BackupDir)) {
+            New-Item -Path $BackupDir -ItemType Directory | Out-Null
         }
 
-        $backupFile = "$backupDirFull\$table.sql"
+        $backupFile = "$BackupDir\$table.sql"
 		
 		# Define the mysqldump command
 		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"guildid=$GuildID`" `"$SourceDatabaseCharacters`" `"$table`" > `"$backupFile`""
@@ -785,7 +779,7 @@ function Backup-Guild {
 			# Extract item_guid values from DataRow objects
 			$guidList = $itemGuids | ForEach-Object { $_.item_guid } | Where-Object { $_ -ne $null }
 			if ($guidList.Count -gt 0) {
-				$backupFile = "$backupDirFull\item_instance.sql"
+				$backupFile = "$BackupDir\item_instance.sql"
 				$whereClause = "guid IN (" + ($guidList -join ',') + ")"
 				
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" item_instance > `"$backupFile`""
@@ -815,7 +809,7 @@ function Backup-Guild {
 			# Extract id values from DataRow objects
 			$guidList = $GuildGuids | ForEach-Object { $_.id } | Where-Object { $_ -ne $null }
 			if ($guidList.Count -gt 0) {
-				$backupFile = "$backupDirFull\guild_house.sql"
+				$backupFile = "$BackupDir\guild_house.sql"
 				$whereClause = "id IN (" + ($guidList -join ',') + ")"
 				
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseCharacters`" guild_house > `"$backupFile`""
@@ -836,7 +830,7 @@ function Backup-Guild {
 	}
 ########### Handle creature_respawn table
 
-	$backupFile = "$backupDirFull\creature.sql"
+	$backupFile = "$BackupDir\creature.sql"
 	
 	$NPCIds = @(26327, 26324, 26325, 26326, 26328, 26329, 26330, 26331, 26332, 500030, 500031, 500032, 30605, 29195, 2836, 8128, 8736, 18774, 18751, 18773, 18753, 30721, 30722, 19187, 19180, 19052, 908, 2627, 19184, 2834, 19185, 8719, 9856, 184137, 1685, 4087, 500000, 500001, 500002, 500003, 500004, 500005, 500006, 500007, 500008, 500009, 187293, 28692, 28776, 4255, 6491, 191028, 29636, 29493, 28690, 9858, 2622) 
 	
@@ -884,24 +878,24 @@ function Backup-Guild-Main {
         if ($guildData.ItemArray.Length -gt 0) {
             if ($AllGuilds) {
                 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+				
+                $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
                 foreach ($guild in $guildData) {
-                    $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
-                    $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
-                    $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+                    # $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
+                    # $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+					$GuildName = $guild.name
+					$LeaderName = $guild.leader_name
+					$BackupDir = "$GuildBackupDir\full_backups\$SourceServerName ($($CurrentDate))\$GuildName ($CurrentDate) - $LeaderName"
+					
                     Backup-Guild -GuildID $guild.guildid `
                                 -GuildName $guild.name `
-                                -LeaderGUID $guild.leaderguid `
-                                -CreateDate $guild.createdate `
-                                -BankMoney $guild.BankMoney `
-                                -LeaderName $guild.leader_name `
-                                -CreateDateConverted $CreateDateConverted `
-                                -BankMoneyConverted $BankMoneyConverted `
-                                -CurrentDate $CurrentDate
+                                -BackupDir $BackupDir
                 }
                 $stopwatch.Stop()
                 Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
                 return
             }
+########################################
             $exitScript = $false
             $foundGuild = $true
             while (-not $exitScript) {
@@ -928,15 +922,12 @@ function Backup-Guild-Main {
                         $selectedGuild = $guildData[$choice - 1]
 
                         $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+						$GuildName = $selectedGuild.name
+						$LeaderName = $selectedGuild.leader_name
+						$BackupDir = "$GuildBackupDir\single_backups\$GuildName ($CurrentDate) - $LeaderName"
                         Backup-Guild -GuildID $selectedGuild.guildid `
                                     -GuildName $selectedGuild.name `
-                                    -LeaderGUID $selectedGuild.leaderguid `
-                                    -CreateDate $selectedGuild.createdate `
-                                    -BankMoney $selectedGuild.BankMoney `
-                                    -LeaderName $selectedGuild.leader_name `
-                                    -CreateDateConverted $CreateDateConverted `
-                                    -BankMoneyConverted $BankMoneyConverted `
-                                    -CurrentDate $CurrentDate
+									-BackupDir $BackupDir
 
                         $stopwatch.Stop()
                         Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
@@ -945,17 +936,17 @@ function Backup-Guild-Main {
                         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
                         foreach ($guild in $guildData) {
-                            $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
-                            $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+                            # $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
+                            # $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
 
+							$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+							$GuildName = $guild.name
+							$LeaderName = $guild.leader_name
+							$BackupDir = "$GuildBackupDir\single_backups\$GuildName ($CurrentDate) - $LeaderName"
+							
                             Backup-Guild -GuildID $guild.guildid `
                                         -GuildName $guild.name `
-                                        -LeaderGUID $guild.leaderguid `
-                                        -CreateDate $guild.createdate `
-                                        -BankMoney $guild.BankMoney `
-                                        -LeaderName $guild.leader_name `
-                                        -CreateDateConverted $CreateDateConverted `
-                                        -BankMoneyConverted $BankMoneyConverted
+										-BackupDir $BackupDir
                         }
                         $stopwatch.Stop()
                         Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
@@ -1056,7 +1047,7 @@ function Restore-Character {
 			$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
 			# check if character exists first, if yes return
-			$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+			$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
 			$ValueColumn = "guid"
 			$ConnectionName = "CharConn"
 			$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1625,7 +1616,7 @@ function Restore-Character {
 									$itemTemplateID = $values[1]
 							
 									# Check if the row already exists in the database
-									$Query = "SELECT COUNT(*) as count FROM custom_unlocked_appearances WHERE account_id = $AccountID AND item_template_id = $ItemTemplateID;"
+									$Query = "SELECT COUNT(*) as count FROM custom_unlocked_appearances WHERE account_id = '$AccountID' AND item_template_id = '$ItemTemplateID';"
 									$ValueColumn = "count"
 									$ConnectionName = "CharConn"
 									$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1862,14 +1853,14 @@ function Restore-Character-Main {
 ########################################
 function Restore-Guild {
     param (
-        [string]$folder,
         [string]$character,
         [int]$characterID,
-        [string]$GuildName
+        [string]$GuildName,
+        [string]$BackupDir
     )
 	
 	#Check if guild exists
-	$Query = "SELECT guildid FROM guild WHERE name = $GuildName;"
+	$Query = "SELECT guildid FROM guild WHERE name = '$GuildName';"
 	$ValueColumn = "guildid"
 	$ConnectionName = "CharConn"
 	$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1878,8 +1869,8 @@ function Restore-Guild {
 		return
 	}
 ############## PROCESS GUILD.SQL - alter guildid[0] and leaderguid[2]
-	# Write-Host "folder is $folder"
-	$sqlFilePath = "$GuildBackupDir\$folder\guild.sql"
+	Write-Host "folder is $BackupDir"
+	$sqlFilePath = "$BackupDir\guild.sql"
 	if (Test-Path -Path $sqlFilePath) {
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		
@@ -1901,7 +1892,7 @@ function Restore-Guild {
 		$newGuildID = $maxGuid + 1
 ############################ Process guild_members.json
 		$guidMapping = @{}
-        $guildMembersFile = "$GuildBackupDir\$folder\guild_members.json"
+        $guildMembersFile = "$BackupDir\guild_members.json"
         if (Test-Path $guildMembersFile) {
             $guildMembersJson = Get-Content $guildMembersFile | ConvertFrom-Json
             foreach ($property in $guildMembersJson.psobject.Properties) {
@@ -1909,7 +1900,7 @@ function Restore-Guild {
                 $characterName = $property.Value
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+				$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
                 $newCharGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1950,7 +1941,7 @@ function Restore-Guild {
 			$columnIndex = $entry[1]
 			$columnIndexValue = $entry[2]
 			
-			$sqlFilePath = "$GuildBackupDir\$folder\$table.sql"
+			$sqlFilePath = "$BackupDir\$table.sql"
 			if (Test-Path $sqlFilePath) {
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
 				$matches = [regex]::Matches($sqlContent, $pattern)
@@ -1967,7 +1958,7 @@ function Restore-Guild {
 			}
 		}
 ############################### Process guild_member.sql
-        $sqlFilePath = "$GuildBackupDir\$folder\guild_member.sql"
+        $sqlFilePath = "$BackupDir\guild_member.sql"
         if (Test-Path $sqlFilePath) {
             $sqlContent = Get-Content -Path $sqlFilePath -Raw
             $matches = [regex]::Matches($sqlContent, $pattern)
@@ -1993,7 +1984,7 @@ function Restore-Guild {
         }
 ############################# Process guild_bank_eventlog.sql
 		# guild_eventlog = guildid[0], PlayerGuid[3]
-        $sqlFilePath = "$GuildBackupDir\$folder\guild_bank_eventlog.sql"
+        $sqlFilePath = "$BackupDir\guild_bank_eventlog.sql"
         if (Test-Path $sqlFilePath) {
             $sqlContent = Get-Content -Path $sqlFilePath -Raw
             $matches = [regex]::Matches($sqlContent, $pattern)
@@ -2019,7 +2010,7 @@ function Restore-Guild {
         }
 ############################# Process guild_eventlog.sql
 		# guild_bank_eventlog - guildid[0], PlayerGuid[3], PlayerGuid[4]
-        $sqlFilePath = "$GuildBackupDir\$folder\guild_eventlog.sql"
+        $sqlFilePath = "$BackupDir\guild_eventlog.sql"
         if (Test-Path $sqlFilePath) {
             $sqlContent = Get-Content -Path $sqlFilePath -Raw
             $matches = [regex]::Matches($sqlContent, $pattern)
@@ -2057,7 +2048,7 @@ function Restore-Guild {
         }
 		
 ############################# Process guild_member_withdraw.sql
-		$sqlFilePath = "$GuildBackupDir\$folder\guild_member_withdraw.sql"
+		$sqlFilePath = "$BackupDir\guild_member_withdraw.sql"
 		if (Test-Path $sqlFilePath) {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
 			$matches = [regex]::Matches($sqlContent, $pattern)
@@ -2086,7 +2077,7 @@ function Restore-Guild {
 			}
 		}
 ############################ PROCESS ITEM_INSTANCE - alter guid[0] taking into account existing items
-		$sqlFilePath = "$GuildBackupDir\$folder\item_instance.sql"
+		$sqlFilePath = "$BackupDir\item_instance.sql"
 		
 		if (Test-Path -Path $sqlFilePath) {
 			if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
@@ -2155,7 +2146,7 @@ function Restore-Guild {
 				Execute-Query -query $modifiedSqlQuery -tablename "item_instance" -ConnectionName "CharConn"
 				
 ################################ PROCESS GUILD_BANK_ITEM - alter guidid[0] and item_guid[3]
-				$sqlFilePath = "$GuildBackupDir\$folder\guild_bank_item.sql"
+				$sqlFilePath = "$BackupDir\guild_bank_item.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "guild_bank_item" -ConnectionName "CharConn") {
@@ -2216,7 +2207,7 @@ function Restore-Guild {
 
 
 ######################################## PROCESS GUILD_HOUSE - alter id[0] taking into account existing items and guild[1]
-		$sqlFilePath = "$GuildBackupDir\$folder\guild_house.sql"
+		$sqlFilePath = "$BackupDir\guild_house.sql"
 		
 		if (Test-Path -Path $sqlFilePath) {
 			if (Table-Exists -TableName "guild_house" -ConnectionName "CharConn") {
@@ -2272,7 +2263,7 @@ function Restore-Guild {
 				#Execute the query
 				Execute-Query -query $modifiedSqlQuery -tablename "guild_house" -ConnectionName "CharConn"
 ############################################ PROCESS CREATURE (this is for guild house NPCs) - alter guid[0] taking into account existing creatures
-				$sqlFilePath = "$GuildBackupDir\$folder\creature.sql"
+				$sqlFilePath = "$BackupDir\creature.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "creature" -ConnectionName "WorldConn") {
@@ -2386,7 +2377,8 @@ function Restore-Guild-Main {
 		
 		$selectedFolder = $guildFolders[$selection - 1].Name
 		
-		$GuildName = ($selectedFolder -split " - ")[0]
+		# $GuildName = ($selectedFolder -split " - ")[0]
+		$GuildName = ($selectedFolder -split " - ")[0] -replace '\s*\(.*?\)', '' 
 		Write-Host "`nYou selected: $GuildName" -ForegroundColor Cyan
 	}
 	# All
@@ -2417,14 +2409,14 @@ function Restore-Guild-Main {
             $characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($characterGuid){
 				#check if character already is a member of a guild
-				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = $characterGuid;"
+				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = '$characterGuid';"
 				$ValueColumn = "count"
 				$ConnectionName = "CharConn"
 				$FoundRow = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 				if ($FoundRow){
 					Write-Host "Character $characterNameToSearch already is a member of a guild. Try again." -ForegroundColor Red
 				} else {
-					Restore-Guild -folder $selectedFolder -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName
+					Restore-Guild -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName -BackupDir $selectedFolder 
 				}
 			} else {
 				Write-Host "Character name not found in database. Try again." -ForegroundColor Red
@@ -2443,12 +2435,12 @@ function Restore-Guild-Main {
 				$characterNameToSearch = Read-Host "Enter character name"
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
+				$Query = "SELECT guid FROM characters WHERE name = '$characterNameToSearch';"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
 				$characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 				if ($characterGuid){
-					Restore-Guild -folder $folder.Name -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName
+					Restore-Guild -character $characterNameToSearch -characterID $characterGuid -GuildName $GuildName -BackupDir $folder
 				} else {
 					Write-Host "Character name not found in database. Try again." -ForegroundColor Red
 				}
@@ -2786,7 +2778,42 @@ function Restore-All-Guilds-Main {
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 ####################################################################
     try {
-        $guildFolders = Get-ChildItem -Path $GuildBackupDir -Directory
+		# Get all backup folders under full_backups
+		$backupRoot = "$GuildBackupDir\full_backups"
+		
+		if (-not (Test-Path $backupRoot)) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+        }
+		
+		$backupFolders = Get-ChildItem -Path $backupRoot -Directory
+		
+		if ($backupFolders.Count -eq 0) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+		}
+		
+		# Display numbered list of available backup folders
+		Write-Host "`nAvailable backup folders:" -ForegroundColor Cyan
+		for ($i = 0; $i -lt $backupFolders.Count; $i++) {
+			Write-Host "[$i] $($backupFolders[$i].Name)"
+		}
+		
+		# Prompt user to choose one
+		$selection = Read-Host "Enter the number of the full backup you want to use"
+		
+		# Validate input
+		if ($selection -notmatch '^\d+$' -or [int]$selection -ge $backupFolders.Count) {
+			Write-Host "Invalid selection." -ForegroundColor Red
+			return
+		}
+		
+		# Get the chosen folder
+		$chosenFolder = $backupFolders[$selection].FullName
+		Write-Host "`nYou selected: $($chosenFolder.Name)" -ForegroundColor Green
+		
+		
+        $guildFolders = Get-ChildItem -Path $chosenFolder -Directory
         if ($guildFolders.Count -eq 0) {
             Write-Host "No guild backups found in '$GuildBackupDir'." -ForegroundColor Yellow
             return
@@ -2797,8 +2824,8 @@ function Restore-All-Guilds-Main {
 ####################################################################
         foreach ($folder in $guildFolders) {
             $folderName = $folder.Name
-            $guildName = ($folderName -split " - ")[0]
-            $leaderName = ($folderName -split " - ")[1]
+			$guildName = ($folderName -split " - ")[0] -replace '\s*\(.*?\)', '' 
+			$leaderName = ($folderName -split " - ")[1]
 
             Write-Host "`nStarting restoring guild: $guildName, Leader: $leaderName" -ForegroundColor Cyan
 
@@ -2811,7 +2838,7 @@ function Restore-All-Guilds-Main {
                     Write-Host "Character '$leaderName' is already in a guild. Skipping restore for guild '$guildName'." -ForegroundColor Yellow
                     continue
                 }
-                Restore-Guild -folder $folderName -character $leaderName -characterID $characterGuid -GuildName $guildName
+                Restore-Guild -character $leaderName -characterID $characterGuid -GuildName $guildName -BackupDir $folder
             } else {
                 Write-Host "Leader character '$leaderName' not found for guild '$guildName'. Skipping restore." -ForegroundColor Red
             }
