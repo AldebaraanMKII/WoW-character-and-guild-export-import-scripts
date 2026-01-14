@@ -34,16 +34,7 @@ function Backup-TableData {
         [string]$tableNameFile,
         [string]$columnName,
         [int]$value,
-        [string]$characterName,
-        [string]$Race,
-        [string]$Class,
-        [string]$Gender,
-        [string]$Level,
-        [int]$XP,
-        [int]$Money,
-        [int]$Honor,
-        [string]$AccountName,
-        [string]$CurrentDate
+        [string]$BackupDir
     )
     
     # Convert race/class/gender
@@ -51,13 +42,13 @@ function Backup-TableData {
 	$Class = GetCharacterClassString -Class $Class
 	$Gender = GetCharacterGenderString -Gender $Gender
 
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
-    if (-not (Test-Path $backupDirFull)) {
-        New-Item -Path $backupDirFull -ItemType Directory | Out-Null
+    # $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
+    if (-not (Test-Path $BackupDir)) {
+        New-Item -Path $BackupDir -ItemType Directory | Out-Null
     }
     
-    $backupFile = "$backupDirFull\$tableNameFile.sql"
-	# Write-Host "File: $backupDirFull\$tableNameFile.sql" -ForegroundColor Yellow
+    $backupFile = "$BackupDir\$tableNameFile.sql"
+	# Write-Host "File: $BackupDir\$tableNameFile.sql" -ForegroundColor Yellow
     $whereClause = "$columnName=$value"
 	
 
@@ -71,16 +62,7 @@ function Backup-TableData-Array {
         [string]$tableNameFile,
         [string]$columnName,
         [int[]]$values,
-        [string]$characterName,
-        [string]$Race,
-        [string]$Class,
-        [string]$Gender,
-        [string]$Level,
-        [int]$XP,
-        [int]$Money,
-        [int]$Honor,
-        [string]$AccountName,
-        [string]$CurrentDate
+        [string]$BackupDir
     )
     
     # Convert race/class/gender
@@ -89,12 +71,12 @@ function Backup-TableData-Array {
 	$Gender = GetCharacterGenderString -Gender $Gender
 
     # Create backup directory
-    $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
-    if (-not (Test-Path $backupDirFull)) {
-        New-Item -Path $backupDirFull -ItemType Directory | Out-Null
+    # $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
+    if (-not (Test-Path $BackupDir)) {
+        New-Item -Path $BackupDir -ItemType Directory | Out-Null
     }
     
-    $backupFile = "$backupDirFull\$tableNameFile.sql"
+    $backupFile = "$BackupDir\$tableNameFile.sql"
     $valuesList = $values -join ","
     $whereClause = "$columnName IN ($valuesList)"
     
@@ -415,15 +397,7 @@ function Backup-Character {
         [int]$characterId,
         [string]$characterName,
         [string]$accountID,
-        [string]$Race,
-        [string]$Class,
-        [string]$Gender,
-        [string]$Level,
-        [int]$XP,
-        [int]$Money,
-        [int]$Honor,
-        [string]$AccountName,
-        [string]$CurrentDate
+        [string]$BackupDir
     )
     
     Write-Host "`nBacking up character $characterName..." -ForegroundColor Cyan
@@ -463,7 +437,7 @@ function Backup-Character {
     )
     
     foreach ($table in $tables) {
-        Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+        Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -BackupDir $BackupDir
     }
     
 ########## Pet Data
@@ -475,46 +449,46 @@ function Backup-Character {
             Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Cyan
         }
         
-        Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+        Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -BackupDir $BackupDir
         
         $petIds = $petsData | Select-Object -ExpandProperty id
         
-        Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-        Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-        Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+        Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -BackupDir $BackupDir
+        Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -BackupDir $BackupDir
+        Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -BackupDir $BackupDir
     }
     
 ########## Item Data
-    Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+    Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
     
 ########## Mail Data
-    Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+    Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -BackupDir $BackupDir
     
 ########## Transmog Data
 	if (Table-Exists -TableName "custom_transmogrification" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-		Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
-		Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -BackupDir $BackupDir
 	}
 ########## Reagent Bank Data
 	if (Table-Exists -TableName "custom_reagent_bank" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -BackupDir $BackupDir
 	}
 ########## Character Settings data
 	if (Table-Exists -TableName "character_settings" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -BackupDir $BackupDir
 	}
 ########## Beast Master 
 	if (Table-Exists -TableName "beastmaster_tamed_pets" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "beastmaster_tamed_pets" -tableNameFile "beastmaster_tamed_pets" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "beastmaster_tamed_pets" -tableNameFile "beastmaster_tamed_pets" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
 	}
 ########## Improved Bank
 	if (Table-Exists -TableName "mod_improved_bank" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "mod_improved_bank" -tableNameFile "mod_improved_bank" -columnName "owner_guid" -value $characterId -characterName $characterName -Race $Race -Class $Class -Gender $Gender -Level $Level -XP $XP -Money $Money -Honor $Honor -AccountName $AccountName -CurrentDate $CurrentDate
+		Backup-TableData -tableName "mod_improved_bank" -tableNameFile "mod_improved_bank" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
 	}
 ##########
     # Delete empty SQL files
-    Get-ChildItem -Path $CharacterBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
+    Get-ChildItem -Path $BackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 	
 }
 ########################################
@@ -633,7 +607,7 @@ function Backup-Character-Main {
 							}
 							CreateCharacterInfoFile @characterInfoParams
 #############################################################
-							Backup-Character -characterId $selectedCharacter.guid -characterName $selectedCharacter.name -accountID $id.id -Race $selectedCharacter.race -Class $selectedCharacter.class -Gender $selectedCharacter.gender -Level $selectedCharacter.level -XP $selectedCharacter.xp -Money $selectedCharacter.money -Honor $selectedCharacter.totalHonorPoints -AccountName $userNameToSearch -CurrentDate $CurrentDate
+							Backup-Character -characterId $selectedCharacter.guid -characterName $selectedCharacter.name -accountID $id.id -BackupDir $backupDirFull
 							$stopwatch.Stop()
 							Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
 						}
@@ -689,7 +663,7 @@ function Backup-Character-Main {
 								}
 								CreateCharacterInfoFile @characterInfoParams
 #############################################################
-								Backup-Character -characterId $character.guid -characterName $character.name -accountID $id.id -Race $character.race -Class $character.class -Gender $character.gender -Level $character.level -XP $character.xp -Money $character.money -Honor $character.totalHonorPoints -AccountName $userNameToSearch -CurrentDate $CurrentDate
+								Backup-Character -characterId $character.guid -characterName $character.name -accountID $id.id -Race -BackupDir $backupDirFull
 							}
 							$stopwatch.Stop()
 							Write-Host "All characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
@@ -1020,12 +994,15 @@ function Restore-Character {
     param (
         [string]$folder,
         [string]$account,
-        [int]$accountID
+        [int]$accountID,
+        [string]$BackupDir
+		
     )
 	
 ############## PROCESS CHARACTERS.SQL
-	# Write-Host "folder is $folder"
-	$sqlFilePath = "$CharacterBackupDir\*\$folder\characters.sql"
+	# Write-Host "folder is $BackupDir"
+	# $sqlFilePath = "$BackupDir\*\$folder\characters.sql"
+	$sqlFilePath = "$BackupDir\characters.sql"
 	if (Test-Path -Path $sqlFilePath) {
 		if (Table-Exists -TableName "characters" -ConnectionName "CharConn") {
 			# Write-Host "The file exists: $sqlFilePath"
@@ -1139,7 +1116,8 @@ function Restore-Character {
 				$table = $entry[0]
 	
 				# Path to the .sql file
-				$sqlFilePath = "$CharacterBackupDir\*\$folder\$table.sql"
+				# $sqlFilePath = "$CharacterBackupDir\*\$folder\$table.sql"
+				$sqlFilePath = "$BackupDir\$table.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName $table -ConnectionName "CharConn") {
@@ -1184,7 +1162,7 @@ function Restore-Character {
 				}
 			}	
 ############################################ PROCESS HOMEBIND (this was giving errors because the old azerothcore homebind had a extra column at the end which the new azerothcore doesn`t have)
-				$sqlFilePath = "$CharacterBackupDir\*\$folder\character_homebind.sql"
+				$sqlFilePath = "$BackupDir\character_homebind.sql"
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "character_homebind" -ConnectionName "CharConn") {
 						# Read the contents of the .sql file
@@ -1229,7 +1207,7 @@ function Restore-Character {
 				}
 ############################################ PROCESS PET TABLES
 				#region Pet Tables
-				$sqlFilePath = "$CharacterBackupDir\*\$folder\character_pet.sql"
+				$sqlFilePath = "$BackupDir\character_pet.sql"
 				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "character_pet" -ConnectionName "CharConn") {
@@ -1307,7 +1285,7 @@ function Restore-Character {
 							$table = $entry[0]
 							$columnIndex = $entry[1]
 							
-							$sqlFilePath = "$CharacterBackupDir\*\$folder\$table.sql"
+							$sqlFilePath = "$BackupDir\$table.sql"
 							
 							if (Test-Path -Path $sqlFilePath) {
 								if (Table-Exists -TableName $table -ConnectionName "CharConn") {
@@ -1365,7 +1343,7 @@ function Restore-Character {
 				#endregion
 ############################################ PROCESS ITEM_INSTANCE - guid[0], owner_guid[2]
 			#region ITEM_INSTANCE
-			$sqlFilePath = "$CharacterBackupDir\*\$folder\item_instance.sql"
+			$sqlFilePath = "$BackupDir\item_instance.sql"
 			
 			if (Test-Path -Path $sqlFilePath) {
 				if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
@@ -1436,7 +1414,7 @@ function Restore-Character {
 					Execute-Query -query "$modifiedSqlQuery" -tablename "item_instance" -ConnectionName "CharConn"
 					
 ############################################ PROCESS CHARACTER_INVENTORY - guid[0], bag[1], item[3]
-					$sqlFilePath = "$CharacterBackupDir\*\$folder\character_inventory.sql"
+					$sqlFilePath = "$BackupDir\character_inventory.sql"
 					
 					if (Test-Path -Path $sqlFilePath) {
 						if (Table-Exists -TableName "character_inventory" -ConnectionName "CharConn") {
@@ -1503,7 +1481,7 @@ function Restore-Character {
 	
 ############################################ PROCESS CUSTOM_TRANSMOGRIFICATION - GUID[0], Owner[2]
 					#region TRANSMOG
-					$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_transmogrification.sql"
+					$sqlFilePath = "$BackupDir\custom_transmogrification.sql"
 					
 					if (Test-Path -Path $sqlFilePath) {
 						if (Table-Exists -TableName "custom_transmogrification" -ConnectionName "CharConn") {
@@ -1558,7 +1536,7 @@ function Restore-Character {
 						
 						
 ############################################ PROCESS CUSTOM_TRANSMOGRIFICATION_SETS - Owner[0], PresetID[1]
-						$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_transmogrification_sets.sql"
+						$sqlFilePath = "$BackupDir\custom_transmogrification_sets.sql"
 						
 						if (Test-Path -Path $sqlFilePath) {
 							if (Table-Exists -TableName "custom_transmogrification_sets" -ConnectionName "CharConn") {
@@ -1621,7 +1599,7 @@ function Restore-Character {
 						}
 	
 ############################################ PROCESS CUSTOM_UNLOCKED_APPEARANCES - account_id[0], item_template_id[1]
-						$sqlFilePath = "$CharacterBackupDir\*\$folder\custom_unlocked_appearances.sql"
+						$sqlFilePath = "$BackupDir\custom_unlocked_appearances.sql"
 						
 						if (Test-Path -Path $sqlFilePath) {
 							if (Table-Exists -TableName "custom_unlocked_appearances" -ConnectionName "CharConn") {
@@ -1682,7 +1660,7 @@ function Restore-Character {
 ############################################ 
 	
 ############################################ PROCESS character_equipmentsets - guid[0], setguid[1]
-					$sqlFilePath = "$CharacterBackupDir\*\$folder\character_equipmentsets.sql"
+					$sqlFilePath = "$BackupDir\character_equipmentsets.sql"
 					
 					if (Test-Path -Path $sqlFilePath) {
 						if (Table-Exists -TableName "character_equipmentsets" -ConnectionName "CharConn") {
@@ -1843,7 +1821,7 @@ function Restore-Character-Main {
 				$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 				
 				# Write-Host "folder is: $($selectedFolder.Name)"
-				Restore-Character -folder $($selectedFolder.Name) -account $userNameToSearch -accountID $AccountId
+				Restore-Character -folder $($selectedFolder.Name) -account $userNameToSearch -accountID $AccountId -BackupDir $selectedFolder
 				
 				$stopwatch.Stop()
 				Write-Host "`nImport done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
@@ -1855,7 +1833,7 @@ function Restore-Character-Main {
 				
 				foreach ($folder in $characterFolders) {
 					# Write-Host "folder is: $folder.Name"
-					Restore-Character -folder $folder.Name -account $userNameToSearch -accountID $AccountId
+					Restore-Character -folder $folder.Name -account $userNameToSearch -accountID $AccountId -BackupDir $folder
 				}
 				
 				$stopwatch.Stop()
@@ -2484,32 +2462,40 @@ function Restore-Guild-Main {
 }
 ###################################################
 #endregion
-########################################
+################################################################################
 function Backup-All-Accounts-Main {
     # Open database connections
     Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
     Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
     Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "WorldConn"
-
+################################################################################
     try {
         $accounts = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id, username FROM account"
         if ($accounts) {
 			if (-not ([string]::IsNullOrEmpty($AccountNameRegexFilter))) {
 				$accounts = $accounts | Where-Object { $_.username -match $AccountNameRegexFilter }
 			}
+			
+			if ($accounts.Count -eq 0) {
+				Write-Host "Found 0 accounts after regex filter." -ForegroundColor Red
+				return
+			}
+			
             Write-Host "Found $($accounts.Count) accounts. Starting backup process..." -ForegroundColor Green
             $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-
+################################################################################
+            $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
             foreach ($account in $accounts) {
                 $accountId = $account.id
                 $accountName = $account.username
                 Write-Host "`nBacking up account: $accountName (ID: $accountId)" -ForegroundColor Cyan
                 
-                $backupDirFullAccount = "$CharacterBackupDir\$accountName"
+                # $backupDirFullAccount = "$CharacterBackupDir\$accountName"
+                $backupDirFullAccount = "$CharacterBackupDir\full_backups\$SourceServerName ($($CurrentDate))\$accountName"
                 if (-not (Test-Path $backupDirFullAccount)) {
                     New-Item -Path $backupDirFullAccount -ItemType Directory | Out-Null
                 }
-
+################################################################################
                 # Backup account details
                 $backupFile = "$backupDirFullAccount\_account.sql"
                 $whereClause = "id=$accountId"
@@ -2521,7 +2507,7 @@ function Backup-All-Accounts-Main {
                 $whereClause = "id=$accountId"
                 $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
                 Invoke-Expression $mysqldumpCommand
-
+################################################################################
                 $characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
                     SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
                     FROM characters 
@@ -2534,7 +2520,6 @@ function Backup-All-Accounts-Main {
 					}
                     Write-Host "Found $($characterData.Count) characters for account $accountName." -ForegroundColor Green
                     foreach ($character in $characterData) {
-                        $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
                         $CurCharMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $character.money
                         $CurCharRace = GetCharacterRaceString -Race $character.race
                         $CurCharClass = GetCharacterClassString -Class $character.class
@@ -2542,11 +2527,12 @@ function Backup-All-Accounts-Main {
                         $CurCharName = $character.name
                         $CurCharLevel = $character.level
 
-                        $backupDirFull = "$CharacterBackupDir\$accountName\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+                        # $backupDirFull = "$CharacterBackupDir\$accountName\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+                        $backupDirFull = Join-Path $backupDirFullAccount "$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
                         if (-not (Test-Path $backupDirFull)) {
                             New-Item -Path $backupDirFull -ItemType Directory | Out-Null
                         }
-
+################################################################################
                         $characterInfoParams = @{
                             backupDirFull = $backupDirFull
                             CharacterId = $character.guid
@@ -2577,17 +2563,22 @@ function Backup-All-Accounts-Main {
                             CharacterCurZone = $character.zone
                         }
                         CreateCharacterInfoFile @characterInfoParams
-                        Backup-Character -characterId $character.guid -characterName $character.name -accountID $accountId -Race $character.race -Class $character.class -Gender $character.gender -Level $character.level -XP $character.xp -Money $character.money -Honor $character.totalHonorPoints -AccountName $accountName -CurrentDate $CurrentDate
+################################################################################
+                        Backup-Character -characterId $character.guid -characterName $character.name -accountID $accountId -BackupDir $backupDirFull
                     }
+################################################################################
                 } else {
                     Write-Host "No characters found for account '$accountName'" -ForegroundColor Yellow
                 }
             }
+################################################################################
             $stopwatch.Stop()
             Write-Host "`nAll accounts and characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+################################################################################
         } else {
             Write-Host "No accounts found in the database." -ForegroundColor Red
         }
+################################################################################
     } catch {
         Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
     } finally {
@@ -2604,11 +2595,46 @@ function Restore-All-Accounts-Main {
     Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
 ####################################################################
     try {
-        $accountFolders = Get-ChildItem -Path $CharacterBackupDir -Directory
-        if ($accountFolders.Count -eq 0) {
-            Write-Host "No account backups found in '$CharacterBackupDir'." -ForegroundColor Red
-            return
+		# Get all backup folders under full_backups
+		$backupRoot = "$CharacterBackupDir\full_backups"
+		
+		if (-not (Test-Path $backupRoot)) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
         }
+		
+		$backupFolders = Get-ChildItem -Path $backupRoot -Directory
+		
+		if ($backupFolders.Count -eq 0) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+		}
+		
+		# Display numbered list of available backup folders
+		Write-Host "`nAvailable backup folders:" -ForegroundColor Cyan
+		for ($i = 0; $i -lt $backupFolders.Count; $i++) {
+			Write-Host "[$i] $($backupFolders[$i].Name)"
+		}
+		
+		# Prompt user to choose one
+		$selection = Read-Host "Enter the number of the full backup you want to use"
+		
+		# Validate input
+		if ($selection -notmatch '^\d+$' -or [int]$selection -ge $backupFolders.Count) {
+			Write-Host "Invalid selection." -ForegroundColor Red
+			return
+		}
+		
+		# Get the chosen folder
+		$chosenFolder = $backupFolders[$selection].FullName
+		Write-Host "`nYou selected: $($chosenFolder.Name)" -ForegroundColor Green
+		
+		# Now you can use $chosenFolder as the parent path for account folders
+		$accountFolders = Get-ChildItem -Path $chosenFolder -Directory
+		if ($accountFolders.Count -eq 0) {
+			Write-Host "No account backups found in '$chosenFolder'." -ForegroundColor Red
+			return
+		}
 
         Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Cyan
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -2733,9 +2759,9 @@ function Restore-All-Accounts-Main {
                 continue
             }
 
-            Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'." -ForegroundColor Cyan
+            Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'." -ForegroundColor Green
             foreach ($characterFolder in $characterFolders) {
-                Restore-Character -folder $characterFolder.Name -account $accountName -accountID $accountId
+                Restore-Character -folder $characterFolder.Name -account $accountName -accountID $accountId -BackupDir $characterFolder
             }
         }
         $stopwatch.Stop()
