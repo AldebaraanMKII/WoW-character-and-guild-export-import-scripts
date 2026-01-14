@@ -1,3 +1,8 @@
+
+
+# Initialize the guidMapping as an ArrayList for dynamic addition
+$guidMappingCharacters = [System.Collections.ArrayList]::new()
+
 #region utility-functions
 function ConvertToGoldSilverCopper {
     param (
@@ -432,7 +437,10 @@ function Backup-Character {
 		"character_queststatus_monthly",
 		"character_queststatus_seasonal",
 		"character_spell_cooldown",
-		"character_stats"
+		"character_stats",
+		################## new 14-01-2026
+		"character_social",
+		"battleground_deserters"
 		##################
     )
     
@@ -983,13 +991,10 @@ function Backup-Guild-Main {
 ###################################################
 function Restore-Character {
     param (
-        [string]$folder,
         [string]$account,
         [int]$accountID,
         [string]$BackupDir
-		
     )
-	
 ############## PROCESS CHARACTERS.SQL
 	# Write-Host "folder is $BackupDir"
 	# $sqlFilePath = "$BackupDir\*\$folder\characters.sql"
@@ -1029,6 +1034,8 @@ function Restore-Character {
 				# Split the row into individual values
 				$values = $match -split ","
 				
+				$oldGuid = $values[0]
+				
 				# Modify the first value with the incrementing GUID
 				$values[0] = $newGuid
 			
@@ -1038,30 +1045,37 @@ function Restore-Character {
 				#gets the character name
 				$characterName = $values[2]
 				
+				$guidMappingCharacters += [pscustomobject]@{CharacterName = $characterName; OldGuid = $oldGuid; NewGuid = $newGuid}
+				
 				# Recreate the modified row and store it
 				$modifiedRow = "(" + ($values -join ",") + ")"
 				$modifiedRows += $modifiedRow
 			}
 			
-			# Join the modified rows into the final SQL query
-			$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
+			if ($modifiedRows.Count -gt 0) {
+				# Join the modified rows into the final SQL query
+				$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
-			# check if character exists first, if yes return
-			$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
-			$ValueColumn = "guid"
-			$ConnectionName = "CharConn"
-			$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
-			if ($result) {
-				Write-Host "`nCharacter $($characterName) already exists in database! Skipping..." -ForegroundColor Yellow
+				# check if character exists first, if yes return
+				$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
+				$ValueColumn = "guid"
+				$ConnectionName = "CharConn"
+				$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+				if ($result) {
+					Write-Host "`nCharacter $($characterName) already exists in database! Skipping..." -ForegroundColor Yellow
+					return
+				}
+############################################
+				Write-Host "`nRestoring character $($characterName)..." -ForegroundColor Cyan
+		
+				# Output the modified SQL to verify
+				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Execute the query
+				Execute-Query -query "$modifiedSqlQuery" -tablename "characters" -ConnectionName "CharConn"
+			} else {
+				Write-Host "`nNo characters.sql rows modified. Report this to the script developer." -ForegroundColor Red
 				return
 			}
-############################################
-			Write-Host "`nRestoring character $($characterName)..." -ForegroundColor Cyan
-	
-			# Output the modified SQL to verify
-			# Write-Output "`nModified SQL: $modifiedSqlQuery"
-			# Execute the query
-			Execute-Query -query "$modifiedSqlQuery" -tablename "characters" -ConnectionName "CharConn"
 ############################################ PROCESS TABLES IN $TABLES ARRAY
 			# Array of tables to restore
 			# format is tablename, column index 1, column value 1, column index 2, column value 2, column index 3, column value 3
@@ -1094,10 +1108,11 @@ function Restore-Character {
 				@("character_queststatus_monthly", 0, $newGuid, -1, -1, -1, -1),
 				@("character_queststatus_seasonal", 0, $newGuid, -1, -1, -1, -1),
 				@("character_spell_cooldown", 0, $newGuid, -1, -1, -1, -1),
-				@("character_stats", 0, $newGuid, -1, -1, -1, -1)
-				@("beastmaster_tamed_pets", 0, $newGuid, -1, -1, -1, -1)
-				@("mod_improved_bank", 1, $newGuid, 2, $accountID, -1, -1)
-				################
+				@("character_stats", 0, $newGuid, -1, -1, -1, -1),
+				@("beastmaster_tamed_pets", 0, $newGuid, -1, -1, -1, -1),
+				@("mod_improved_bank", 1, $newGuid, 2, $accountID, -1, -1),
+				################ 
+				@("battleground_deserters", 1, $newGuid, -1, -1, -1, -1) # new 14-01-2026
 			)
 			
 			Write-Host "Importing character data..." -ForegroundColor Cyan
@@ -1733,7 +1748,74 @@ function Restore-Character {
 #################################################
 }
 ###################################################
-
+function Restore-Multiple-Character-Tables {
+    param (
+        [string]$account,
+        [int]$accountID,
+        [string]$BackupDir
+    )
+	
+	# Store the old and new GUIDs in the array
+############################################
+	$sqlFilePath = "$BackupDir\character_social.sql"
+	if (Test-Path -Path $sqlFilePath) {
+		if (Table-Exists -TableName "character_social" -ConnectionName "CharConn") {
+			# Read the content of the SQL file as a single string
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			
+			# Extract values inside parentheses
+			$pattern = "(?<=\().*?(?=\))"
+			$matches = [regex]::Matches($sqlContent, $pattern)
+			
+			# List to store modified rows
+			$modifiedRows = @()
+############################################
+			# Loop through each match
+			for ($i = 0; $i -lt $matches.Count; $i++) {
+				$match = $matches[$i].Value
+				
+				# Split the row into individual values
+				$values = $match -split ","
+				
+				# $guidMappingCharacters += [pscustomobject]@{CharacterName = $characterName; OldGuid = $oldGuid; NewGuid = $newGuid}
+				
+				# character GUID
+				$oldGuid = $values[0]
+				# Find the entry with matching OldGuid 
+				$match = $guidMappingCharacters | Where-Object { $_.OldGuid -eq $oldGuid } 
+				if ($match) { # Update NewGuid 
+					$values[0] = $match.NewGuid
+				} else {
+					continue
+				}
+				
+				# friend GUID
+				$oldGuid = $values[1]
+				$match = $guidMappingCharacters | Where-Object { $_.OldGuid -eq $oldGuid } 
+				if ($match) { # Update NewGuid 
+					$values[1] = $match.NewGuid
+				} else {
+					continue
+				}
+				
+				# Recreate the modified row and store it
+				$modifiedRow = "(" + ($values -join ",") + ")"
+				$modifiedRows += $modifiedRow
+			}
+			
+			if ($modifiedRows.Count -gt 0) {
+				# Join the modified rows into the final SQL query
+				$modifiedSqlQuery = "INSERT INTO `character_social` VALUES " + ($modifiedRows -join ",") + ";"
+				# Output the modified SQL to verify
+				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Execute the query
+				Execute-Query -query "$modifiedSqlQuery" -tablename "character_social" -ConnectionName "CharConn"
+			}
+############################################
+		}
+	}
+############################################
+}
 ###################################################
 function Restore-Character-Main {
 	# Create SimplySql connections
@@ -1812,7 +1894,7 @@ function Restore-Character-Main {
 				$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 				
 				# Write-Host "folder is: $($selectedFolder.Name)"
-				Restore-Character -folder $($selectedFolder.Name) -account $userNameToSearch -accountID $AccountId -BackupDir $selectedFolder
+				Restore-Character -account $userNameToSearch -accountID $AccountId -BackupDir $selectedFolder
 				
 				$stopwatch.Stop()
 				Write-Host "`nImport done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
@@ -1824,7 +1906,7 @@ function Restore-Character-Main {
 				
 				foreach ($folder in $characterFolders) {
 					# Write-Host "folder is: $folder.Name"
-					Restore-Character -folder $folder.Name -account $userNameToSearch -accountID $AccountId -BackupDir $folder
+					Restore-Character -account $userNameToSearch -accountID $AccountId -BackupDir $folder
 				}
 				
 				$stopwatch.Stop()
@@ -2632,6 +2714,9 @@ function Restore-All-Accounts-Main {
 
         Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Cyan
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+		
+		#clear global array list of characters
+		$guidMappingCharacters.Clear()
 ####################################################################
         foreach ($accountFolder in $accountFolders) {
             $accountName = $accountFolder.Name
@@ -2755,8 +2840,14 @@ function Restore-All-Accounts-Main {
 
             Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'." -ForegroundColor Green
             foreach ($characterFolder in $characterFolders) {
-                Restore-Character -folder $characterFolder.Name -account $accountName -accountID $accountId -BackupDir $characterFolder
+                Restore-Character -account $accountName -accountID $accountId -BackupDir $characterFolder
             }
+			
+			#restore tables with two or more characters e.g. character_social
+            foreach ($characterFolder in $characterFolders) {
+                Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
+            }
+			
         }
         $stopwatch.Stop()
         Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
