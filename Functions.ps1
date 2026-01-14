@@ -471,7 +471,10 @@ function Backup-Character {
     
 ########## Mail Data
     Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -BackupDir $BackupDir
-    
+	
+########## Auction House Data #new 14-01-2026
+	Backup-TableData -tableName "auctionhouse" -tableNameFile "auctionhouse" -columnName "itemowner" -value $characterId -BackupDir $BackupDir
+
 ########## Transmog Data
 	if (Table-Exists -TableName "custom_transmogrification" -ConnectionName "CharConn") {
 		Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -BackupDir $BackupDir
@@ -1111,8 +1114,9 @@ function Restore-Character {
 				@("character_stats", 0, $newGuid, -1, -1, -1, -1),
 				@("beastmaster_tamed_pets", 0, $newGuid, -1, -1, -1, -1),
 				@("mod_improved_bank", 1, $newGuid, 2, $accountID, -1, -1),
-				################ 
-				@("battleground_deserters", 1, $newGuid, -1, -1, -1, -1) # new 14-01-2026
+				################ new 14-01-2026
+				@("battleground_deserters", 1, $newGuid, -1, -1, -1, -1)
+				####################
 			)
 			
 			Write-Host "Importing character data..." -ForegroundColor Cyan
@@ -1372,7 +1376,7 @@ function Restore-Character {
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
 					
 					# Initialize the guidMapping as an ArrayList for dynamic addition
-					$guidMappingpItems = [System.Collections.ArrayList]::new()
+					$guidMappingItems = [System.Collections.ArrayList]::new()
 	
 					# Extract values inside parentheses
 					$pattern = "(?<=\().*?(?=\))"
@@ -1397,7 +1401,7 @@ function Restore-Character {
 						$values[0] = $newItemGuidValue
 					
 						# Store the old and new GUIDs in the array
-						$guidMappingpItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
+						$guidMappingItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
 	
 						# Modify the third value with the new GUID
 						$values[2] = $newGuid
@@ -1411,7 +1415,7 @@ function Restore-Character {
 					$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
 					
 					# Output the array to verify
-					# Write-Host $guidMappingpItems
+					# Write-Host $guidMappingItems
 					
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1446,7 +1450,7 @@ function Restore-Character {
 								$currentValue = $values[3]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingpItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
@@ -1457,7 +1461,7 @@ function Restore-Character {
 								$currentValue = $values[1]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingpItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
@@ -1481,6 +1485,59 @@ function Restore-Character {
 							Execute-Query -query "$modifiedSqlQuery" -tablename "character_inventory" -ConnectionName "CharConn"
 						} else {
 							Write-Host "Table 'character_inventory' does not exist, skipping restore for this table." -ForegroundColor Red
+						}
+					} 
+############################################ PROCESS auctionhouse - itemguid[2], itemowner[3]
+					$sqlFilePath = "$BackupDir\auctionhouse.sql"
+					
+					if (Test-Path -Path $sqlFilePath) {
+						if (Table-Exists -TableName "auctionhouse" -ConnectionName "CharConn") {
+							# Read the contents of the .sql file
+							$sqlContent = Get-Content -Path $sqlFilePath -Raw
+							
+							# Extract values inside parentheses
+							$pattern = "(?<=\().*?(?=\))"
+							$matches = [regex]::Matches($sqlContent, $pattern)
+							
+							# List to store modified rows
+							$modifiedRows = @()
+						
+							# Loop through each match
+							for ($i = 0; $i -lt $matches.Count; $i++) {
+								$match = $matches[$i].Value
+								
+								# Split the row into individual values
+								$values = $match -split ","
+								
+############################################ THIS IS FOR ITEM GUID
+								# Get the current value in the target column (adjust for 0-based index)
+								$currentValue = $values[2]
+								
+								# Check if the current value matches an old GUID in the mapping
+								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
+								
+								# If a match is found, replace the old GUID with the new GUID
+								if ($matchingGuid) {
+									$values[2] = $matchingGuid.NewGuid
+								}
+############################################ THIS IS FOR OWNER GUID
+								$values[3] = $newGuid
+############################################
+								# Recreate the modified row and store it
+								$modifiedRow = "(" + ($values -join ",") + ")"
+								$modifiedRows += $modifiedRow
+							}
+						
+							# Join the modified rows into the final SQL query
+							$modifiedSqlQuery = "INSERT INTO `auctionhouse` VALUES " + ($modifiedRows -join ",") + ";"
+						
+							# Output the modified SQL to verify
+							# Write-Host "`nModified SQL: $modifiedSqlQuery"
+							
+							#Execute the query
+							Execute-Query -query "$modifiedSqlQuery" -tablename "auctionhouse" -ConnectionName "CharConn"
+						} else {
+							Write-Host "Table 'auctionhouse' does not exist, skipping restore for this table." -ForegroundColor Red
 						}
 					}
 ############################################ 
@@ -1514,7 +1571,7 @@ function Restore-Character {
 								$currentValue = $values[0]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingpItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
@@ -2181,7 +2238,7 @@ function Restore-Guild {
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
 				
 				# Initialize the guidMapping as an ArrayList for dynamic addition
-				$guidMappingpItems = [System.Collections.ArrayList]::new()
+				$guidMappingItems = [System.Collections.ArrayList]::new()
 
 				# Extract values inside parentheses
 				$pattern = "(?<=\().*?(?=\))"
@@ -2205,7 +2262,7 @@ function Restore-Guild {
 					$values[0] = $newItemGuidValue
 				
 					# Store the old and new GUIDs in the array
-					$guidMappingpItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
+					$guidMappingItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
 
 					# Modify the third value with the new GUID
 					$values[2] = $newGuildID
@@ -2219,7 +2276,7 @@ function Restore-Guild {
 				$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
 				
 				# Output the array to verify
-				# Write-Host $guidMappingpItems
+				# Write-Host $guidMappingItems
 				
 				# Output the modified SQL to verify
 				# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -2254,7 +2311,7 @@ function Restore-Guild {
 							$currentValue = $values[3]
 							
 							# Check if the current value matches an old GUID in the mapping
-							$matchingGuid = $guidMappingpItems | Where-Object { $_.OldGuid -eq $currentValue }
+							$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
 							
 							# If a match is found, replace the old GUID with the new GUID
 							if ($matchingGuid) {
