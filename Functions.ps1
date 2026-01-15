@@ -1060,7 +1060,7 @@ function Restore-Character {
 				$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
 				# check if character exists first, if yes return
-				$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
+				$Query = "SELECT guid FROM characters WHERE name = $characterName;"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
 				$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1688,7 +1688,7 @@ function Restore-Character {
 									$itemTemplateID = $values[1]
 							
 									# Check if the row already exists in the database
-									$Query = "SELECT COUNT(*) as count FROM custom_unlocked_appearances WHERE account_id = '$AccountID' AND item_template_id = '$ItemTemplateID';"
+									$Query = "SELECT COUNT(*) as count FROM custom_unlocked_appearances WHERE account_id = $AccountID AND item_template_id = $ItemTemplateID;"
 									$ValueColumn = "count"
 									$ConnectionName = "CharConn"
 									$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1999,7 +1999,7 @@ function Restore-Guild {
     )
 	
 	#Check if guild exists
-	$Query = "SELECT guildid FROM guild WHERE name = '$GuildName';"
+	$Query = "SELECT guildid FROM guild WHERE name = $GuildName;"
 	$ValueColumn = "guildid"
 	$ConnectionName = "CharConn"
 	$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -2039,7 +2039,7 @@ function Restore-Guild {
                 $characterName = $property.Value
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
+				$Query = "SELECT guid FROM characters WHERE name = $characterName;"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
                 $newCharGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -2548,7 +2548,7 @@ function Restore-Guild-Main {
             $characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($characterGuid){
 				#check if character already is a member of a guild
-				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = '$characterGuid';"
+				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = $characterGuid;"
 				$ValueColumn = "count"
 				$ConnectionName = "CharConn"
 				$FoundRow = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -2574,7 +2574,7 @@ function Restore-Guild-Main {
 				$characterNameToSearch = Read-Host "Enter character name"
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = '$characterNameToSearch';"
+				$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
 				$characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
