@@ -5,154 +5,154 @@ $guidMappingCharacters = [System.Collections.ArrayList]::new()
 
 #region utility-functions
 function ConvertToGoldSilverCopper {
-    param (
-        [int]$MoneyAmount
-    )
-    
-    if ($MoneyAmount -gt 0) {
-        $gold = [math]::Floor($MoneyAmount / 10000)
-        $remainingAfterGold = $MoneyAmount % 10000
-        $silver = [math]::Floor($remainingAfterGold / 100)
-        $copper = $remainingAfterGold % 100
-        
-        $result = ""
-        if ($gold -gt 0) { $result += "$($gold)g" }
-        if ($silver -gt 0) {
-            if ($result -ne "") { $result += ", " }
-            $result += "$($silver)s"
-        }
-        if ($copper -gt 0) {
-            if ($result -ne "") {
-                if ($silver -gt 0) { $result += " and " }
-                else { $result += ", " }
-            }
-            $result += "$($copper)c"
-        }
-        return $result
-    }
-    else { return 0 }
+	param (
+		[int]$MoneyAmount
+	)
+	
+	if ($MoneyAmount -gt 0) {
+		$gold = [math]::Floor($MoneyAmount / 10000)
+		$remainingAfterGold = $MoneyAmount % 10000
+		$silver = [math]::Floor($remainingAfterGold / 100)
+		$copper = $remainingAfterGold % 100
+		
+		$result = ""
+		if ($gold -gt 0) { $result += "$($gold)g" }
+		if ($silver -gt 0) {
+			if ($result -ne "") { $result += ", " }
+			$result += "$($silver)s"
+		}
+		if ($copper -gt 0) {
+			if ($result -ne "") {
+				if ($silver -gt 0) { $result += " and " }
+				else { $result += ", " }
+			}
+			$result += "$($copper)c"
+		}
+		return $result
+	}
+	else { return 0 }
 }
 #######################################
 function Backup-TableData {
-    param (
-        [string]$tableName,
-        [string]$tableNameFile,
-        [string]$columnName,
-        [int]$value,
-        [string]$BackupDir
-    )
-    
-    # Convert race/class/gender
+	param (
+		[string]$tableName,
+		[string]$tableNameFile,
+		[string]$columnName,
+		[int]$value,
+		[string]$BackupDir
+	)
+	
+	# Convert race/class/gender
 	$Race = GetCharacterRaceString -Race $Race
 	$Class = GetCharacterClassString -Class $Class
 	$Gender = GetCharacterGenderString -Gender $Gender
 
-    # $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
-    if (-not (Test-Path $BackupDir)) {
-        New-Item -Path $BackupDir -ItemType Directory | Out-Null
-    }
-    
-    $backupFile = "$BackupDir\$tableNameFile.sql"
+	# $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
+	if (-not (Test-Path $BackupDir)) {
+		New-Item -Path $BackupDir -ItemType Directory | Out-Null
+	}
+	
+	$backupFile = "$BackupDir\$tableNameFile.sql"
 	# Write-Host "File: $BackupDir\$tableNameFile.sql" -ForegroundColor Yellow
-    $whereClause = "$columnName=$value"
+	$whereClause = "$columnName=$value"
 	
 
-    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
-    Invoke-Expression $mysqldumpCommand
+	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
+	Invoke-Expression $mysqldumpCommand
 }
 #######################################
 function Backup-TableData-Array {
-    param (
-        [string]$tableName,
-        [string]$tableNameFile,
-        [string]$columnName,
-        [int[]]$values,
-        [string]$BackupDir
-    )
-    
-    # Convert race/class/gender
+	param (
+		[string]$tableName,
+		[string]$tableNameFile,
+		[string]$columnName,
+		[int[]]$values,
+		[string]$BackupDir
+	)
+	
+	# Convert race/class/gender
 	$Race = GetCharacterRaceString -Race $Race
 	$Class = GetCharacterClassString -Class $Class
 	$Gender = GetCharacterGenderString -Gender $Gender
 
-    # Create backup directory
-    # $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
-    if (-not (Test-Path $BackupDir)) {
-        New-Item -Path $BackupDir -ItemType Directory | Out-Null
-    }
-    
-    $backupFile = "$BackupDir\$tableNameFile.sql"
-    $valuesList = $values -join ","
-    $whereClause = "$columnName IN ($valuesList)"
-    
-    $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
-    Invoke-Expression $mysqldumpCommand
+	# Create backup directory
+	# $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
+	if (-not (Test-Path $BackupDir)) {
+		New-Item -Path $BackupDir -ItemType Directory | Out-Null
+	}
+	
+	$backupFile = "$BackupDir\$tableNameFile.sql"
+	$valuesList = $values -join ","
+	$whereClause = "$columnName IN ($valuesList)"
+	
+	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
+	Invoke-Expression $mysqldumpCommand
 
 	
 }
 ########################################
 function ConvertFromUnixTime {
-    param (
-        [int64]$unixTime
-    )
+	param (
+		[int64]$unixTime
+	)
 
-    $epoch = [datetime]'1970-01-01 00:00:00'
-    $readableTime = $epoch.AddSeconds($unixTime).ToLocalTime()
-    return $readableTime
+	$epoch = [datetime]'1970-01-01 00:00:00'
+	$readableTime = $epoch.AddSeconds($unixTime).ToLocalTime()
+	return $readableTime
 }
 ########################################
 function Execute-Query {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$Query,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$TableName,
-        
-        [Parameter(Mandatory=$true)]
-        [string]$ConnectionName
-    )
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$Query,
+		
+		[Parameter(Mandatory=$true)]
+		[string]$TableName,
+		
+		[Parameter(Mandatory=$true)]
+		[string]$ConnectionName
+	)
 
-    try {
-        # Write-Output "Query: $Query"
-        Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query | Out-Null
-        # Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
-    } catch {
-        Write-Output "($TableName) An error occurred: $_" -ForegroundColor Red
-    }
+	try {
+		# Write-Output "Query: $Query"
+		Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query | Out-Null
+		# Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
+	} catch {
+		Write-Output "($TableName) An error occurred: $_" -ForegroundColor Red
+	}
 }
 ########################################
 # Function to check if a table exists
 function Table-Exists {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$TableName,
+	param (
+		[Parameter(Mandatory=$true)]
+		[string]$TableName,
 
-        [Parameter(Mandatory=$true)]
-        [string]$ConnectionName
-    )
+		[Parameter(Mandatory=$true)]
+		[string]$ConnectionName
+	)
 
-    try {
-        $query = "SHOW TABLES LIKE '$TableName'"
-        $result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $query
-        return ($null -ne $result)
-    }
-    catch {
-        Write-Error "Error checking if table '$TableName' exists: $_"
-        return $false
-    }
+	try {
+		$query = "SHOW TABLES LIKE '$TableName'"
+		$result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $query 3>$null		#supress warnings when no results found
+		return ($null -ne $result)
+	}
+	catch {
+		Write-Error "Error checking if table '$TableName' exists: $_"
+		return $false
+	}
 }
 ########################################
 function Check-Value-in-DB {
-    param (
-        [string]$Query,
-        [string]$ValueColumn,
-        [string]$ConnectionName
-    )
+	param (
+		[string]$Query,
+		[string]$ValueColumn,
+		[string]$ConnectionName
+	)
 	
 		$value = $null
 		try {
-		    # Write-Host "Query: $Query" -ForegroundColor Cyan
+			# Write-Host "Query: $Query" -ForegroundColor Cyan
 			$Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			
 			if ($Result) {
@@ -174,102 +174,102 @@ function Check-Value-in-DB {
 }
 ################################
 function Get-ItemNameById {
-    param(
-        [int]$ItemId
-    )
-    
-    if ($ItemId -le 0) {
-        return $ItemId
-    }
+	param(
+		[int]$ItemId
+	)
+	
+	if ($ItemId -le 0) {
+		return $ItemId
+	}
 
-    $Query = "SELECT name FROM item_template WHERE entry = @ItemId"
-    
-    try {
-        $Result = Invoke-SqlQuery -ConnectionName "WorldConn" -Query $Query -Parameters @{ ItemId = $ItemId }
-        if ($Result -and $Result.name) {
-            # Write-Host "Item ID $ItemId name found: $Result.name."
-            return $Result.name
-        } else {
-            # Write-Host "Item ID $ItemId not found in the database."
-            return "Unknown"
-        }
-    }
-    catch {
-        # Write-Host "Failed to lookup item ID $ItemId : ${_}"
-        return "Unknown"
-    }
+	$Query = "SELECT name FROM item_template WHERE entry = @ItemId"
+	
+	try {
+		$Result = Invoke-SqlQuery -ConnectionName "WorldConn" -Query $Query -Parameters @{ ItemId = $ItemId } 3>$null		#supress warnings when no results found
+		if ($Result -and $Result.name) {
+			# Write-Host "Item ID $ItemId name found: $Result.name."
+			return $Result.name
+		} else {
+			# Write-Host "Item ID $ItemId not found in the database."
+			return "Unknown"
+		}
+	}
+	catch {
+		# Write-Host "Failed to lookup item ID $ItemId : ${_}"
+		return "Unknown"
+	}
 }
 ################################
 function Get-MapNameById {
-    param(
-        [int]$MapId
-    )
-    
-    $Query = "SELECT Name FROM Maps WHERE ID = @MapId"
-    
-    try {
+	param(
+		[int]$MapId
+	)
+	
+	$Query = "SELECT Name FROM Maps WHERE ID = @MapId"
+	
+	try {
 		$result = Invoke-SQLiteQuery -DataSource $MapZoneDBFilePath -Query $Query -SqlParameters @{ MapId = $MapId }
-        if ($Result -and $Result.name) {
-            return $Result.name
-        } else {
-            return "Unknown"
-        }
-    }
-    catch {
-        return "Unknown"
-    }
+		if ($Result -and $Result.name) {
+			return $Result.name
+		} else {
+			return "Unknown"
+		}
+	}
+	catch {
+		return "Unknown"
+	}
 }
 ################################
 function Get-ZoneNameById {
-    param(
-        [int]$ZoneId
-    )
-    
-    $Query = "SELECT Name FROM Zones WHERE ID = @ZoneId"
-    
-    try {
+	param(
+		[int]$ZoneId
+	)
+	
+	$Query = "SELECT Name FROM Zones WHERE ID = @ZoneId"
+	
+	try {
 		$result = Invoke-SQLiteQuery -DataSource $MapZoneDBFilePath -Query $Query -SqlParameters @{ ZoneId = $ZoneId }
-        if ($Result -and $Result.name) {
-            return $Result.name
-        } else {
-            return "Unknown"
-        }
-    }
-    catch {
-        return "Unknown"
-    }
+		if ($Result -and $Result.name) {
+			return $Result.name
+		} else {
+			return "Unknown"
+		}
+	}
+	catch {
+		return "Unknown"
+	}
 }
 ################################ Create character_info txt file
 function CreateCharacterInfoFile {
-    param(
-        [string]$backupDirFull,
-        [int]$CharacterId,
-        [int]$CharacterAccountId,
-        [string]$CharacterAccountName,
-        [string]$CharacterCreationDate,
-        [string]$CharacterName,
-        [string]$CharacterRaceString,
-        [string]$CharacterClassString,
-        [string]$CharacterGenderString,
-        [int]$CharacterLevel,
-        [int]$CharacterHonor,
-        [string]$CharacterMoneyConverted,
-        [int]$CharacterXP,
-        [int]$CharacterHealth,
-        [int]$CharacterMana,
-        [int]$CharacterSkin,
-        [int]$CharacterFace,
-        [int]$CharacterHairStyle,
-        [int]$CharacterHairColor,
-        [int]$CharacterFacialStyle,
-        [int]$CharacterBankSlots,
-        [int]$CharacterArenapoints,
-        [int]$CharacterTotalKills,
-        [string]$CharacterEquipmentCache,
-        [int]$CharacterAmmoId,
-        [int]$CharacterCurMap,
-        [int]$CharacterCurZone
-    )
+	param(
+		[string]$backupDirFull,
+		[int]$CharacterId,
+		[int]$CharacterAccountId,
+		[string]$CharacterAccountName,
+		[string]$CharacterCreationDate,
+		[string]$CharacterName,
+		[string]$CharacterRaceString,
+		[string]$CharacterClassString,
+		[string]$CharacterGenderString,
+		[int]$CharacterLevel,
+		[int]$CharacterHonor,
+		[string]$CharacterMoneyConverted,
+		[int]$CharacterXP,
+		[int]$CharacterHealth,
+		[int]$CharacterMana,
+		[int]$CharacterSkin,
+		[int]$CharacterFace,
+		[int]$CharacterHairStyle,
+		[int]$CharacterHairColor,
+		[int]$CharacterFacialStyle,
+		[int]$CharacterBankSlots,
+		[int]$CharacterArenapoints,
+		[int]$CharacterTotalKills,
+		[string]$CharacterEquipmentCache,
+		[int]$CharacterAmmoId,
+		[int]$CharacterCurMap,
+		[int]$CharacterCurZone
+	)
 		
 	# Create the text file path
 	$CharacterInfoFilePath = Join-Path -Path $backupDirFull -ChildPath "character_info.txt"
@@ -336,8 +336,8 @@ function CreateCharacterInfoFile {
 }
 ################################
 function GetCharacterRaceString {
-    param(
-        [int]$Race
+	param(
+		[int]$Race
 	)
 	
 	switch ($Race) {
@@ -358,8 +358,8 @@ function GetCharacterRaceString {
 }
 ################################
 function GetCharacterClassString {
-    param(
-        [int]$Class
+	param(
+		[int]$Class
 	)
 	
 	switch ($Class) {
@@ -380,8 +380,8 @@ function GetCharacterClassString {
 }
 ################################
 function GetCharacterGenderString {
-    param(
-        [int]$Gender
+	param(
+		[int]$Gender
 	)
 	
 	switch ($Gender) {
@@ -398,33 +398,33 @@ function GetCharacterGenderString {
 #region Backup-Characters
 ########################################
 function Backup-Character {
-    param (
-        [int]$characterId,
-        [string]$characterName,
-        [string]$accountID,
-        [string]$BackupDir
-    )
-    
-    Write-Host "`nBacking up character $characterName..." -ForegroundColor Cyan
-    
+	param (
+		[int]$characterId,
+		[string]$characterName,
+		[string]$accountID,
+		[string]$BackupDir
+	)
+	
+	Write-Host "`nBacking up character $characterName..." -ForegroundColor Cyan
+	
 ########## List of tables to back up
-    $tables = @(
-        "characters",
-        "character_account_data",
-        "character_achievement", 	#fixed achivements not being restored
-        "character_achievement_progress",
-        "character_action",
-        "character_aura",
-        "character_glyphs",
-        "character_homebind",
-        "character_queststatus",
-        "character_queststatus_rewarded",
-        "character_reputation",
-        "character_skills",
-        "character_spell",
-        "character_talent",
-        "character_inventory",
-        "character_equipmentsets",
+	$tables = @(
+		"characters",
+		"character_account_data",
+		"character_achievement", 	#fixed achivements not being restored
+		"character_achievement_progress",
+		"character_action",
+		"character_aura",
+		"character_glyphs",
+		"character_homebind",
+		"character_queststatus",
+		"character_queststatus_rewarded",
+		"character_reputation",
+		"character_skills",
+		"character_spell",
+		"character_talent",
+		"character_inventory",
+		"character_equipmentsets",
 		################## new 13-01-2026
 		"character_arena_stats",
 		"character_banned",
@@ -442,35 +442,35 @@ function Backup-Character {
 		"character_social",
 		"battleground_deserters"
 		##################
-    )
-    
-    foreach ($table in $tables) {
-        Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -BackupDir $BackupDir
-    }
-    
+	)
+	
+	foreach ($table in $tables) {
+		Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -BackupDir $BackupDir
+	}
+	
 ########## Pet Data
-    $petsData = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id, entry, level, name FROM character_pet WHERE owner = @owner" -Parameters @{ owner = $characterId }
-    
-    if ($petsData) {
-        foreach ($pet in $petsData) {
-            $petEntryName = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT name FROM creature_template WHERE entry = @PetEntry" -Parameters @{ PetEntry = $pet.entry }
-            Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Cyan
-        }
-        
-        Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -BackupDir $BackupDir
-        
-        $petIds = $petsData | Select-Object -ExpandProperty id
-        
-        Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -BackupDir $BackupDir
-        Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -BackupDir $BackupDir
-        Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -BackupDir $BackupDir
-    }
-    
+	$petsData = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id, entry, level, name FROM character_pet WHERE owner = @owner" -Parameters @{ owner = $characterId } 3>$null		#supress warnings when no results found
+	
+	if ($petsData) {
+		foreach ($pet in $petsData) {
+			$petEntryName = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT name FROM creature_template WHERE entry = @PetEntry" -Parameters @{ PetEntry = $pet.entry } 3>$null		#supress warnings when no results found
+			Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Cyan
+		}
+		
+		Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -BackupDir $BackupDir
+		
+		$petIds = $petsData | Select-Object -ExpandProperty id
+		
+		Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -BackupDir $BackupDir
+		Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -BackupDir $BackupDir
+		Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -BackupDir $BackupDir
+	}
+	
 ########## Item Data
-    Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
-    
+	Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
+	
 ########## Mail Data
-    Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -BackupDir $BackupDir
+	Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -BackupDir $BackupDir
 	
 ########## Auction House Data #new 14-01-2026
 	Backup-TableData -tableName "auctionhouse" -tableNameFile "auctionhouse" -columnName "itemowner" -value $characterId -BackupDir $BackupDir
@@ -498,8 +498,8 @@ function Backup-Character {
 		Backup-TableData -tableName "mod_improved_bank" -tableNameFile "mod_improved_bank" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
 	}
 ##########
-    # Delete empty SQL files
-    Get-ChildItem -Path $BackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
+	# Delete empty SQL files
+	Get-ChildItem -Path $BackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 	
 }
 ########################################
@@ -511,11 +511,11 @@ function Backup-Character-Main {
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 
-    try {
+	try {
 		Write-Host "(Press CTRL + C to exit)" -ForegroundColor Cyan
 		$userNameToSearch = Read-Host "`nEnter account name"
 		
-		$id = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $userNameToSearch }
+		$id = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $userNameToSearch } 3>$null		#supress warnings when no results found
 ########################################
 		if ($id) {
 			Write-Host "`nID for username '$userNameToSearch': $($id.id)" -ForegroundColor Cyan
@@ -524,7 +524,7 @@ function Backup-Character-Main {
 				SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
 				FROM characters 
 				WHERE account = @id
-"@ -Parameters @{ id = $id.id }
+"@ -Parameters @{ id = $id.id } 3>$null		#supress warnings when no results found
 
 			if ($characterData) {
 				if (-not ([string]::IsNullOrEmpty($CharacterNameRegexFilter))) {
@@ -710,10 +710,10 @@ function Backup-Character-Main {
 			Write-Host "`nNo account found with username '$userNameToSearch'" -ForegroundColor Red
 		}
 ########################################
-    } catch {
-        Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
-        $exitScript = $true
-    }
+	} catch {
+		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
+		$exitScript = $true
+	}
 	# Close all connections
 	Close-SqlConnection -ConnectionName "AuthConn"
 	Close-SqlConnection -ConnectionName "CharConn"
@@ -725,49 +725,50 @@ function Backup-Character-Main {
 #region Backup-Guilds
 ########################################
 function Backup-Guild {
-    param (
-        [int]$GuildID,
-        [string]$GuildName,
-        [string]$BackupDir
-    )
+	param (
+		[int]$GuildID,
+		[string]$GuildName,
+		[string]$BackupDir
+	)
 
-    Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Cyan
-    # $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
+	Write-Host "`nBacking up guild $GuildName..." -ForegroundColor Cyan
+	# $backupDirFull = "$GuildBackupDir\$GuildName ($CurrentDate) - $LeaderName"
 		
 	# Ensure backup directory exists 
 	if (-not (Test-Path $BackupDir)) { 
 		New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null 
 	}
 ########### Create guild_members.json
-    $memberGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID}
-    $memberMapping = @{}
-    if ($memberGuids) {
-        foreach ($member in $memberGuids) {
-            $memberName = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT name FROM characters WHERE guid = @guid" -Parameters @{guid = $member.guid}
-            if ($memberName) {
-                $memberMapping[($member.guid).ToString()] = $memberName.name
-            }
-        }
-    }
-    $memberMappingJson = $memberMapping | ConvertTo-Json
-    $memberMappingJson | Out-File -FilePath "$($BackupDir)\guild_members.json" -Encoding utf8
+	$memberGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID} 3>$null		#supress warnings when no results found
+	$memberMapping = @{}
+	if ($memberGuids) {
+		foreach ($member in $memberGuids) {
+			$memberName = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT name FROM characters WHERE guid = @guid" -Parameters @{guid = $member.guid} 3>$null		#supress warnings when no results found
+			if ($memberName) {
+				$memberMapping[($member.guid).ToString()] = $memberName.name
+			}
+		}
+	}
+	$memberMappingJson = $memberMapping | ConvertTo-Json
+	$memberMappingJson | Out-File -FilePath "$($BackupDir)\guild_members.json" -Encoding utf8
 	
 ########### List of tables to back up
-    $tables = @(
-        "guild",
-        "guild_bank_right",
-        "guild_bank_tab",
-        "guild_bank_item",
-        "guild_bank_eventlog",
-        "guild_rank"
-    )
+	$tables = @(
+		"guild",
+		"guild_bank_right",
+		"guild_bank_tab",
+		"guild_bank_item",
+		"guild_bank_eventlog",
+		"guild_rank",
+		"guild_member"
+	)
 
-    foreach ($table in $tables) {
-        if (-not (Test-Path $BackupDir)) {
-            New-Item -Path $BackupDir -ItemType Directory | Out-Null
-        }
+	foreach ($table in $tables) {
+		if (-not (Test-Path $BackupDir)) {
+			New-Item -Path $BackupDir -ItemType Directory | Out-Null
+		}
 
-        $backupFile = "$BackupDir\$table.sql"
+		$backupFile = "$BackupDir\$table.sql"
 		
 		# Define the mysqldump command
 		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"guildid=$GuildID`" `"$SourceDatabaseCharacters`" `"$table`" > `"$backupFile`""
@@ -781,11 +782,11 @@ function Backup-Guild {
 		} else {
 				Write-Host "Error backing up data from $tableName" -ForegroundColor Red
 		}
-    }
+	}
 
 ########### Handle item_instance table
 	try {
-		$itemGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT item_guid FROM guild_bank_item WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID}
+		$itemGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT item_guid FROM guild_bank_item WHERE guildid = @GuildID" -Parameters @{GuildID = $GuildID} 3>$null		#supress warnings when no results found
 		if ($itemGuids.Count -gt 0) {
 			# Extract item_guid values from DataRow objects
 			$guidList = $itemGuids | ForEach-Object { $_.item_guid } | Where-Object { $_ -ne $null }
@@ -815,7 +816,7 @@ function Backup-Guild {
 	
 ########### Guild House Data
 	if (Table-Exists -TableName "guild_house" -ConnectionName "CharConn") {
-		$GuildGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id FROM guild_house WHERE guild = @GuildID" -Parameters @{GuildID = $GuildID}
+		$GuildGuids = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT id FROM guild_house WHERE guild = @GuildID" -Parameters @{GuildID = $GuildID} 3>$null		#supress warnings when no results found
 		if ($GuildGuids.Count -gt 0) {
 			# Extract id values from DataRow objects
 			$guidList = $GuildGuids | ForEach-Object { $_.id } | Where-Object { $_ -ne $null }
@@ -862,23 +863,23 @@ function Backup-Guild {
 	}
 
 ########### Delete empty SQL files
-    Get-ChildItem -Path $GuildBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
+	Get-ChildItem -Path $GuildBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 }
 ########################################
 
 ########################################
 function Backup-Guild-Main {
-    param (
-        [switch]$AllGuilds
-    )
+	param (
+		[switch]$AllGuilds
+	)
 	# Open database connections
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
 
-    $query = "SELECT g.*, c.name as leader_name 
-              FROM guild g 
-              LEFT JOIN characters c ON g.leaderguid = c.guid"
-    try {
-        $guildData = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query
+	$query = "SELECT g.*, c.name as leader_name 
+			  FROM guild g 
+			  LEFT JOIN characters c ON g.leaderguid = c.guid"
+	try {
+		$guildData = Invoke-SqlQuery -ConnectionName "CharConn" -Query $query 3>$null		#supress warnings when no results found
 		if (-not ([string]::IsNullOrEmpty($GuildNameRegexFilter))) {
 			$guildData = $guildData | Where-Object { $_.name -match $GuildNameRegexFilter }
 		}
@@ -886,104 +887,104 @@ function Backup-Guild-Main {
 			$guildData = $guildData | Where-Object { $_.name -match $GuildNameRegexFilter }
 		}
 ########################################
-        if ($guildData.ItemArray.Length -gt 0) {
-            if ($AllGuilds) {
-                $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+		if ($guildData.ItemArray.Length -gt 0) {
+			if ($AllGuilds) {
+				$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 				
-                $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
-                foreach ($guild in $guildData) {
-                    # $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
-                    # $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+				$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+				foreach ($guild in $guildData) {
+					# $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
+					# $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
 					$GuildName = $guild.name
 					$LeaderName = $guild.leader_name
 					$BackupDir = "$GuildBackupDir\full_backups\$SourceServerName ($($CurrentDate))\$GuildName ($CurrentDate) - $LeaderName"
 					
-                    Backup-Guild -GuildID $guild.guildid `
-                                -GuildName $guild.name `
-                                -BackupDir $BackupDir
-                }
-                $stopwatch.Stop()
-                Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
-                return
-            }
+					Backup-Guild -GuildID $guild.guildid `
+								-GuildName $guild.name `
+								-BackupDir $BackupDir
+				}
+				$stopwatch.Stop()
+				Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+				return
+			}
 ########################################
-            $exitScript = $false
-            $foundGuild = $true
-            while (-not $exitScript) {
-                Write-Host "`nFound $($guildData.Count) Guilds." -ForegroundColor Green
-                Write-Host "`nGuild List:" -ForegroundColor Green
-                $index = 1
-                foreach ($guild in $guildData) {
-                    $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
-                    $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+			$exitScript = $false
+			$foundGuild = $true
+			while (-not $exitScript) {
+				Write-Host "`nFound $($guildData.Count) Guilds." -ForegroundColor Green
+				Write-Host "`nGuild List:" -ForegroundColor Green
+				$index = 1
+				foreach ($guild in $guildData) {
+					$CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
+					$BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
 
-                    Write-Host "$index. (ID: $($guild.guildid)) $($guild.name) - Leader: $($guild.leader_name), Created at $CreateDateConverted, Bank Money: $BankMoneyConverted" -ForegroundColor Green
-                    $index++
-                }
-                Write-Host "$index. Back up all Guilds" -ForegroundColor Green
-                Write-Host "$($index + 1). Exit script" -ForegroundColor Green
+					Write-Host "$index. (ID: $($guild.guildid)) $($guild.name) - Leader: $($guild.leader_name), Created at $CreateDateConverted, Bank Money: $BankMoneyConverted" -ForegroundColor Green
+					$index++
+				}
+				Write-Host "$index. Back up all Guilds" -ForegroundColor Green
+				Write-Host "$($index + 1). Exit script" -ForegroundColor Green
 
-                $choice = Read-Host "`nType a number (1-$($index + 1))"
+				$choice = Read-Host "`nType a number (1-$($index + 1))"
 ########################################
-                if ($choice -match '^\d+$') {
-                    $choice = [int]$choice
+				if ($choice -match '^\d+$') {
+					$choice = [int]$choice
 ########################################
-                    if ($choice -ge 1 -and $choice -le $guildData.Count) {
-                        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-                        $selectedGuild = $guildData[$choice - 1]
+					if ($choice -ge 1 -and $choice -le $guildData.Count) {
+						$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+						$selectedGuild = $guildData[$choice - 1]
 
-                        $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+						$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
 						$GuildName = $selectedGuild.name
 						$LeaderName = $selectedGuild.leader_name
 						$BackupDir = "$GuildBackupDir\single_backups\$GuildName ($CurrentDate) - $LeaderName"
-                        Backup-Guild -GuildID $selectedGuild.guildid `
-                                    -GuildName $selectedGuild.name `
+						Backup-Guild -GuildID $selectedGuild.guildid `
+									-GuildName $selectedGuild.name `
 									-BackupDir $BackupDir
 
-                        $stopwatch.Stop()
-                        Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
+						$stopwatch.Stop()
+						Write-Host "Backup done in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
 ########################################
-                    } elseif ($choice -eq $index) {
-                        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+					} elseif ($choice -eq $index) {
+						$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-                        foreach ($guild in $guildData) {
-                            # $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
-                            # $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
+						foreach ($guild in $guildData) {
+							# $CreateDateConverted = (Get-Date (ConvertFromUnixTime -unixTime $guild.createdate)).ToString("dd/MM/yyyy HH:mm:ss")
+							# $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
 
 							$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
 							$GuildName = $guild.name
 							$LeaderName = $guild.leader_name
 							$BackupDir = "$GuildBackupDir\single_backups\$GuildName ($CurrentDate) - $LeaderName"
 							
-                            Backup-Guild -GuildID $guild.guildid `
-                                        -GuildName $guild.name `
+							Backup-Guild -GuildID $guild.guildid `
+										-GuildName $guild.name `
 										-BackupDir $BackupDir
-                        }
-                        $stopwatch.Stop()
-                        Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
+						}
+						$stopwatch.Stop()
+						Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds. Returning to menu..." -ForegroundColor Green
 ########################################
-                    } elseif ($choice -eq ($index + 1)) {
-                        Write-Host "Exiting script..." -ForegroundColor Yellow
-                        $exitScript = $true
+					} elseif ($choice -eq ($index + 1)) {
+						Write-Host "Exiting script..." -ForegroundColor Yellow
+						$exitScript = $true
 ########################################
-                    } else {
-                        Write-Host "Invalid selection. Please try again." -ForegroundColor Red
-                    }
+					} else {
+						Write-Host "Invalid selection. Please try again." -ForegroundColor Red
+					}
 ########################################
-                } else {
-                    Write-Host "Invalid selection. Please try again." -ForegroundColor Red
-                }
-            }
+				} else {
+					Write-Host "Invalid selection. Please try again." -ForegroundColor Red
+				}
+			}
 ########################################
-        } else {
-            Write-Host "No guilds found in the database." -ForegroundColor Red
-            $exitScript = $true
-        }
+		} else {
+			Write-Host "No guilds found in the database." -ForegroundColor Red
+			$exitScript = $true
+		}
 ########################################
-    } catch {
-        Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
-        $exitScript = $true
-    }
+	} catch {
+		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
+		$exitScript = $true
+	}
 	
 	Close-SqlConnection -ConnectionName "CharConn"
 }
@@ -993,11 +994,11 @@ function Backup-Guild-Main {
 #region Restore-Characters
 ###################################################
 function Restore-Character {
-    param (
-        [string]$account,
-        [int]$accountID,
-        [string]$BackupDir
-    )
+	param (
+		[string]$account,
+		[int]$accountID,
+		[string]$BackupDir
+	)
 ############## PROCESS CHARACTERS.SQL
 	# Write-Host "folder is $BackupDir"
 	# $sqlFilePath = "$BackupDir\*\$folder\characters.sql"
@@ -1007,7 +1008,7 @@ function Restore-Character {
 			# Write-Host "The file exists: $sqlFilePath"
 	
 			# Get the maximum GUID from the characters table
-			$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM characters"
+			$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM characters" 3>$null		#supress warnings when no results found
 			
 			# Extract the numeric value from the DataRow
 			if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
@@ -1055,30 +1056,30 @@ function Restore-Character {
 				$modifiedRows += $modifiedRow
 			}
 			
-			if ($modifiedRows.Count -gt 0) {
-				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
+			# if ($modifiedRows.Count -gt 0) {
+			# Join the modified rows into the final SQL query
+			$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
-				# check if character exists first, if yes return
-				$Query = "SELECT guid FROM characters WHERE name = $characterName;"
-				$ValueColumn = "guid"
-				$ConnectionName = "CharConn"
-				$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
-				if ($result) {
-					Write-Host "`nCharacter $($characterName) already exists in database! Skipping..." -ForegroundColor Yellow
-					return
-				}
-############################################
-				Write-Host "`nRestoring character $($characterName)..." -ForegroundColor Cyan
-		
-				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
-				# Execute the query
-				Execute-Query -query "$modifiedSqlQuery" -tablename "characters" -ConnectionName "CharConn"
-			} else {
-				Write-Host "`nNo characters.sql rows modified. Report this to the script developer." -ForegroundColor Red
+			# check if character exists first, if yes return
+			$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+			$ValueColumn = "guid"
+			$ConnectionName = "CharConn"
+			$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+			if ($result) {
+				Write-Host "`nCharacter $($characterName) already exists in database! Skipping..." -ForegroundColor Yellow
 				return
 			}
+############################################
+			Write-Host "`nRestoring character $($characterName)..." -ForegroundColor Cyan
+		
+			# Output the modified SQL to verify
+			# Write-Output "`nModified SQL: $modifiedSqlQuery"
+			# Execute the query
+			Execute-Query -query "$modifiedSqlQuery" -tablename "characters" -ConnectionName "CharConn"
+			# } else {
+				# Write-Host "`nNo characters.sql rows modified. Report this to the script developer." -ForegroundColor Red
+				# return
+			# }
 ############################################ PROCESS TABLES IN $TABLES ARRAY
 			# Array of tables to restore
 			# format is tablename, column index 1, column value 1, column index 2, column value 2, column index 3, column value 3
@@ -1097,8 +1098,8 @@ function Restore-Character {
 				@("character_talent", 0, $newGuid, -1, -1, -1, -1),
 				@("mail_sender", 4, $newGuid, -1, -1, -1, -1),
 				@("mail_receiver", 5, $newGuid, -1, -1, -1, -1),
-				@("custom_reagent_bank", 0, $newGuid, -1, -1, -1, -1),          #new
-				@("character_settings", 0, $newGuid, -1, -1, -1, -1),          #new 27-12-2025
+				@("custom_reagent_bank", 0, $newGuid, -1, -1, -1, -1),		  #new
+				@("character_settings", 0, $newGuid, -1, -1, -1, -1),		  #new 27-12-2025
 				################ new 13-01-2026
 				@("character_arena_stats", 0, $newGuid, -1, -1, -1, -1),
 				@("character_banned", 0, $newGuid, -1, -1, -1, -1),
@@ -1223,7 +1224,7 @@ function Restore-Character {
 					if (Table-Exists -TableName "character_pet" -ConnectionName "CharConn") {
 						Write-Host "Importing pet data..." -ForegroundColor Cyan
 						
-						$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM character_pet"
+						$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM character_pet" 3>$null		#supress warnings when no results found
 						
 						# Extract the numeric value from the DataRow
 						if ($maxGuidResult -and $maxGuidResult.MaxID -ne [DBNull]::Value) {
@@ -1359,7 +1360,7 @@ function Restore-Character {
 				if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
 					Write-Host "Importing character items..." -ForegroundColor Cyan
 					
-					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance"
+					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance" 3>$null		#supress warnings when no results found
 	
 					# Extract the numeric value from the DataRow
 					if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
@@ -1606,7 +1607,7 @@ function Restore-Character {
 								Write-Host "Importing transmog sets..." -ForegroundColor Cyan
 								
 								# Get the maximum PresetID from the database
-								$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(PresetID) AS MaxPresetID FROM custom_transmogrification_sets"
+								$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(PresetID) AS MaxPresetID FROM custom_transmogrification_sets" 3>$null		#supress warnings when no results found
 								
 								# Extract the numeric value from the DataRow and check for DBNull
 								if ($maxGuidResult -and $maxGuidResult.MaxPresetID -ne [DBNull]::Value) {
@@ -1729,7 +1730,7 @@ function Restore-Character {
 						if (Table-Exists -TableName "character_equipmentsets" -ConnectionName "CharConn") {
 							Write-Host "Importing character equipment sets..." -ForegroundColor Cyan
 							
-							$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(setguid) AS MaxSetguid FROM character_equipmentsets"
+							$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(setguid) AS MaxSetguid FROM character_equipmentsets" 3>$null		#supress warnings when no results found
 	
 							# Extract the numeric value from the DataRow
 							if ($maxGuidResult -and $maxGuidResult.MaxSetguid -ne [DBNull]::Value) {
@@ -1806,11 +1807,11 @@ function Restore-Character {
 }
 ###################################################
 function Restore-Multiple-Character-Tables {
-    param (
-        [string]$account,
-        [int]$accountID,
-        [string]$BackupDir
-    )
+	param (
+		[string]$account,
+		[int]$accountID,
+		[string]$BackupDir
+	)
 	
 	# Store the old and new GUIDs in the array
 ############################################
@@ -1860,14 +1861,14 @@ function Restore-Multiple-Character-Tables {
 				$modifiedRows += $modifiedRow
 			}
 			
-			if ($modifiedRows.Count -gt 0) {
-				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `character_social` VALUES " + ($modifiedRows -join ",") + ";"
-				# Output the modified SQL to verify
-				# Write-Output "`nModified SQL: $modifiedSqlQuery"
-				# Execute the query
-				Execute-Query -query "$modifiedSqlQuery" -tablename "character_social" -ConnectionName "CharConn"
-			}
+			# if ($modifiedRows.Count -gt 0) {
+			# Join the modified rows into the final SQL query
+			$modifiedSqlQuery = "INSERT INTO `character_social` VALUES " + ($modifiedRows -join ",") + ";"
+			# Output the modified SQL to verify
+			# Write-Output "`nModified SQL: $modifiedSqlQuery"
+			# Execute the query
+			Execute-Query -query "$modifiedSqlQuery" -tablename "character_social" -ConnectionName "CharConn"
+			# }
 ############################################
 		}
 	}
@@ -1941,7 +1942,7 @@ function Restore-Character-Main {
 		
 		$UsernameID = $null
 		try {
-			$UsernameID = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @userNameToSearch;" -Parameters @{ userNameToSearch = $userNameToSearch }
+			$UsernameID = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @userNameToSearch;" -Parameters @{ userNameToSearch = $userNameToSearch } 3>$null		#supress warnings when no results found
 	
 			if ($UsernameID) {
 				$AccountId = $UsernameID.id
@@ -1991,15 +1992,15 @@ function Restore-Character-Main {
 #region Restore-Guilds
 ########################################
 function Restore-Guild {
-    param (
-        [string]$character,
-        [int]$characterID,
-        [string]$GuildName,
-        [string]$BackupDir
-    )
+	param (
+		[string]$character,
+		[int]$characterID,
+		[string]$GuildName,
+		[string]$BackupDir
+	)
 	
 	#Check if guild exists
-	$Query = "SELECT guildid FROM guild WHERE name = $GuildName;"
+	$Query = "SELECT guildid FROM guild WHERE name = '$GuildName';"
 	$ValueColumn = "guildid"
 	$ConnectionName = "CharConn"
 	$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -2008,7 +2009,7 @@ function Restore-Guild {
 		return
 	}
 ############## PROCESS GUILD.SQL - alter guildid[0] and leaderguid[2]
-	Write-Host "folder is $BackupDir"
+	# Write-Host "folder is $BackupDir"
 	$sqlFilePath = "$BackupDir\guild.sql"
 	if (Test-Path -Path $sqlFilePath) {
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -2017,7 +2018,7 @@ function Restore-Guild {
 		# Write-Host "The file exists: $sqlFilePath"
 ############################
 		# Get the maximum guildid from the characters table
-		$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guildid) AS MaxGuildID FROM guild"
+		$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guildid) AS MaxGuildID FROM guild" 3>$null		#supress warnings when no results found
 		
 		# Extract the numeric value from the DataRow and check for DBNull
 		if ($maxGuidResult -and $maxGuidResult.MaxGuildID -ne [DBNull]::Value) {
@@ -2030,43 +2031,45 @@ function Restore-Guild {
 		#assign new guid to highest value in column guid + 1,
 		$newGuildID = $maxGuid + 1
 ############################ Process guild_members.json
+		Write-Host "Processing guild member data..." -ForegroundColor Cyan
 		$guidMapping = @{}
-        $guildMembersFile = "$BackupDir\guild_members.json"
-        if (Test-Path $guildMembersFile) {
-            $guildMembersJson = Get-Content $guildMembersFile | ConvertFrom-Json
-            foreach ($property in $guildMembersJson.psobject.Properties) {
-                $oldGuid = $property.Name
-                $characterName = $property.Value
+		$guildMembersFile = "$BackupDir\guild_members.json"
+		if (Test-Path $guildMembersFile) {
+			$guildMembersJson = Get-Content $guildMembersFile | ConvertFrom-Json
+			foreach ($property in $guildMembersJson.psobject.Properties) {
+				$oldGuid = $property.Name
+				$characterName = $property.Value
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+				$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
-                $newCharGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
-                if ($newCharGuid) {
-                    $guidMapping[$oldGuid] = $newCharGuid
-                } else {
-                    Write-Host "Character '$characterName' not found on the target server. Skipping member." -ForegroundColor Yellow
-                }
-            }
-        }
+				$newCharGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+				if ($newCharGuid) {
+					$guidMapping[$oldGuid] = $newCharGuid
+					Write-Host "Character '$characterName' (old ID: $($oldGuid), new ID: $($newCharGuid)) found on the target server database. Adding member..." -ForegroundColor Green
+				} else {
+					Write-Host "Character '$characterName' (old ID: $($oldGuid)) not found on the target server database. Skipping member..." -ForegroundColor Yellow
+				}
+			}
+		}
 #############################
-        $pattern = "(?<=\().*?(?=\))"
+		$pattern = "(?<=\().*?(?=\))"
 ############################# Process guild.sql
 		# guild = guildid[0], PlayerGuid[2]
-        $sqlContent = Get-Content -Path $sqlFilePath -Raw
-        $matches = [regex]::Matches($sqlContent, $pattern)
-        $modifiedRows = @()
-        foreach ($match in $matches) {
-            $values = $match.Value -split ","
-            $values[0] = $newGuildID
-            $values[2] = $characterID # Set leader
-            $modifiedRows += "(" + ($values -join ",") + ")"
-        }
-        $modifiedSqlQuery = "INSERT INTO `guild` VALUES " + ($modifiedRows -join ",") + ";"
+		$sqlContent = Get-Content -Path $sqlFilePath -Raw
+		$matches = [regex]::Matches($sqlContent, $pattern)
+		$modifiedRows = @()
+		foreach ($match in $matches) {
+			$values = $match.Value -split ","
+			$values[0] = $newGuildID
+			$values[2] = $characterID # Set leader
+			$modifiedRows += "(" + ($values -join ",") + ")"
+		}
+		$modifiedSqlQuery = "INSERT INTO `guild` VALUES " + ($modifiedRows -join ",") + ";"
 		# Output the modified SQL to verify
 		# Write-Host "`nModified SQL: $modifiedSqlQuery"
-        Execute-Query -query $modifiedSqlQuery -tablename "guild" -ConnectionName "CharConn"
+		Execute-Query -query $modifiedSqlQuery -tablename "guild" -ConnectionName "CharConn"
 ############################## Process guild_rank, guild_bank_right, guild_bank_tab
 		# guild_bank_right, guild_bank_tab, guild_rank = guildid[0]
 		$tables = @(
@@ -2097,94 +2100,97 @@ function Restore-Guild {
 			}
 		}
 ############################### Process guild_member.sql
-        $sqlFilePath = "$BackupDir\guild_member.sql"
-        if (Test-Path $sqlFilePath) {
-            $sqlContent = Get-Content -Path $sqlFilePath -Raw
-            $matches = [regex]::Matches($sqlContent, $pattern)
-            $modifiedRows = @()
-            foreach ($match in $matches) {
-                $values = $match.Value -split ","
-                $oldMemberGuid = $values[1]
-                if ($guidMapping.ContainsKey($oldMemberGuid)) {
-                    $values[0] = $newGuildID
-                    $values[1] = $guidMapping[$oldMemberGuid]
-                    $modifiedRows += "(" + ($values -join ",") + ")"
-				#else set it as guild leader ID
-                } else {
-                    $values[0] = $newGuildID
-                    $values[1] = $characterID
-                    $modifiedRows += "(" + ($values -join ",") + ")"
+		$sqlFilePath = "$BackupDir\guild_member.sql"
+		if (Test-Path $sqlFilePath) {
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			$matches = [regex]::Matches($sqlContent, $pattern)
+			$modifiedRows = @()
+			foreach ($match in $matches) {
+				$values = $match.Value -split ","
+				# $values = ($match.Value -split ",").Trim()
+				$oldMemberGuid = $values[1]
+				# Write-Host "Checking oldMemberGuid: '$oldMemberGuid'" -ForegroundColor Cyan
+
+				if ($guidMapping.ContainsKey($oldMemberGuid)) {
+					$values[0] = $newGuildID
+					$values[1] = $guidMapping[$oldMemberGuid]
+					$modifiedRows += "(" + ($values -join ",") + ")"
 				}
-            }
-            if ($modifiedRows.Count -gt 0) {
-                $modifiedSqlQuery = "INSERT INTO `guild_member` VALUES " + ($modifiedRows -join ",") + ";"
-                Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
-            }
-        }
+			}
+			# if ($modifiedRows.Count -gt 0) {
+			$modifiedSqlQuery = "INSERT INTO `guild_member` VALUES " + ($modifiedRows -join ",") + ";"
+			# Output the modified SQL to verify
+			# Write-Host "`nModified SQL: $modifiedSqlQuery"
+			Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
+		}
 ############################# Process guild_bank_eventlog.sql
 		# guild_eventlog = guildid[0], PlayerGuid[3]
-        $sqlFilePath = "$BackupDir\guild_bank_eventlog.sql"
-        if (Test-Path $sqlFilePath) {
-            $sqlContent = Get-Content -Path $sqlFilePath -Raw
-            $matches = [regex]::Matches($sqlContent, $pattern)
-            $modifiedRows = @()
-            foreach ($match in $matches) {
-                $values = $match.Value -split ","
-                $oldPlayerGuid = $values[4]
-                if ($guidMapping.ContainsKey($oldPlayerGuid)) {
-                    $values[0] = $newGuildID
-                    $values[4] = $guidMapping[$oldPlayerGuid]
-                    $modifiedRows += "(" + ($values -join ",") + ")"
+		$sqlFilePath = "$BackupDir\guild_bank_eventlog.sql"
+		if (Test-Path $sqlFilePath) {
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			$matches = [regex]::Matches($sqlContent, $pattern)
+			$modifiedRows = @()
+			foreach ($match in $matches) {
+				$values = $match.Value -split ","
+				$oldPlayerGuid = $values[4]
+				if ($guidMapping.ContainsKey($oldPlayerGuid)) {
+					$values[0] = $newGuildID
+					$values[4] = $guidMapping[$oldPlayerGuid]
+					$modifiedRows += "(" + ($values -join ",") + ")"
 				#else set it as guild leader ID
-                } else {
-                    $values[0] = $newGuildID
-                    $values[4] = $characterID
-                    $modifiedRows += "(" + ($values -join ",") + ")"
+				} else {
+					$values[0] = $newGuildID
+					$values[4] = $characterID
+					$modifiedRows += "(" + ($values -join ",") + ")"
 				}
-            }
-            if ($modifiedRows.Count -gt 0) {
-                $modifiedSqlQuery = "INSERT INTO `guild_bank_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
-                Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_eventlog" -ConnectionName "CharConn"
-            }
-        }
+			}
+			# if ($modifiedRows.Count -gt 0) {
+			$modifiedSqlQuery = "INSERT INTO `guild_bank_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
+			# Output the modified SQL to verify
+			# Write-Host "`nModified SQL: $modifiedSqlQuery"
+			Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_eventlog" -ConnectionName "CharConn"
+			# }
+		}
 ############################# Process guild_eventlog.sql
 		# guild_bank_eventlog - guildid[0], PlayerGuid[3], PlayerGuid[4]
-        $sqlFilePath = "$BackupDir\guild_eventlog.sql"
-        if (Test-Path $sqlFilePath) {
-            $sqlContent = Get-Content -Path $sqlFilePath -Raw
-            $matches = [regex]::Matches($sqlContent, $pattern)
-            $modifiedRows = @()
-            foreach ($match in $matches) {
-                $values = $match.Value -split ","
-                $oldPlayerGuid1 = $values[3]
-                $oldPlayerGuid2 = $values[4]
-                $guid1Exists = $guidMapping.ContainsKey($oldPlayerGuid1)
-                $guid2Exists = $guidMapping.ContainsKey($oldPlayerGuid2)
+		$sqlFilePath = "$BackupDir\guild_eventlog.sql"
+		if (Test-Path $sqlFilePath) {
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			$matches = [regex]::Matches($sqlContent, $pattern)
+			$modifiedRows = @()
+			foreach ($match in $matches) {
+				$values = $match.Value -split ","
+				$oldPlayerGuid1 = $values[3]
+				$oldPlayerGuid2 = $values[4]
+				$guid1Exists = $guidMapping.ContainsKey($oldPlayerGuid1)
+				$guid2Exists = $guidMapping.ContainsKey($oldPlayerGuid2)
 
-                if ($guid1Exists -or $guid2Exists) {
-                    $values[0] = $newGuildID
-                    if ($guid1Exists) {
-                        $values[3] = $guidMapping[$oldPlayerGuid1]
+				if ($guid1Exists -or $guid2Exists) {
+					$values[0] = $newGuildID
+					if ($guid1Exists) {
+						$values[3] = $guidMapping[$oldPlayerGuid1]
 					#else set it as guild leader ID
 					} else {
-                        $values[3] = $characterID
+						$values[3] = $characterID
 					}
 					
-                    if ($guid2Exists) {
-                        $values[4] = $guidMapping[$oldPlayerGuid2]
+					if ($guid2Exists) {
+						$values[4] = $guidMapping[$oldPlayerGuid2]
 					#else set it as guild leader ID
 					} else {
-                        $values[4] = $characterID
+						$values[4] = $characterID
 					}
 					
-                    $modifiedRows += "(" + ($values -join ",") + ")"
-                }
-            }
-            if ($modifiedRows.Count -gt 0) {
-                $modifiedSqlQuery = "INSERT INTO `guild_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
-                Execute-Query -query $modifiedSqlQuery -tablename "guild_eventlog" -ConnectionName "CharConn"
-            }
-        }
+					$modifiedRows += "(" + ($values -join ",") + ")"
+				}
+			}
+			# if ($modifiedRows.Count -gt 0) {
+			$modifiedSqlQuery = "INSERT INTO `guild_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
+			# Output the modified SQL to verify
+			# Write-Host "`nModified SQL: $modifiedSqlQuery"
+			Execute-Query -query $modifiedSqlQuery -tablename "guild_eventlog" -ConnectionName "CharConn"
+			# }
+		}
 		
 ############################# Process guild_member_withdraw.sql
 		$sqlFilePath = "$BackupDir\guild_member_withdraw.sql"
@@ -2199,19 +2205,23 @@ function Restore-Guild {
 					$values[0] = $guidMapping[$oldMemberGuid]
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
-					if ($modifiedRows.Count -gt 0) {
-						$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
-						Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
-					}
+					# if ($modifiedRows.Count -gt 0) {
+					$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
+					# Output the modified SQL to verify
+					# Write-Host "`nModified SQL: $modifiedSqlQuery"
+					Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
+					# }
 				#else set it as guild leader ID
 				} else {
 					$values[0] = $characterID
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
-					if ($modifiedRows.Count -gt 0) {
-						$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
-						Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
-					}
+					# if ($modifiedRows.Count -gt 0) {
+					$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
+					# Output the modified SQL to verify
+					# Write-Host "`nModified SQL: $modifiedSqlQuery"
+					Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
+					# }
 				}
 			}
 		}
@@ -2220,8 +2230,9 @@ function Restore-Guild {
 		
 		if (Test-Path -Path $sqlFilePath) {
 			if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
+				Write-Host "Processing guild bank items..." -ForegroundColor Cyan
 				# Get the maximum GUID from the characters table
-				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance"
+				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance" 3>$null		#supress warnings when no results found
 				
 				# Extract the numeric value from the DataRow and check for DBNull
 				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
@@ -2350,8 +2361,9 @@ function Restore-Guild {
 		
 		if (Test-Path -Path $sqlFilePath) {
 			if (Table-Exists -TableName "guild_house" -ConnectionName "CharConn") {
+				Write-Host "Processing guild house data..." -ForegroundColor Cyan
 				# Get the maximum GUID from the characters table
-				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxGuid FROM guild_house"
+				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxGuid FROM guild_house" 3>$null		#supress warnings when no results found
 				
 				# Extract the numeric value from the DataRow and check for DBNull
 				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
@@ -2407,7 +2419,7 @@ function Restore-Guild {
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "creature" -ConnectionName "WorldConn") {
 						# Get the maximum GUID from the characters table
-						$maxGuidResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(guid) AS MaxGuid FROM creature"
+						$maxGuidResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(guid) AS MaxGuid FROM creature" 3>$null		#supress warnings when no results found
 						
 						# Extract the numeric value from the DataRow and check for DBNull
 						if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
@@ -2545,7 +2557,7 @@ function Restore-Guild-Main {
 			$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
 			$ValueColumn = "guid"
 			$ConnectionName = "CharConn"
-            $characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
+			$characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($characterGuid){
 				#check if character already is a member of a guild
 				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = $characterGuid;"
@@ -2597,14 +2609,14 @@ function Restore-Guild-Main {
 #region All-Accounts
 ################################################################################
 function Backup-All-Accounts-Main {
-    # Open database connections
-    Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
-    Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
-    Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "WorldConn"
+	# Open database connections
+	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
+	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "CharConn"
+	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 ################################################################################
-    try {
-        $accounts = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id, username FROM account"
-        if ($accounts) {
+	try {
+		$accounts = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id, username FROM account" 3>$null		#supress warnings when no results found
+		if ($accounts) {
 			if (-not ([string]::IsNullOrEmpty($AccountNameRegexFilter))) {
 				$accounts = $accounts | Where-Object { $_.username -match $AccountNameRegexFilter }
 			}
@@ -2614,127 +2626,127 @@ function Backup-All-Accounts-Main {
 				return
 			}
 			
-            Write-Host "Found $($accounts.Count) accounts. Starting backup process..." -ForegroundColor Green
-            $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+			Write-Host "Found $($accounts.Count) accounts. Starting backup process..." -ForegroundColor Green
+			$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 ################################################################################
-            $CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
-            foreach ($account in $accounts) {
-                $accountId = $account.id
-                $accountName = $account.username
-                Write-Host "`nBacking up account: $accountName (ID: $accountId)" -ForegroundColor Cyan
-                
-                # $backupDirFullAccount = "$CharacterBackupDir\$accountName"
-                $backupDirFullAccount = "$CharacterBackupDir\full_backups\$SourceServerName ($($CurrentDate))\$accountName"
-                if (-not (Test-Path $backupDirFullAccount)) {
-                    New-Item -Path $backupDirFullAccount -ItemType Directory | Out-Null
-                }
+			$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+			foreach ($account in $accounts) {
+				$accountId = $account.id
+				$accountName = $account.username
+				Write-Host "`nBacking up account: $accountName (ID: $accountId)" -ForegroundColor Cyan
+				
+				# $backupDirFullAccount = "$CharacterBackupDir\$accountName"
+				$backupDirFullAccount = "$CharacterBackupDir\full_backups\$SourceServerName ($($CurrentDate))\$accountName"
+				if (-not (Test-Path $backupDirFullAccount)) {
+					New-Item -Path $backupDirFullAccount -ItemType Directory | Out-Null
+				}
 ################################################################################
-                # Backup account details
-                $backupFile = "$backupDirFullAccount\_account.sql"
-                $whereClause = "id=$accountId"
-                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account`" > `"$backupFile`""
-                Invoke-Expression $mysqldumpCommand
-                
-                # Backup account access details
-                $backupFile = "$backupDirFullAccount\_account_access.sql"
-                $whereClause = "id=$accountId"
-                $mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
-                Invoke-Expression $mysqldumpCommand
+				# Backup account details
+				$backupFile = "$backupDirFullAccount\_account.sql"
+				$whereClause = "id=$accountId"
+				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account`" > `"$backupFile`""
+				Invoke-Expression $mysqldumpCommand
+				
+				# Backup account access details
+				$backupFile = "$backupDirFullAccount\_account_access.sql"
+				$whereClause = "id=$accountId"
+				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
+				Invoke-Expression $mysqldumpCommand
 ################################################################################
-                $characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
-                    SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
-                    FROM characters 
-                    WHERE account = @id
-"@ -Parameters @{ id = $accountId }
+				$characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
+					SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
+					FROM characters 
+					WHERE account = @id
+"@ -Parameters @{ id = $accountId } 3>$null		#supress warnings when no results found
 
-                if ($characterData) {
+				if ($characterData) {
 					if (-not ([string]::IsNullOrEmpty($CharacterNameRegexFilter))) {
 						$characterData = $characterData | Where-Object { $_.name -match $CharacterNameRegexFilter }
 					}
-                    Write-Host "Found $($characterData.Count) characters for account $accountName." -ForegroundColor Green
-                    foreach ($character in $characterData) {
-                        $CurCharMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $character.money
-                        $CurCharRace = GetCharacterRaceString -Race $character.race
-                        $CurCharClass = GetCharacterClassString -Class $character.class
-                        $CurCharGender = GetCharacterGenderString -Gender $character.gender
-                        $CurCharName = $character.name
-                        $CurCharLevel = $character.level
+					Write-Host "Found $($characterData.Count) characters for account $accountName." -ForegroundColor Green
+					foreach ($character in $characterData) {
+						$CurCharMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $character.money
+						$CurCharRace = GetCharacterRaceString -Race $character.race
+						$CurCharClass = GetCharacterClassString -Class $character.class
+						$CurCharGender = GetCharacterGenderString -Gender $character.gender
+						$CurCharName = $character.name
+						$CurCharLevel = $character.level
 
-                        # $backupDirFull = "$CharacterBackupDir\$accountName\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
-                        $backupDirFull = Join-Path $backupDirFullAccount "$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
-                        if (-not (Test-Path $backupDirFull)) {
-                            New-Item -Path $backupDirFull -ItemType Directory | Out-Null
-                        }
+						# $backupDirFull = "$CharacterBackupDir\$accountName\$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+						$backupDirFull = Join-Path $backupDirFullAccount "$CurCharName ($CurrentDate) - $CurCharRace $CurCharClass $CurCharGender LV$CurCharLevel"
+						if (-not (Test-Path $backupDirFull)) {
+							New-Item -Path $backupDirFull -ItemType Directory | Out-Null
+						}
 ################################################################################
-                        $characterInfoParams = @{
-                            backupDirFull = $backupDirFull
-                            CharacterId = $character.guid
-                            CharacterAccountId = $accountId
-                            CharacterAccountName = $accountName
-                            CharacterCreationDate = $character.creation_date
-                            CharacterName = $character.name
-                            CharacterRaceString = $CurCharRace
-                            CharacterClassString = $CurCharClass
-                            CharacterGenderString = $CurCharGender
-                            CharacterLevel = $character.level
-                            CharacterHonor = $character.totalHonorPoints
-                            CharacterMoneyConverted = $CurCharMoneyConverted
-                            CharacterXP = $character.xp
-                            CharacterHealth = $character.health
-                            CharacterMana = $character.power1
-                            CharacterSkin = $character.skin
-                            CharacterFace = $character.face
-                            CharacterHairStyle = $character.hairStyle
-                            CharacterHairColor = $character.hairColor
-                            CharacterFacialStyle = $character.facialStyle
-                            CharacterBankSlots = $character.bankSlots
-                            CharacterArenapoints = $character.arenapoints
-                            CharacterTotalKills = $character.totalKills
-                            CharacterEquipmentCache = $character.equipmentCache
-                            CharacterAmmoId = $character.ammoId
-                            CharacterCurMap = $character.map
-                            CharacterCurZone = $character.zone
-                        }
-                        CreateCharacterInfoFile @characterInfoParams
+						$characterInfoParams = @{
+							backupDirFull = $backupDirFull
+							CharacterId = $character.guid
+							CharacterAccountId = $accountId
+							CharacterAccountName = $accountName
+							CharacterCreationDate = $character.creation_date
+							CharacterName = $character.name
+							CharacterRaceString = $CurCharRace
+							CharacterClassString = $CurCharClass
+							CharacterGenderString = $CurCharGender
+							CharacterLevel = $character.level
+							CharacterHonor = $character.totalHonorPoints
+							CharacterMoneyConverted = $CurCharMoneyConverted
+							CharacterXP = $character.xp
+							CharacterHealth = $character.health
+							CharacterMana = $character.power1
+							CharacterSkin = $character.skin
+							CharacterFace = $character.face
+							CharacterHairStyle = $character.hairStyle
+							CharacterHairColor = $character.hairColor
+							CharacterFacialStyle = $character.facialStyle
+							CharacterBankSlots = $character.bankSlots
+							CharacterArenapoints = $character.arenapoints
+							CharacterTotalKills = $character.totalKills
+							CharacterEquipmentCache = $character.equipmentCache
+							CharacterAmmoId = $character.ammoId
+							CharacterCurMap = $character.map
+							CharacterCurZone = $character.zone
+						}
+						CreateCharacterInfoFile @characterInfoParams
 ################################################################################
-                        Backup-Character -characterId $character.guid -characterName $character.name -accountID $accountId -BackupDir $backupDirFull
-                    }
+						Backup-Character -characterId $character.guid -characterName $character.name -accountID $accountId -BackupDir $backupDirFull
+					}
 ################################################################################
-                } else {
-                    Write-Host "No characters found for account '$accountName'" -ForegroundColor Yellow
-                }
-            }
+				} else {
+					Write-Host "No characters found for account '$accountName'" -ForegroundColor Yellow
+				}
+			}
 ################################################################################
-            $stopwatch.Stop()
-            Write-Host "`nAll accounts and characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+			$stopwatch.Stop()
+			Write-Host "`nAll accounts and characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
 ################################################################################
-        } else {
-            Write-Host "No accounts found in the database." -ForegroundColor Red
-        }
+		} else {
+			Write-Host "No accounts found in the database." -ForegroundColor Red
+		}
 ################################################################################
-    } catch {
-        Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
-    } finally {
-        Close-SqlConnection -ConnectionName "AuthConn"
-        Close-SqlConnection -ConnectionName "CharConn"
-        Close-SqlConnection -ConnectionName "WorldConn"
+	} catch {
+		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
+	} finally {
+		Close-SqlConnection -ConnectionName "AuthConn"
+		Close-SqlConnection -ConnectionName "CharConn"
+		Close-SqlConnection -ConnectionName "WorldConn"
 		[console]::beep()
-    }
+	}
 }
 ############################################################
 function Restore-All-Accounts-Main {
-    # Create SimplySql connections
-    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
-    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
+	# Create SimplySql connections
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
 ####################################################################
-    try {
+	try {
 		# Get all backup folders under full_backups
 		$backupRoot = "$CharacterBackupDir\full_backups"
 		
 		if (-not (Test-Path $backupRoot)) {
 			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
 			return
-        }
+		}
 		
 		$backupFolders = Get-ChildItem -Path $backupRoot -Directory
 		
@@ -2769,31 +2781,31 @@ function Restore-All-Accounts-Main {
 			return
 		}
 
-        Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Cyan
-        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+		Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Cyan
+		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		
 		#clear global array list of characters
 		$guidMappingCharacters.Clear()
 ####################################################################
-        foreach ($accountFolder in $accountFolders) {
-            $accountName = $accountFolder.Name
-            Write-Host "`nRestoring account: $accountName" -ForegroundColor Cyan
+		foreach ($accountFolder in $accountFolders) {
+			$accountName = $accountFolder.Name
+			Write-Host "`nRestoring account: $accountName" -ForegroundColor Cyan
 
-            # Check if account exists
-            $accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName } -WarningAction SilentlyContinue
-            $accountId = $null
+			# Check if account exists
+			$accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName } 3>$null		#supress warnings when no results found
+			$accountId = $null
 ####################################################################
-            if ($accountResult) {
-                $accountId = $accountResult.id
-                Write-Host "Account '$accountName' already exists with ID $accountId." -ForegroundColor Green
+			if ($accountResult) {
+				$accountId = $accountResult.id
+				Write-Host "Account '$accountName' already exists with ID $accountId." -ForegroundColor Green
 ####################################################################
-            } else {
-                Write-Host "Account '$accountName' does not exist. Creating it..." -ForegroundColor Cyan
-                $accountSqlFile = Join-Path $accountFolder.FullName "_account.sql"
-                if (Test-Path $accountSqlFile) {
+			} else {
+				Write-Host "Account '$accountName' does not exist. Creating it..." -ForegroundColor Cyan
+				$accountSqlFile = Join-Path $accountFolder.FullName "_account.sql"
+				if (Test-Path $accountSqlFile) {
 					
 					# Get the maximum GUID from the characters table
-					$maxIDResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT MAX(id) AS MaxID FROM account"
+					$maxIDResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT MAX(id) AS MaxID FROM account" 3>$null		#supress warnings when no results found
 					
 					# Extract the numeric value from the DataRow
 					if ($maxIDResult -and $maxIDResult.MaxID -ne [DBNull]::Value) {
@@ -2879,43 +2891,43 @@ function Restore-All-Accounts-Main {
 						
 						#Execute the query
 						Execute-Query -query "$modifiedSqlQuery" -tablename "account_access" -ConnectionName "AuthConn"
-                    }
-                    Write-Host "Account '$accountName' created with ID $accountId." -ForegroundColor Green
+					}
+					Write-Host "Account '$accountName' created with ID $accountId." -ForegroundColor Green
 ####################################################################
-                } else {
-                    Write-Host "Could not find '_account.sql' for account '$accountName'. Skipping." -ForegroundColor Red
-                    continue
-                }
-                
-            }
+				} else {
+					Write-Host "Could not find '_account.sql' for account '$accountName'. Skipping." -ForegroundColor Red
+					continue
+				}
+				
+			}
 ####################################################################
-            $characterFolders = Get-ChildItem -Path $accountFolder.FullName -Directory
-            if ($characterFolders.Count -eq 0) {
-                Write-Host "No character backups found for account '$accountName'." -ForegroundColor Yellow
-                continue
-            }
+			$characterFolders = Get-ChildItem -Path $accountFolder.FullName -Directory
+			if ($characterFolders.Count -eq 0) {
+				Write-Host "No character backups found for account '$accountName'." -ForegroundColor Yellow
+				continue
+			}
 
-            Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'." -ForegroundColor Green
-            foreach ($characterFolder in $characterFolders) {
-                Restore-Character -account $accountName -accountID $accountId -BackupDir $characterFolder
-            }
+			Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'." -ForegroundColor Green
+			foreach ($characterFolder in $characterFolders) {
+				Restore-Character -account $accountName -accountID $accountId -BackupDir $characterFolder
+			}
 			
 			#restore tables with two or more characters e.g. character_social
-            foreach ($characterFolder in $characterFolders) {
-                Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
-            }
+			foreach ($characterFolder in $characterFolders) {
+				Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
+			}
 			
-        }
-        $stopwatch.Stop()
-        Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+		}
+		$stopwatch.Stop()
+		Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
 ####################################################################
-    } catch {
-        Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
-    } finally {
-        Close-SqlConnection -ConnectionName "AuthConn"
-        Close-SqlConnection -ConnectionName "CharConn"
+	} catch {
+		Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+	} finally {
+		Close-SqlConnection -ConnectionName "AuthConn"
+		Close-SqlConnection -ConnectionName "CharConn"
 		[console]::beep()
-    }
+	}
 }
 ####################################################################
 #endregion
@@ -2923,22 +2935,22 @@ function Restore-All-Accounts-Main {
 #region All-Guilds
 ########################################
 function Backup-All-Guilds-Main-Wrapper {
-    Backup-Guild-Main -AllGuilds
+	Backup-Guild-Main -AllGuilds
 	[console]::beep()
 }
 ########################################
 function Restore-All-Guilds-Main {
-    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
-    Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 ####################################################################
-    try {
+	try {
 		# Get all backup folders under full_backups
 		$backupRoot = "$GuildBackupDir\full_backups"
 		
 		if (-not (Test-Path $backupRoot)) {
 			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
 			return
-        }
+		}
 		
 		$backupFolders = Get-ChildItem -Path $backupRoot -Directory
 		
@@ -2967,46 +2979,46 @@ function Restore-All-Guilds-Main {
 		Write-Host "`nYou selected: $($chosenFolder.Name)" -ForegroundColor Green
 		
 		
-        $guildFolders = Get-ChildItem -Path $chosenFolder -Directory
-        if ($guildFolders.Count -eq 0) {
-            Write-Host "No guild backups found in '$GuildBackupDir'." -ForegroundColor Yellow
-            return
-        }
+		$guildFolders = Get-ChildItem -Path $chosenFolder -Directory
+		if ($guildFolders.Count -eq 0) {
+			Write-Host "No guild backups found in '$GuildBackupDir'." -ForegroundColor Yellow
+			return
+		}
 
-        Write-Host "Found $($guildFolders.Count) guild backups. Starting restore process..." -ForegroundColor Cyan
-        $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+		Write-Host "Found $($guildFolders.Count) guild backups. Starting restore process..." -ForegroundColor Cyan
+		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 ####################################################################
-        foreach ($folder in $guildFolders) {
-            $folderName = $folder.Name
+		foreach ($folder in $guildFolders) {
+			$folderName = $folder.Name
 			$guildName = ($folderName -split " - ")[0] -replace '\s*\(.*?\)', '' 
 			$leaderName = ($folderName -split " - ")[1]
 
-            Write-Host "`nStarting restoring guild: $guildName, Leader: $leaderName" -ForegroundColor Cyan
+			Write-Host "`nStarting restoring guild: $guildName, Leader: $leaderName" -ForegroundColor Cyan
 
-            $characterGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM characters WHERE name = @name" -Parameters @{ name = $leaderName } -WarningAction SilentlyContinue
-            if ($characterGuidResult) {
+			$characterGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM characters WHERE name = @name" -Parameters @{ name = $leaderName } 3>$null		#supress warnings when no results found
+			if ($characterGuidResult) {
 				Write-Host "Found guild leader in database: $leaderName" -ForegroundColor Green
-                $characterGuid = $characterGuidResult.guid
-                $isGuildMember = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guid = @guid" -Parameters @{ guid = $characterGuid } -WarningAction SilentlyContinue
-                if ($isGuildMember) {
-                    Write-Host "Character '$leaderName' is already in a guild. Skipping restore for guild '$guildName'." -ForegroundColor Yellow
-                    continue
-                }
-                Restore-Guild -character $leaderName -characterID $characterGuid -GuildName $guildName -BackupDir $folder
-            } else {
-                Write-Host "Leader character '$leaderName' not found for guild '$guildName'. Skipping restore." -ForegroundColor Red
-            }
-        }
+				$characterGuid = $characterGuidResult.guid
+				$isGuildMember = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT guid FROM guild_member WHERE guid = @guid" -Parameters @{ guid = $characterGuid } 3>$null		#supress warnings when no results found
+				if ($isGuildMember) {
+					Write-Host "Character '$leaderName' is already in a guild. Skipping restore for guild '$guildName'." -ForegroundColor Yellow
+					continue
+				}
+				Restore-Guild -character $leaderName -characterID $characterGuid -GuildName $guildName -BackupDir $folder
+			} else {
+				Write-Host "Leader character '$leaderName' not found for guild '$guildName'. Skipping restore." -ForegroundColor Red
+			}
+		}
 ####################################################################
-        $stopwatch.Stop()
-        Write-Host "`nAll guilds restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
-    } catch {
-        Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
-    } finally {
-        Close-SqlConnection -ConnectionName "CharConn"
-        Close-SqlConnection -ConnectionName "WorldConn"
+		$stopwatch.Stop()
+		Write-Host "`nAll guilds restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+	} catch {
+		Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
+	} finally {
+		Close-SqlConnection -ConnectionName "CharConn"
+		Close-SqlConnection -ConnectionName "WorldConn"
 		[console]::beep()
-    }
+	}
 }
 ########################################
 #endregion
