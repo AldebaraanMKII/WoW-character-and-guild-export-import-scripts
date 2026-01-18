@@ -41,11 +41,6 @@ function Backup-TableData {
 		[int]$value,
 		[string]$BackupDir
 	)
-	
-	# Convert race/class/gender
-	$Race = GetCharacterRaceString -Race $Race
-	$Class = GetCharacterClassString -Class $Class
-	$Gender = GetCharacterGenderString -Gender $Gender
 
 	# $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
 	if (-not (Test-Path $BackupDir)) {
@@ -70,11 +65,6 @@ function Backup-TableData-Array {
 		[string]$BackupDir
 	)
 	
-	# Convert race/class/gender
-	$Race = GetCharacterRaceString -Race $Race
-	$Class = GetCharacterClassString -Class $Class
-	$Gender = GetCharacterGenderString -Gender $Gender
-
 	# Create backup directory
 	# $backupDirFull = "$CharacterBackupDir\$AccountName\$characterName ($CurrentDate) - $Race $Class $Gender LV$Level"
 	if (-not (Test-Path $BackupDir)) {
@@ -1049,7 +1039,12 @@ function Restore-Character {
 				#gets the character name
 				$characterName = $values[2]
 				
-				$guidMappingCharacters += [pscustomobject]@{CharacterName = $characterName; OldGuid = $oldGuid; NewGuid = $newGuid}
+				$guidMappingCharacters.Add([pscustomobject]@{
+					CharacterName = $characterName
+					OldGuid       = $oldGuid
+					NewGuid       = $newGuid
+				}) | Out-Null
+				# Write-Host "`nAdded mapping: $characterName (OldGuid=$oldGuid, NewGuid=$newGuid)" -ForegroundColor Cyan
 				
 				# Recreate the modified row and store it
 				$modifiedRow = "(" + ($values -join ",") + ")"
@@ -1815,9 +1810,12 @@ function Restore-Multiple-Character-Tables {
 	
 	# Store the old and new GUIDs in the array
 ############################################
+	# Write-Host "Restore-Multiple-Character-Tables: Folder is $BackupDir." -ForegroundColor Yellow
 	$sqlFilePath = "$BackupDir\character_social.sql"
 	if (Test-Path -Path $sqlFilePath) {
+		# Write-Host "Restore-Multiple-Character-Tables: Found character_social.sql." -ForegroundColor Yellow
 		if (Table-Exists -TableName "character_social" -ConnectionName "CharConn") {
+			# Write-Host "Restore-Multiple-Character-Tables: Found character_social table." -ForegroundColor Yellow
 			# Read the content of the SQL file as a single string
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
 			
@@ -1828,6 +1826,14 @@ function Restore-Multiple-Character-Tables {
 			# List to store modified rows
 			$modifiedRows = @()
 ############################################
+			# $guidMappingCharacters += [pscustomobject]@{CharacterName = $characterName; OldGuid = $oldGuid; NewGuid = $newGuid}
+			# if (-not $guidMappingCharacters -or $guidMappingCharacters.Count -eq 0) {
+				# Write-Host "guidMappingCharacters is empty!" -ForegroundColor Red
+			# } else {
+				# Write-Host "guidMappingCharacters has $($guidMappingCharacters.Count) entries." -ForegroundColor Green
+				# $guidMappingCharacters | Format-Table -AutoSize
+			# }
+
 			# Loop through each match
 			for ($i = 0; $i -lt $matches.Count; $i++) {
 				$match = $matches[$i].Value
@@ -1835,15 +1841,15 @@ function Restore-Multiple-Character-Tables {
 				# Split the row into individual values
 				$values = $match -split ","
 				
-				# $guidMappingCharacters += [pscustomobject]@{CharacterName = $characterName; OldGuid = $oldGuid; NewGuid = $newGuid}
-				
 				# character GUID
 				$oldGuid = $values[0]
 				# Find the entry with matching OldGuid 
 				$match = $guidMappingCharacters | Where-Object { $_.OldGuid -eq $oldGuid } 
 				if ($match) { # Update NewGuid 
 					$values[0] = $match.NewGuid
+					# Write-Host "Restore-Multiple-Character-Tables: Found index 0 character in database: $($match.CharacterName) (ID: $($match.NewGuid))." -ForegroundColor Green
 				} else {
+					# Write-Host "Restore-Multiple-Character-Tables: Didn't find index 0 character in database: (ID: $($oldGuid))." -ForegroundColor Yellow
 					continue
 				}
 				
@@ -1852,7 +1858,9 @@ function Restore-Multiple-Character-Tables {
 				$match = $guidMappingCharacters | Where-Object { $_.OldGuid -eq $oldGuid } 
 				if ($match) { # Update NewGuid 
 					$values[1] = $match.NewGuid
+					# Write-Host "Restore-Multiple-Character-Tables: Found index 1 character in database: $($match.CharacterName) (ID: $($match.NewGuid))." -ForegroundColor Green
 				} else {
+					# Write-Host "Restore-Multiple-Character-Tables: Didn't find index 1 character in database: (ID: $($oldGuid))." -ForegroundColor Yellow
 					continue
 				}
 				
@@ -1860,15 +1868,15 @@ function Restore-Multiple-Character-Tables {
 				$modifiedRow = "(" + ($values -join ",") + ")"
 				$modifiedRows += $modifiedRow
 			}
-			
-			# if ($modifiedRows.Count -gt 0) {
-			# Join the modified rows into the final SQL query
-			$modifiedSqlQuery = "INSERT INTO `character_social` VALUES " + ($modifiedRows -join ",") + ";"
-			# Output the modified SQL to verify
-			# Write-Output "`nModified SQL: $modifiedSqlQuery"
-			# Execute the query
-			Execute-Query -query "$modifiedSqlQuery" -tablename "character_social" -ConnectionName "CharConn"
-			# }
+############################################
+			if ($modifiedRows.Count -gt 0) {
+				# Join the modified rows into the final SQL query
+				$modifiedSqlQuery = "INSERT INTO `character_social` VALUES " + ($modifiedRows -join ",") + ";"
+				# Output the modified SQL to verify
+				# Write-Output "`nModified SQL: $modifiedSqlQuery"
+				# Execute the query
+				Execute-Query -query "$modifiedSqlQuery" -tablename "character_social" -ConnectionName "CharConn"
+			}
 ############################################
 		}
 	}
@@ -1888,6 +1896,9 @@ function Restore-Character-Main {
 	
 	# Initialize an array to hold all character subfolders
 	$characterFolders = @()
+	
+	#clear global array list of characters
+	$guidMappingCharacters.Clear()
 	
 	# Loop through each account folder to get its subfolders
 	foreach ($accountFolder in $accountFolders) {
@@ -2786,6 +2797,8 @@ function Restore-All-Accounts-Main {
 		
 		#clear global array list of characters
 		$guidMappingCharacters.Clear()
+		#List to store character folder paths
+		$CharacterFolderList = @()
 ####################################################################
 		foreach ($accountFolder in $accountFolders) {
 			$accountName = $accountFolder.Name
@@ -2909,15 +2922,19 @@ function Restore-All-Accounts-Main {
 
 			Write-Host "Found $($characterFolders.Count) character backups for account '$accountName'." -ForegroundColor Green
 			foreach ($characterFolder in $characterFolders) {
+				$CharacterFolderList += $characterFolder	#add to folder list
 				Restore-Character -account $accountName -accountID $accountId -BackupDir $characterFolder
+				# Write-Host "`nTotal mappings collected: $($guidMappingCharacters.Count)" -ForegroundColor Green
+				# $guidMappingCharacters | Format-Table -AutoSize
 			}
-			
-			#restore tables with two or more characters e.g. character_social
-			foreach ($characterFolder in $characterFolders) {
-				Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
-			}
-			
 		}
+####################################################################
+		#restore tables with two or more characters e.g. character_social
+		Write-Host "`nRestoring friend lists..." -ForegroundColor Cyan
+		foreach ($characterFolder in $CharacterFolderList) {
+			Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
+		}
+			
 		$stopwatch.Stop()
 		Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
 ####################################################################
