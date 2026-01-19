@@ -1702,14 +1702,16 @@ function Restore-Character {
 								#remove duplicates
 								$modifiedRows = $modifiedRows | Select-Object -Unique
 								
-								# Join the modified rows into the final SQL query
-								$modifiedSqlQuery = "INSERT INTO custom_unlocked_appearances VALUES " + ($modifiedRows -join ",") + ";"
-								
-								# Output the modified SQL to verify
-								# Write-Host "`nModified SQL: $modifiedSqlQuery"
-								
-								#Execute the query
-								Execute-Query -query $modifiedSqlQuery -tablename "custom_unlocked_appearances" -ConnectionName "CharConn"
+								if ($modifiedRows.Count -gt 0) {
+									# Join the modified rows into the final SQL query
+									$modifiedSqlQuery = "INSERT INTO custom_unlocked_appearances VALUES " + ($modifiedRows -join ",") + ";"
+									
+									# Output the modified SQL to verify
+									# Write-Host "`nModified SQL: $modifiedSqlQuery"
+									
+									#Execute the query
+									Execute-Query -query $modifiedSqlQuery -tablename "custom_unlocked_appearances" -ConnectionName "CharConn"
+								}							
 							} else {
 								Write-Host "Table 'custom_unlocked_appearances' does not exist, skipping restore for this table." -ForegroundColor Red
 							}
