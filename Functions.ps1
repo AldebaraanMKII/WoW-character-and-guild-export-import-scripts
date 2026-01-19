@@ -2860,7 +2860,7 @@ function Restore-All-Accounts-Main {
 ####################################################################
 		foreach ($accountFolder in $accountFolders) {
 			$accountName = $accountFolder.Name
-			Write-Host "`nRestoring account: $accountName" -ForegroundColor Cyan
+			Write-Host "`nRestoring account: $accountName" -ForegroundColor Blue
 
 			# Check if account exists
 			$accountResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT id FROM account WHERE username = @username" -Parameters @{ username = $accountName } 3>$null		#supress warnings when no results found
@@ -2990,9 +2990,24 @@ function Restore-All-Accounts-Main {
 		}
 ####################################################################
 		#restore tables with two or more characters e.g. character_social
-		Write-Host "`nRestoring friend lists..." -ForegroundColor Cyan
+		# Write-Host "`nRestoring friend lists..." -ForegroundColor Cyan
+		# foreach ($characterFolder in $CharacterFolderList) {
+			# Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
+		# }
+		$totalChars = $CharacterFolderList.Count
+		$charCounter = 0
+		
 		foreach ($characterFolder in $CharacterFolderList) {
+			$charCounter++
+			
+			$percent = [int](($charCounter / $totalChars) * 100)
+			Write-Progress -Activity "Restoring Characters" -Status "Processing $charCounter of $totalChars" -PercentComplete $percent
+		
 			Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
+		
+			if ($charCounter % 50 -eq 0) {
+				Write-Host "Processed $charCounter characters so far..." -ForegroundColor Cyan
+			}
 		}
 			
 		$stopwatch.Stop()
