@@ -2072,17 +2072,25 @@ function Restore-Guild {
 ############################# Process guild.sql
 		# guild = guildid[0], PlayerGuid[2]
 		$sqlContent = Get-Content -Path $sqlFilePath -Raw
-		$matches = [regex]::Matches($sqlContent, $pattern)
-		$modifiedRows = @()
-		foreach ($match in $matches) {
-			$values = $match.Value -split ","
-			$values[0] = $newGuildID
-			$values[2] = $characterID # Set leader
-			$modifiedRows += "(" + ($values -join ",") + ")"
-		}
-		$modifiedSqlQuery = "INSERT INTO guild VALUES " + ($modifiedRows -join ",") + ";"
-		# Output the modified SQL to verify
-		# Write-Host "`nModified SQL: $modifiedSqlQuery"
+		
+		# 1. Clean the SQL content to remove the 'INSERT INTO...' header and the final ');'
+		# This handles the case where there are parentheses inside the text
+		$innerValues = $sqlContent.Trim()
+		$innerValues = [regex]::Replace($innerValues, "(?i)INSERT INTO `?guild`? VALUES \s*\(", "")
+		$innerValues = [regex]::Replace($innerValues, "\);$", "")
+		
+		# 2. Since we only need to change the first few IDs, we don't need to split the whole thing.
+		# We split by the first few commas only to preserve the message text.
+		$parts = $innerValues -split ",", 4  # Split into: 0:guildid, 1:name, 2:leaderguid, 3:the_rest
+		
+		$parts[0] = $newGuildID
+		$parts[2] = $characterID
+		
+		# 3. Reconstruct the row
+		$modifiedRow = "(" + ($parts -join ",") + ")"
+		$modifiedSqlQuery = "INSERT INTO `guild` VALUES $modifiedRow;"
+		
+		# Execute
 		Execute-Query -query $modifiedSqlQuery -tablename "guild" -ConnectionName "CharConn"
 ############################## Process guild_rank, guild_bank_right, guild_bank_tab
 		# guild_bank_right, guild_bank_tab, guild_rank = guildid[0]
