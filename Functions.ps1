@@ -2107,7 +2107,7 @@ function Restore-Guild {
 					$values[$columnIndex] = $columnIndexValue
 					$modifiedRows += "(" + ($values -join ",") + ")"
 				}
-				$modifiedSqlQuery = "INSERT INTO $table VALUES " + ($modifiedRows -join ",") + ";"
+				$modifiedSqlQuery = "INSERT IGNORE INTO $table VALUES " + ($modifiedRows -join ",") + ";"
 				# Output the modified SQL to verify
 				# Write-Host "`nModified SQL: $modifiedSqlQuery"
 				Execute-Query -query $modifiedSqlQuery -tablename $table -ConnectionName "CharConn"
@@ -2159,7 +2159,7 @@ function Restore-Guild {
 				}
 			}
 			# if ($modifiedRows.Count -gt 0) {
-			$modifiedSqlQuery = "INSERT INTO guild_bank_eventlog VALUES " + ($modifiedRows -join ",") + ";"
+			$modifiedSqlQuery = "INSERT IGNORE INTO guild_bank_eventlog VALUES " + ($modifiedRows -join ",") + ";"
 			# Output the modified SQL to verify
 			# Write-Host "`nModified SQL: $modifiedSqlQuery"
 			Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_eventlog" -ConnectionName "CharConn"
@@ -2199,7 +2199,7 @@ function Restore-Guild {
 				}
 			}
 			# if ($modifiedRows.Count -gt 0) {
-			$modifiedSqlQuery = "INSERT INTO guild_eventlog VALUES " + ($modifiedRows -join ",") + ";"
+			$modifiedSqlQuery = "INSERT IGNORE INTO guild_eventlog VALUES " + ($modifiedRows -join ",") + ";"
 			# Output the modified SQL to verify
 			# Write-Host "`nModified SQL: $modifiedSqlQuery"
 			Execute-Query -query $modifiedSqlQuery -tablename "guild_eventlog" -ConnectionName "CharConn"
@@ -2220,7 +2220,7 @@ function Restore-Guild {
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
 					# if ($modifiedRows.Count -gt 0) {
-					$modifiedSqlQuery = "INSERT INTO guild_member_withdraw VALUES " + ($modifiedRows -join ",") + ";"
+					$modifiedSqlQuery = "INSERT IGNORE INTO guild_member_withdraw VALUES " + ($modifiedRows -join ",") + ";"
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
@@ -2231,7 +2231,7 @@ function Restore-Guild {
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
 					# if ($modifiedRows.Count -gt 0) {
-					$modifiedSqlQuery = "INSERT INTO guild_member_withdraw VALUES " + ($modifiedRows -join ",") + ";"
+					$modifiedSqlQuery = "INSERT IGNORE INTO guild_member_withdraw VALUES " + ($modifiedRows -join ",") + ";"
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
