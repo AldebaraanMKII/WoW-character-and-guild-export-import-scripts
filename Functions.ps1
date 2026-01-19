@@ -2117,25 +2117,44 @@ function Restore-Guild {
 		$sqlFilePath = "$BackupDir\guild_member.sql"
 		if (Test-Path $sqlFilePath) {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
-			$matches = [regex]::Matches($sqlContent, $pattern)
+			
+			# 1. Strip SQL header and trailing characters
+			$justValues = [regex]::Replace($sqlContent.Trim(), "(?i)INSERT INTO `?guild_member`? VALUES \s*\(", "")
+			$justValues = $justValues.TrimEnd(";").TrimEnd(")")
+		
+			# 2. Split by the actual row separator "),(" to avoid breaking on commas inside notes
+			$rows = [regex]::Split($justValues, "\)\s*,\s*\(")
+		
 			$modifiedRows = @()
-			foreach ($match in $matches) {
-				$values = $match.Value -split ","
-				# $values = ($match.Value -split ",").Trim()
-				$oldMemberGuid = $values[1]
-				# Write-Host "Checking oldMemberGuid: '$oldMemberGuid'" -ForegroundColor Cyan
-
-				if ($guidMapping.ContainsKey($oldMemberGuid)) {
-					$values[0] = $newGuildID
-					$values[1] = $guidMapping[$oldMemberGuid]
-					$modifiedRows += "(" + ($values -join ",") + ")"
+			foreach ($row in $rows) {
+				# 3. ONLY split the first 3 columns (guildid, guid, rank)
+				# The 4th part will contain ALL the remaining text (PNote and OffNote)
+				$parts = $row -split ",", 4
+		
+				if ($parts.Count -ge 2) {
+					$oldMemberGuid = $parts[1].Trim()
+		
+					if ($guidMapping.ContainsKey($oldMemberGuid)) {
+						$parts[0] = $newGuildID
+						$parts[1] = $guidMapping[$oldMemberGuid]
+						
+						# Re-wrap this specific row and add it to our list
+						$modifiedRows += "(" + ($parts -join ",") + ")"
+					}
 				}
 			}
-			# if ($modifiedRows.Count -gt 0) {
-			$modifiedSqlQuery = "INSERT INTO guild_member VALUES " + ($modifiedRows -join ",") + ";"
-			# Output the modified SQL to verify
-			# Write-Host "`nModified SQL: $modifiedSqlQuery"
-			Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
+		
+			if ($modifiedRows.Count -gt 0) {
+				# Clean up target table for this guild
+				Invoke-SqlUpdate -ConnectionName "CharConn" -Query "DELETE FROM guild_member WHERE guildid = $newGuildID"
+		
+				# Construct and execute final query
+				$finalQuery = "INSERT INTO `guild_member` VALUES " + ($modifiedRows -join ",") + ";"
+				
+				# FINAL SAFETY: If the original file had escaped quotes like \', 
+				# MySQL might need them. But usually, just sending the string works.
+				Execute-Query -query $finalQuery -tablename "guild_member" -ConnectionName "CharConn"
+			}
 		}
 ############################# Process guild_bank_eventlog.sql
 		# guild_eventlog = guildid[0], PlayerGuid[3]
