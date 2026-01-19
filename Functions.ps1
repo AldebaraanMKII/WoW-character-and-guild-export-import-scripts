@@ -39,6 +39,7 @@ function Backup-TableData {
 		[string]$tableNameFile,
 		[string]$columnName,
 		[int]$value,
+		[string]$SourceDatabase,
 		[string]$BackupDir
 	)
 
@@ -51,8 +52,7 @@ function Backup-TableData {
 	# Write-Host "File: $BackupDir\$tableNameFile.sql" -ForegroundColor Yellow
 	$whereClause = "$columnName=$value"
 	
-
-	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
+	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabase`" `"$tableName`" > `"$backupFile`""
 	Invoke-Expression $mysqldumpCommand
 }
 #######################################
@@ -62,6 +62,7 @@ function Backup-TableData-Array {
 		[string]$tableNameFile,
 		[string]$columnName,
 		[int[]]$values,
+		[string]$SourceDatabase,
 		[string]$BackupDir
 	)
 	
@@ -75,7 +76,7 @@ function Backup-TableData-Array {
 	$valuesList = $values -join ","
 	$whereClause = "$columnName IN ($valuesList)"
 	
-	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseCharacters`" `"$tableName`" > `"$backupFile`""
+	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabase`" `"$tableName`" > `"$backupFile`""
 	Invoke-Expression $mysqldumpCommand
 
 	
@@ -435,7 +436,7 @@ function Backup-Character {
 	)
 	
 	foreach ($table in $tables) {
-		Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 	
 ########## Pet Data
@@ -447,45 +448,45 @@ function Backup-Character {
 			Write-Host "Found pet: (ID: $($pet.id)), $($pet.name), $($petEntryName.name), LV $($pet.level)" -ForegroundColor Cyan
 		}
 		
-		Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "character_pet" -tableNameFile "character_pet" -columnName "owner" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 		
 		$petIds = $petsData | Select-Object -ExpandProperty id
 		
-		Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -BackupDir $BackupDir
-		Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -BackupDir $BackupDir
-		Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -BackupDir $BackupDir
+		Backup-TableData-Array -tableName "pet_aura" -tableNameFile "pet_aura" -columnName "guid" -values $petIds -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
+		Backup-TableData-Array -tableName "pet_spell" -tableNameFile "pet_spell" -columnName "guid" -values $petIds -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
+		Backup-TableData-Array -tableName "pet_spell_cooldown" -tableNameFile "pet_spell_cooldown" -columnName "guid" -values $petIds -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 	
 ########## Item Data
-	Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
+	Backup-TableData -tableName "item_instance" -tableNameFile "item_instance" -columnName "owner_guid" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	
 ########## Mail Data
-	Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -BackupDir $BackupDir
+	Backup-TableData -tableName "mail" -tableNameFile "mail_receiver" -columnName "receiver" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	
 ########## Auction House Data #new 14-01-2026
-	Backup-TableData -tableName "auctionhouse" -tableNameFile "auctionhouse" -columnName "itemowner" -value $characterId -BackupDir $BackupDir
+	Backup-TableData -tableName "auctionhouse" -tableNameFile "auctionhouse" -columnName "itemowner" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 
 ########## Transmog Data
 	if (Table-Exists -TableName "custom_transmogrification" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -BackupDir $BackupDir
-		Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -BackupDir $BackupDir
-		Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -BackupDir $BackupDir
+		Backup-TableData -tableName "custom_transmogrification" -tableNameFile "custom_transmogrification" -columnName "Owner" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
+		Backup-TableData -tableName "custom_transmogrification_sets" -tableNameFile "custom_transmogrification_sets" -columnName "Owner" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
+		Backup-TableData -tableName "custom_unlocked_appearances" -tableNameFile "custom_unlocked_appearances" -columnName "account_id" -value $accountID -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 ########## Reagent Bank Data
 	if (Table-Exists -TableName "custom_reagent_bank" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "custom_reagent_bank" -tableNameFile "custom_reagent_bank" -columnName "character_id" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 ########## Character Settings data
 	if (Table-Exists -TableName "character_settings" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "character_settings" -tableNameFile "character_settings" -columnName "guid" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 ########## Beast Master 
 	if (Table-Exists -TableName "beastmaster_tamed_pets" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "beastmaster_tamed_pets" -tableNameFile "beastmaster_tamed_pets" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "beastmaster_tamed_pets" -tableNameFile "beastmaster_tamed_pets" -columnName "owner_guid" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 ########## Improved Bank
 	if (Table-Exists -TableName "mod_improved_bank" -ConnectionName "CharConn") {
-		Backup-TableData -tableName "mod_improved_bank" -tableNameFile "mod_improved_bank" -columnName "owner_guid" -value $characterId -BackupDir $BackupDir
+		Backup-TableData -tableName "mod_improved_bank" -tableNameFile "mod_improved_bank" -columnName "owner_guid" -value $characterId -SourceDatabase $SourceDatabaseCharacters -BackupDir $BackupDir
 	}
 ##########
 	# Delete empty SQL files
@@ -2617,6 +2618,58 @@ function Restore-Guild-Main {
 ###################################################
 #endregion
 ########################################
+function Backup-FusionCMS {
+	param (
+		[int]$characterId,
+		[string]$characterName,
+		[string]$accountID,
+		[string]$BackupDir
+	)
+	
+	Write-Host "`nBacking up FusionCMS website data..." -ForegroundColor Cyan
+	
+	$tables = @(
+		"characters",
+		"character_account_data",
+		"character_achievement", 	#fixed achivements not being restored
+		"character_achievement_progress",
+		"character_action",
+		"character_aura",
+		"character_glyphs",
+		"character_homebind",
+		"character_queststatus",
+		"character_queststatus_rewarded",
+		"character_reputation",
+		"character_skills",
+		"character_spell",
+		"character_talent",
+		"character_inventory",
+		"character_equipmentsets",
+		################## new 13-01-2026
+		"character_arena_stats",
+		"character_banned",
+		"character_battleground_random",
+		"character_brew_of_the_month",
+		"character_entry_point",
+		"character_instance",
+		"character_queststatus_daily",
+		"character_queststatus_weekly",
+		"character_queststatus_monthly",
+		"character_queststatus_seasonal",
+		"character_spell_cooldown",
+		"character_stats",
+		################## new 14-01-2026
+		"character_social",
+		"battleground_deserters"
+		##################
+	)
+	
+	foreach ($table in $tables) {
+		Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -SourceDatabase $SourceDatabaseFusionCMS -BackupDir $BackupDir
+	}
+	
+}
+########################################
 #region All-Accounts
 ################################################################################
 function Backup-All-Accounts-Main {
@@ -2663,6 +2716,9 @@ function Backup-All-Accounts-Main {
 				$whereClause = "id=$accountId"
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
 				Invoke-Expression $mysqldumpCommand
+				
+				#remove empty sqls
+				Get-ChildItem -Path $backupDirFullAccount -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 ################################################################################
 				$characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
 					SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
@@ -2874,36 +2930,38 @@ function Restore-All-Accounts-Main {
 ####################################################################
 					$accountAccessSqlFile = Join-Path $accountFolder.FullName "_account_access.sql"
 					if (Test-Path $accountAccessSqlFile) {
-						# Read the content of the SQL file as a single string
-						$sqlContent = Get-Content -Path $accountAccessSqlFile -Raw
-						
-						# Extract values inside parentheses
-						$pattern = "(?<=\().*?(?=\))"
-						$matches = [regex]::Matches($sqlContent, $pattern)
-						
-						# List to store modified rows
-						$modifiedRows = @()
-						
-						# Loop through each match
-						for ($i = 0; $i -lt $matches.Count; $i++) {
-							$match = $matches[$i].Value
+						if ((Get-Item $accountAccessSqlFile).Length -gt 0) {
+							# Read the content of the SQL file as a single string
+							$sqlContent = Get-Content -Path $accountAccessSqlFile -Raw
 							
-							# Split the row into individual values
-							$values = $match -split ","
+							# Extract values inside parentheses
+							$pattern = "(?<=\().*?(?=\))"
+							$matches = [regex]::Matches($sqlContent, $pattern)
 							
-							# Modify the first value with the incrementing GUID
-							$values[0] = $accountId
+							# List to store modified rows
+							$modifiedRows = @()
 							
-							# Recreate the modified row and store it
-							$modifiedRow = "(" + ($values -join ",") + ")"
-							$modifiedRows += $modifiedRow
+							# Loop through each match
+							for ($i = 0; $i -lt $matches.Count; $i++) {
+								$match = $matches[$i].Value
+								
+								# Split the row into individual values
+								$values = $match -split ","
+								
+								# Modify the first value with the incrementing GUID
+								$values[0] = $accountId
+								
+								# Recreate the modified row and store it
+								$modifiedRow = "(" + ($values -join ",") + ")"
+								$modifiedRows += $modifiedRow
+							}
+							
+							# Join the modified rows into the final SQL query
+							$modifiedSqlQuery = "INSERT INTO account_access VALUES " + ($modifiedRows -join ",") + ";"
+							
+							#Execute the query
+							Execute-Query -query "$modifiedSqlQuery" -tablename "account_access" -ConnectionName "AuthConn"
 						}
-						
-						# Join the modified rows into the final SQL query
-						$modifiedSqlQuery = "INSERT INTO account_access VALUES " + ($modifiedRows -join ",") + ";"
-						
-						#Execute the query
-						Execute-Query -query "$modifiedSqlQuery" -tablename "account_access" -ConnectionName "AuthConn"
 					}
 					Write-Host "Account '$accountName' created with ID $accountId." -ForegroundColor Green
 ####################################################################

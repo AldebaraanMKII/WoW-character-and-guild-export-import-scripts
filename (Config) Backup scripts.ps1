@@ -7,6 +7,7 @@ $SourcePassword = "acore"
 $SourceDatabaseAuth = "acore_auth"
 $SourceDatabaseCharacters = "acore_characters"
 $SourceDatabaseWorld = "acore_world"
+$SourceDatabaseFusionCMS = "website"
 
 # Define target connection details
 # target = database from which you will restore the characters/guilds to
@@ -17,6 +18,7 @@ $TargetPassword = "acore"
 $TargetDatabaseAuth = "acore_auth"
 $TargetDatabaseCharacters = "acore_characters"
 $TargetDatabaseWorld = "acore_world"
+$TargetDatabaseFusionCMS = "website"
 
 
 # Paths to executables
