@@ -1054,7 +1054,7 @@ function Restore-Character {
 			
 			# if ($modifiedRows.Count -gt 0) {
 			# Join the modified rows into the final SQL query
-			$modifiedSqlQuery = "INSERT INTO `characters` VALUES " + ($modifiedRows -join ",") + ";"
+			$modifiedSqlQuery = "INSERT INTO characters VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
 			# check if character exists first, if yes return
 			$Query = "SELECT guid FROM characters WHERE name = $characterName;"
@@ -1204,7 +1204,7 @@ function Restore-Character {
 						}
 						
 						# Join the modified rows into the final SQL query
-						$modifiedSqlQuery = "INSERT INTO `character_homebind` VALUES " + ($modifiedRows -join ",") + ";"
+						$modifiedSqlQuery = "INSERT INTO character_homebind VALUES " + ($modifiedRows -join ",") + ";"
 						
 						#Execute the query
 						Execute-Query -query "$modifiedSqlQuery" -tablename "character_homebind" -ConnectionName "CharConn"
@@ -1272,7 +1272,7 @@ function Restore-Character {
 						}
 					
 						# Join the modified rows into the final SQL query
-						$modifiedSqlQuery = "INSERT INTO `character_pet` VALUES " + ($modifiedRows -join ",") + ";"
+						$modifiedSqlQuery = "INSERT INTO character_pet VALUES " + ($modifiedRows -join ",") + ";"
 			
 						# Output the modified SQL to verify
 						# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1409,7 +1409,7 @@ function Restore-Character {
 					}
 				
 					# Join the modified rows into the final SQL query
-					$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
+					$modifiedSqlQuery = "INSERT INTO item_instance VALUES " + ($modifiedRows -join ",") + ";"
 					
 					# Output the array to verify
 					# Write-Host $guidMappingItems
@@ -1473,7 +1473,7 @@ function Restore-Character {
 							}
 						
 							# Join the modified rows into the final SQL query
-							$modifiedSqlQuery = "INSERT INTO `character_inventory` VALUES " + ($modifiedRows -join ",") + ";"
+							$modifiedSqlQuery = "INSERT INTO character_inventory VALUES " + ($modifiedRows -join ",") + ";"
 						
 							# Output the modified SQL to verify
 							# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1526,7 +1526,7 @@ function Restore-Character {
 							}
 						
 							# Join the modified rows into the final SQL query
-							$modifiedSqlQuery = "INSERT INTO `auctionhouse` VALUES " + ($modifiedRows -join ",") + ";"
+							$modifiedSqlQuery = "INSERT INTO auctionhouse VALUES " + ($modifiedRows -join ",") + ";"
 						
 							# Output the modified SQL to verify
 							# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1583,7 +1583,7 @@ function Restore-Character {
 							}
 						
 							# Join the modified rows into the final SQL query
-							$modifiedSqlQuery = "INSERT INTO `custom_transmogrification` VALUES " + ($modifiedRows -join ",") + ";"
+							$modifiedSqlQuery = "INSERT INTO custom_transmogrification VALUES " + ($modifiedRows -join ",") + ";"
 						
 							# Output the modified SQL to verify
 							# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1649,7 +1649,7 @@ function Restore-Character {
 								}
 								
 								# Join the modified rows into the final SQL query
-								$modifiedSqlQuery = "INSERT INTO `custom_transmogrification_sets` VALUES " + ($modifiedRows -join ",") + ";"
+								$modifiedSqlQuery = "INSERT INTO custom_transmogrification_sets VALUES " + ($modifiedRows -join ",") + ";"
 									
 								# Execute the query
 								Execute-Query -query $modifiedSqlQuery -tablename "custom_transmogrification_sets" -ConnectionName "CharConn"
@@ -1703,7 +1703,7 @@ function Restore-Character {
 								$modifiedRows = $modifiedRows | Select-Object -Unique
 								
 								# Join the modified rows into the final SQL query
-								$modifiedSqlQuery = "INSERT INTO `custom_unlocked_appearances` VALUES " + ($modifiedRows -join ",") + ";"
+								$modifiedSqlQuery = "INSERT INTO custom_unlocked_appearances VALUES " + ($modifiedRows -join ",") + ";"
 								
 								# Output the modified SQL to verify
 								# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1770,7 +1770,7 @@ function Restore-Character {
 							}
 						
 							# Join the modified rows into the final SQL query
-							$modifiedSqlQuery = "INSERT INTO `character_equipmentsets` VALUES " + ($modifiedRows -join ",") + ";"
+							$modifiedSqlQuery = "INSERT INTO character_equipmentsets VALUES " + ($modifiedRows -join ",") + ";"
 							
 							# Output the modified SQL to verify
 							# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -1872,7 +1872,7 @@ function Restore-Multiple-Character-Tables {
 ############################################
 			if ($modifiedRows.Count -gt 0) {
 				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `character_social` VALUES " + ($modifiedRows -join ",") + ";"
+				$modifiedSqlQuery = "INSERT INTO character_social VALUES " + ($modifiedRows -join ",") + ";"
 				# Output the modified SQL to verify
 				# Write-Output "`nModified SQL: $modifiedSqlQuery"
 				# Execute the query
@@ -2078,7 +2078,7 @@ function Restore-Guild {
 			$values[2] = $characterID # Set leader
 			$modifiedRows += "(" + ($values -join ",") + ")"
 		}
-		$modifiedSqlQuery = "INSERT INTO `guild` VALUES " + ($modifiedRows -join ",") + ";"
+		$modifiedSqlQuery = "INSERT INTO guild VALUES " + ($modifiedRows -join ",") + ";"
 		# Output the modified SQL to verify
 		# Write-Host "`nModified SQL: $modifiedSqlQuery"
 		Execute-Query -query $modifiedSqlQuery -tablename "guild" -ConnectionName "CharConn"
@@ -2130,7 +2130,7 @@ function Restore-Guild {
 				}
 			}
 			# if ($modifiedRows.Count -gt 0) {
-			$modifiedSqlQuery = "INSERT INTO `guild_member` VALUES " + ($modifiedRows -join ",") + ";"
+			$modifiedSqlQuery = "INSERT INTO guild_member VALUES " + ($modifiedRows -join ",") + ";"
 			# Output the modified SQL to verify
 			# Write-Host "`nModified SQL: $modifiedSqlQuery"
 			Execute-Query -query $modifiedSqlQuery -tablename "guild_member" -ConnectionName "CharConn"
@@ -2157,7 +2157,7 @@ function Restore-Guild {
 				}
 			}
 			# if ($modifiedRows.Count -gt 0) {
-			$modifiedSqlQuery = "INSERT INTO `guild_bank_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
+			$modifiedSqlQuery = "INSERT INTO guild_bank_eventlog VALUES " + ($modifiedRows -join ",") + ";"
 			# Output the modified SQL to verify
 			# Write-Host "`nModified SQL: $modifiedSqlQuery"
 			Execute-Query -query $modifiedSqlQuery -tablename "guild_bank_eventlog" -ConnectionName "CharConn"
@@ -2197,7 +2197,7 @@ function Restore-Guild {
 				}
 			}
 			# if ($modifiedRows.Count -gt 0) {
-			$modifiedSqlQuery = "INSERT INTO `guild_eventlog` VALUES " + ($modifiedRows -join ",") + ";"
+			$modifiedSqlQuery = "INSERT INTO guild_eventlog VALUES " + ($modifiedRows -join ",") + ";"
 			# Output the modified SQL to verify
 			# Write-Host "`nModified SQL: $modifiedSqlQuery"
 			Execute-Query -query $modifiedSqlQuery -tablename "guild_eventlog" -ConnectionName "CharConn"
@@ -2218,7 +2218,7 @@ function Restore-Guild {
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
 					# if ($modifiedRows.Count -gt 0) {
-					$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
+					$modifiedSqlQuery = "INSERT INTO guild_member_withdraw VALUES " + ($modifiedRows -join ",") + ";"
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
@@ -2229,7 +2229,7 @@ function Restore-Guild {
 					$modifiedRows += "(" + ($values -join ",") + ")"
 					
 					# if ($modifiedRows.Count -gt 0) {
-					$modifiedSqlQuery = "INSERT INTO `guild_member_withdraw` VALUES " + ($modifiedRows -join ",") + ";"
+					$modifiedSqlQuery = "INSERT INTO guild_member_withdraw VALUES " + ($modifiedRows -join ",") + ";"
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
 					Execute-Query -query $modifiedSqlQuery -tablename "guild_member_withdraw" -ConnectionName "CharConn"
@@ -2296,7 +2296,7 @@ function Restore-Guild {
 				}
 			
 				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `item_instance` VALUES " + ($modifiedRows -join ",") + ";"
+				$modifiedSqlQuery = "INSERT INTO item_instance VALUES " + ($modifiedRows -join ",") + ";"
 				
 				# Output the array to verify
 				# Write-Host $guidMappingItems
@@ -2349,7 +2349,7 @@ function Restore-Guild {
 						}
 					
 						# Join the modified rows into the final SQL query
-						$modifiedSqlQuery = "INSERT INTO `guild_bank_item` VALUES " + ($modifiedRows -join ",") + ";"
+						$modifiedSqlQuery = "INSERT INTO guild_bank_item VALUES " + ($modifiedRows -join ",") + ";"
 				
 						# Output the modified SQL to verify
 						# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -2418,7 +2418,7 @@ function Restore-Guild {
 				}
 			
 				# Join the modified rows into the final SQL query
-				$modifiedSqlQuery = "INSERT INTO `guild_house` VALUES " + ($modifiedRows -join ",") + ";"
+				$modifiedSqlQuery = "INSERT INTO guild_house VALUES " + ($modifiedRows -join ",") + ";"
 				
 				# Output the modified SQL to verify
 				# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -2471,7 +2471,7 @@ function Restore-Guild {
 						}
 					
 						# Join the modified rows into the final SQL query
-						$modifiedSqlQuery = "INSERT INTO `creature` VALUES " + ($modifiedRows -join ",") + ";"
+						$modifiedSqlQuery = "INSERT INTO creature VALUES " + ($modifiedRows -join ",") + ";"
 						
 						# Output the modified SQL to verify
 						# Write-Host "`nModified SQL: $modifiedSqlQuery"
