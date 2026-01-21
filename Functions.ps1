@@ -2088,6 +2088,15 @@ function Restore-Guild {
 		# We split by the first few commas only to preserve the message text.
 		$parts = $innerValues -split ",", 4  # Split into: 0:guildid, 1:name, 2:leaderguid, 3:the_rest
 		
+		#get the old ID
+		$oldGuid = $parts[0]
+		#add to list
+		$guidMappingItems.Add([pscustomobject]@{
+			OldGuildGuid       = $oldGuid
+			NewGuildGuid       = $newGuildID
+			GuildLeaderID       = $characterID
+		}) | Out-Null
+					
 		$parts[0] = $newGuildID
 		$parts[2] = $characterID
 		
@@ -2294,9 +2303,6 @@ function Restore-Guild {
 				# Read the contents of the .sql file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
 				
-				# Initialize the guidMapping as an ArrayList for dynamic addition
-				$guidMappingItems = [System.Collections.ArrayList]::new()
-
 				# Extract values inside parentheses
 				$pattern = "(?<=\().*?(?=\))"
 				$matches = [regex]::Matches($sqlContent, $pattern)
@@ -2319,8 +2325,11 @@ function Restore-Guild {
 					$values[0] = $newItemGuidValue
 				
 					# Store the old and new GUIDs in the array
-					$guidMappingItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
-
+					$guidMappingItems.Add([pscustomobject]@{
+						OldGuid       = $oldGuid
+						NewGuid       = $newItemGuidValue
+					}) | Out-Null
+					
 					# Modify the third value with the new GUID
 					$values[2] = $newGuildID
 					
@@ -3382,6 +3391,10 @@ function Restore-All-Guilds-Main {
 		Write-Host "Found $($guildFolders.Count) guild backups. Starting restore process..." -ForegroundColor Cyan
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 ####################################################################
+		#clear lists
+		$guidMappingItems.Clear()
+		$guidMappingGuilds.Clear()
+		
 		foreach ($folder in $guildFolders) {
 			$folderName = $folder.Name
 			$guildName = ($folderName -split " - ")[0] -replace '\s*\(.*?\)', '' 
