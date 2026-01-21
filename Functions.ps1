@@ -1,7 +1,10 @@
 
 #################################################################
 # Initialize the guidMapping as an ArrayList for dynamic addition
+$guidMappingAccounts = [System.Collections.ArrayList]::new()
 $guidMappingCharacters = [System.Collections.ArrayList]::new()
+$guidMappingItems = [System.Collections.ArrayList]::new()
+$guidMappingGuilds = [System.Collections.ArrayList]::new()
 #################################################################
 #region utility-functions
 function ConvertToGoldSilverCopper {
@@ -3113,7 +3116,10 @@ function Restore-All-Accounts-Main {
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		
 		#clear global array list of characters
+		$guidMappingAccounts.Clear()
 		$guidMappingCharacters.Clear()
+		$guidMappingItems.Clear()
+		$guidMappingGuilds.Clear()
 		#List to store character folder paths
 		$CharacterFolderList = @()
 ####################################################################
@@ -3128,6 +3134,28 @@ function Restore-All-Accounts-Main {
 			if ($accountResult) {
 				$accountId = $accountResult.id
 				Write-Host "Account '$accountName' already exists with ID $accountId." -ForegroundColor Green
+				
+				$accountSqlFile = Join-Path $accountFolder.FullName "_account.sql"
+				if (Test-Path $accountSqlFile) {
+					# Read the content of the SQL file as a single string
+					$sqlContent = Get-Content -Path $accountSqlFile -Raw
+					# Extract values inside parentheses
+					$pattern = "(?<=\().*?(?=\))"
+					$matches = [regex]::Matches($sqlContent, $pattern)
+					
+					$match = $matches[0].Value
+					# Split the row into individual values
+					$values = $match -split ","
+					#get the old ID
+					$oldGuid = $values[0]
+					
+					#add to list
+					$guidMappingAccounts.Add([pscustomobject]@{
+						AccountName = $accountName
+						OldGuid       = $oldGuid
+						NewGuid       = $accountId
+					}) | Out-Null
+				}
 ####################################################################
 			} else {
 				Write-Host "Account '$accountName' does not exist. Creating it..." -ForegroundColor Cyan
@@ -3170,6 +3198,9 @@ function Restore-All-Accounts-Main {
 						# Split the row into individual values
 						$values = $match -split ","
 						
+						#get the old ID
+						$oldGuid = $values[0]
+						
 						# Modify the first value with the incrementing GUID
 						$values[0] = $accountId
 						
@@ -3188,6 +3219,13 @@ function Restore-All-Accounts-Main {
 					
 					#Execute the query
 					Execute-Query -query "$modifiedSqlQuery" -tablename "account" -ConnectionName "AuthConn"
+					
+					#add to list
+					$guidMappingAccounts.Add([pscustomobject]@{
+						AccountName = $accountName
+						OldGuid       = $oldGuid
+						NewGuid       = $accountId
+					}) | Out-Null
 ####################################################################
 					$accountAccessSqlFile = Join-Path $accountFolder.FullName "_account_access.sql"
 					if (Test-Path $accountAccessSqlFile) {
