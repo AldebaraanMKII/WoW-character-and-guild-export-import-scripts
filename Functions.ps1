@@ -2793,63 +2793,97 @@ function Restore-FusionGEN {
 		[string]$FusionGENBackupDir,
 		[string]$AccountCharacterBackupDir
 	)
-	
+#################################################################
+	# Load JSON lists
+	$JsonList = @(
+		@("Accounts",	$guidMappingAccounts),
+		@("Characters", $guidMappingCharacters),
+		@("Pets",	$guidMappingpPets),
+		@("Items",	$guidMappingItems)
+	)
+	foreach ($entry in $JsonList) {
+		$JsonName    = $entry[0]
+		$guidMapping = $entry[1]
+		$JsonFilePath = "$AccountCharacterBackupDir\$JsonName.json"
+		if (Test-Path -Path $JsonFilePath) {
+			# Read JSON file and convert to objects
+			$jsonData = Get-Content $JsonFilePath -Raw | ConvertFrom-Json
+			# Clear current ArrayList if you want to replace contents
+			$guidMapping.Clear()
+			# Add each object back into the ArrayList
+			foreach ($obj in $jsonData) {
+				$guidMapping.Add($obj) | Out-Null
+			}
+		}
+	}
+#################################################################
 	Write-Host "`nRestoring FusionGEN website data..." -ForegroundColor Cyan
 #################################################################
 	$tables = @(
-		@("guild_bank_right", 0, $newGuildID),
-		@("guild_bank_tab", 0, $newGuildID),
-		@("guild_rank", 0, $newGuildID)
+		@("account_data",	0, $guidMappingAccounts),
+		@("acl_account_groups",	0, $guidMappingAccounts),
+		@("acl_account_permissions", 0, $guidMappingAccounts),
+		@("acl_account_roles",	0, $guidMappingAccounts, 1, $guidMappingCharacters)
+		@("articles", 2, $guidMappingAccounts),
+		@("comments", 2, $guidMappingAccounts),
+		@("changelog", 2, $guidMappingAccounts),
+		@("character_trade", 2, $guidMappingAccounts, 3, $guidMappingCharacters, 5, $guidMappingAccounts),
+		@("cta_logs", 1, $guidMappingAccounts, 3, $guidMappingCharacters, 5, $guidMappingAccounts),
+		@("dpta_logs", 1, $guidMappingAccounts, 3, $guidMappingAccounts),
+		@("gift_cards", 7, $guidMappingAccounts),
+		@("giftcard", 7, $guidMappingAccounts),
+		@("giftcard_attempts", 1, $guidMappingAccounts),
+		@("log_emblem_transfer", 1, $guidMappingAccounts, 3, $guidMappingCharacters, 6, $guidMappingCharacters),
+		@("log_item_eoe", 1, $guidMappingAccounts, 3, $guidMappingCharacters, 5, $guidMappingCharacters, 14, $guidMappingItems),
+		@("log_skills", 1, $guidMappingAccounts, 4, $guidMappingCharacters),
+		@("logs", 2, $guidMappingAccounts),
+		@("member_admin_logs", 1, $guidMappingAccounts),
+		@("member_id_accounts", 3, $guidMappingAccounts),
 	)
+	
 #################################################################
-	# Loop through each table in the array
 	foreach ($entry in $tables) {
-		# Extract the table name and the column number
-		$table = $entry[0]
-		# Path to the .sql file
-		$sqlFilePath = "$BackupDir\$table.sql"
-#################################################################
+		$table       = $entry[0]
+		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
+	
 		if (Test-Path -Path $sqlFilePath) {
-			if (Table-Exists -TableName $table -ConnectionName "CharConn") {
-				# Read the contents of the .sql file
+			if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
-				
-				# Pattern to match the correct column
-				# The pattern matches values inside parentheses (ignoring the last comma)
-				$pattern = "(?<=\().*?(?=\))"
-				
-				# Replace function
+				$pattern    = "(?<=\().*?(?=\))"
+#################################################################
 				$modifiedSqlQuery = [regex]::Replace($sqlContent, $pattern, {
 					param($match)
-				
-					# Split the row into values
 					$values = $match.Value -split ","
-				
-					# Loop through column/value pairs (index 1/2, 3/4, 5/6 in $entry)
+					# Loop through columnIndex/mapping pairs
 					for ($i = 1; $i -lt $entry.Count; $i += 2) {
-						$colIndex = $entry[$i]
-						$colValue = $entry[$i + 1]
-				
-						if ($colIndex -ne -1 -and $colValue -ne -1) {
-							# Replace the value at the target column index
-							$values[$colIndex] = $colValue
+						$colIndex   = $entry[$i]
+						$mappingSet = $entry[$i + 1]
+	
+						if ($colIndex -ge 0 -and $mappingSet) {
+							$oldValue = $values[$colIndex].Trim()
+	
+							# Look up mapping object where OldGuid matches
+							$map = $mappingSet | Where-Object { $_.OldGuid -eq $oldValue }
+	
+							if ($map) {
+								$values[$colIndex] = $map.NewGuid
+							}
 						}
 					}
-				
-					# Join back the modified values
 					return ($values -join ",")
 				})
-	
-				
+#################################################################
 				# Output the modified SQL to verify
-				# Write-Host "`nModified SQL: $modifiedSqlQuery"
+				Write-Host "`nModified SQL for table $($table): $modifiedSqlQuery"
 				
-				#Execute the query
 				Execute-Query -query "$modifiedSqlQuery" -tablename $table -ConnectionName "CharConn"
+#################################################################
 			} else {
 				Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
 			}
+#################################################################
 		}
+#################################################################
 	}
 #################################################################
 }
@@ -3336,7 +3370,6 @@ function Restore-All-Accounts-Main {
 		$Json = $guidMappingItems | ConvertTo-Json -Depth 3
 		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8
 ####################################################################
-		
 		$stopwatch.Stop()
 		Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
 ####################################################################
@@ -3396,7 +3429,6 @@ function Restore-All-Guilds-Main {
 		# Get the chosen folder
 		$chosenFolder = $backupFolders[$selection].FullName
 		Write-Host "`nYou selected: $($chosenFolder.Name)" -ForegroundColor Green
-		
 		
 		$guildFolders = Get-ChildItem -Path $chosenFolder -Directory
 		if ($guildFolders.Count -eq 0) {
