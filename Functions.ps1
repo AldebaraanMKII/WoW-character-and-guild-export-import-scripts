@@ -2094,9 +2094,10 @@ function Restore-Guild {
 		$oldGuid = $parts[0]
 		#add to list
 		$guidMappingGuilds.Add([pscustomobject]@{
-			OldGuildGuid       = $oldGuid
-			NewGuildGuid       = $newGuildID
-			GuildLeaderID       = $characterID
+			GuildName	= $GuildName
+			OldGuildGuid	= $oldGuid
+			NewGuildGuid	= $newGuildID
+			GuildLeaderID	= $characterID
 		}) | Out-Null
 					
 		$parts[0] = $newGuildID
@@ -3135,7 +3136,6 @@ function Restore-All-Accounts-Main {
 		$guidMappingCharacters.Clear()
 		$guidMappingpPets.Clear()
 		$guidMappingItems.Clear()
-		# $guidMappingGuilds.Clear()
 		#List to store character folder paths
 		$CharacterFolderList = @()
 ####################################################################
@@ -3322,7 +3322,21 @@ function Restore-All-Accounts-Main {
 				Write-Host "Processed $charCounter characters so far..." -ForegroundColor Cyan
 			}
 		}
-			
+####################################################################
+		# Convert mappings to json and dump them
+		$Json = $guidMappingAccounts | ConvertTo-Json -Depth 3
+		$Json | Out-File "$($chosenFolder)/Accounts.json" -Encoding UTF8
+		
+		$Json = $guidMappingCharacters | ConvertTo-Json -Depth 3
+		$Json | Out-File "$($chosenFolder)/Characters.json" -Encoding UTF8
+		
+		$Json = $guidMappingpPets | ConvertTo-Json -Depth 3
+		$Json | Out-File "$($chosenFolder)/Pets.json" -Encoding UTF8
+		
+		$Json = $guidMappingItems | ConvertTo-Json -Depth 3
+		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8
+####################################################################
+		
 		$stopwatch.Stop()
 		Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
 ####################################################################
@@ -3396,7 +3410,7 @@ function Restore-All-Guilds-Main {
 		#clear lists
 		$guidMappingItems.Clear()
 		$guidMappingGuilds.Clear()
-		
+####################################################################
 		foreach ($folder in $guildFolders) {
 			$folderName = $folder.Name
 			$guildName = ($folderName -split " - ")[0] -replace '\s*\(.*?\)', '' 
@@ -3418,6 +3432,13 @@ function Restore-All-Guilds-Main {
 				Write-Host "Leader character '$leaderName' not found for guild '$guildName'. Skipping restore." -ForegroundColor Red
 			}
 		}
+#################################################################### 
+		# Convert mappings to json and dump them
+		$Json = $guidMappingItems | ConvertTo-Json -Depth 3
+		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8
+		
+		$Json = $guidMappingGuilds | ConvertTo-Json -Depth 3
+		$Json | Out-File "$($chosenFolder)/Guilds.json" -Encoding UTF8
 ####################################################################
 		$stopwatch.Stop()
 		Write-Host "`nAll guilds restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
