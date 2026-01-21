@@ -3,6 +3,7 @@
 # Initialize the guidMapping as an ArrayList for dynamic addition
 $guidMappingAccounts = [System.Collections.ArrayList]::new()
 $guidMappingCharacters = [System.Collections.ArrayList]::new()
+$guidMappingpPets = [System.Collections.ArrayList]::new()
 $guidMappingItems = [System.Collections.ArrayList]::new()
 $guidMappingGuilds = [System.Collections.ArrayList]::new()
 #################################################################
@@ -1238,7 +1239,6 @@ function Restore-Character {
 						$sqlContent = Get-Content -Path $sqlFilePath -Raw
 						
 						# Initialize the guidMapping as an ArrayList for dynamic addition
-						$guidMappingpPets = [System.Collections.ArrayList]::new()
 	
 						# Extract values inside parentheses
 						$pattern = "(?<=\().*?(?=\))"
@@ -1262,8 +1262,11 @@ function Restore-Character {
 							$values[0] = $newPetGuidValue
 						
 							# Store the old and new GUIDs in the array
-							$guidMappingpPets += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newPetGuidValue}
-	
+							$guidMappingpPets.Add([pscustomobject]@{
+								OldGuid       = $oldGuid
+								NewGuid       = $newPetGuidValue
+							}) | Out-Null
+							
 							# Modify the third value with the new GUID
 							$values[2] = $newGuid
 							
@@ -3116,9 +3119,10 @@ function Restore-All-Accounts-Main {
 		Write-Host "Found $($accountFolders.Count) account backups. Starting restore process..." -ForegroundColor Cyan
 		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		
-		#clear global array list of characters
+		#clear global array lists
 		$guidMappingAccounts.Clear()
 		$guidMappingCharacters.Clear()
+		$guidMappingpPets.Clear()
 		$guidMappingItems.Clear()
 		$guidMappingGuilds.Clear()
 		#List to store character folder paths
