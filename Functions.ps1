@@ -2816,6 +2816,7 @@ function Restore-FusionGEN {
 			}
 		}
 	}
+	
 #################################################################
 	Write-Host "`nRestoring FusionGEN website data..." -ForegroundColor Cyan
 #################################################################
@@ -2839,8 +2840,16 @@ function Restore-FusionGEN {
 		@("logs", 2, $guidMappingAccounts),
 		@("member_admin_logs", 1, $guidMappingAccounts),
 		@("member_id_accounts", 3, $guidMappingAccounts),
+		@("mod_logs", 2, $guidMappingAccounts, 3, $guidMappingCharacters),
+		@("mysterybox_cooldowns", 1, $guidMappingAccounts),
+		@("mysterybox_history", 1, $guidMappingAccounts, 10, $guidMappingCharacters),
+		@("mysterybox_logs", 1, $guidMappingAccounts),
+		@("order_log", 2, $guidMappingAccounts),
+		@("paypal_logs", 1, $guidMappingAccounts),
+		@("sideboxes_poll_votes", 2, $guidMappingAccounts),
+		@("vote_log", 2, $guidMappingAccounts),
+		@("wheel_logs", 1, $guidMappingAccounts, 3, $guidMappingCharacters)
 	)
-	
 #################################################################
 	foreach ($entry in $tables) {
 		$table       = $entry[0]
@@ -2885,6 +2894,89 @@ function Restore-FusionGEN {
 		}
 #################################################################
 	}
+#################################################################
+	# this is for tables that do not need any ID replacement
+	$tables2 = @(
+		"access_trade_items",
+		"levelup_items",
+		"member_id_features",
+		"acl_group_roles",
+		"acl_groups",
+		"acl_roles",
+		"acl_roles_permissions",
+		"article_tag",
+		"avatars",
+		"backup",
+		"changelog_type",
+		"character_tools_free",
+		"ci_sessions",
+		"daily_signups",
+		"data_wotlk_itemdisplayinfo",
+		"email_change_key",
+		"email_log",
+		"email_templates",
+		"emblemitems",
+		"failed_logins",
+		"image_slider",
+		"item_icons",
+		"member_features",
+		"member_id",
+		"member_id_feature_items",
+		"member_id_login_attempts",
+		"member_id_purchases",
+		"menu",
+		"monthly_income",
+		"monthly_votes",
+		"mysterybox_chance_options",
+		"mysterybox_rewards",
+		"notifications",
+		"pages",
+		"password_recovery_key",
+		"paygol_logs",
+		"paypal_donate",
+		"ranks",
+		"realms",
+		"sideboxes",
+		"sideboxes_custom",
+		"sideboxes_poll_answers",
+		"sideboxes_poll_questions",
+		"skills",
+		"spell_recipes",
+		"spelltext_en",
+		"store_groups",
+		"store_items",
+		"tag",
+		"teleport_locations",
+		"visitor_log",
+		"vote_sites",
+		"wheel_rewards_items",
+		"wheel_upgrade_options"
+	)
+#################################################################
+	foreach ($entry in $tables2) {
+		$table       = $entry[0]
+		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
+	
+		if (Test-Path -Path $sqlFilePath) {
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
+				# Output the modified SQL to verify
+				Write-Host "`nSQL for table $($table): $sqlContent"
+				
+				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
+#################################################################
+			} else {
+				Write-Host "Table '$table' does not exist, Creating it..." -ForegroundColor Cyan
+				# Output the modified SQL to verify
+				Write-Host "`nSQL for table $($table): $sqlContent"
+				
+				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
+			}
+#################################################################
+		}
+#################################################################
+	}
+	
 #################################################################
 }
 #################################################################
