@@ -1,8 +1,8 @@
 
-
+#################################################################
 # Initialize the guidMapping as an ArrayList for dynamic addition
 $guidMappingCharacters = [System.Collections.ArrayList]::new()
-
+#################################################################
 #region utility-functions
 function ConvertToGoldSilverCopper {
 	param (
@@ -32,7 +32,7 @@ function ConvertToGoldSilverCopper {
 	}
 	else { return 0 }
 }
-#######################################
+#################################################################
 function Backup-TableData {
 	param (
 		[string]$tableName,
@@ -55,7 +55,7 @@ function Backup-TableData {
 	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabase`" `"$tableName`" > `"$backupFile`""
 	Invoke-Expression $mysqldumpCommand
 }
-#######################################
+#################################################################
 function Backup-TableData-Array {
 	param (
 		[string]$tableName,
@@ -81,7 +81,7 @@ function Backup-TableData-Array {
 
 	
 }
-########################################
+#################################################################
 function ConvertFromUnixTime {
 	param (
 		[int64]$unixTime
@@ -91,7 +91,7 @@ function ConvertFromUnixTime {
 	$readableTime = $epoch.AddSeconds($unixTime).ToLocalTime()
 	return $readableTime
 }
-########################################
+#################################################################
 function Execute-Query {
 	param (
 		[Parameter(Mandatory=$true)]
@@ -112,7 +112,7 @@ function Execute-Query {
 		Write-Output "($TableName) An error occurred: $_" -ForegroundColor Red
 	}
 }
-########################################
+#################################################################
 # Function to check if a table exists
 function Table-Exists {
 	param (
@@ -133,7 +133,7 @@ function Table-Exists {
 		return $false
 	}
 }
-########################################
+#################################################################
 function Check-Value-in-DB {
 	param (
 		[string]$Query,
@@ -163,7 +163,7 @@ function Check-Value-in-DB {
 		}
 ##########################
 }
-################################
+#################################################################
 function Get-ItemNameById {
 	param(
 		[int]$ItemId
@@ -190,7 +190,7 @@ function Get-ItemNameById {
 		return "Unknown"
 	}
 }
-################################
+#################################################################
 function Get-MapNameById {
 	param(
 		[int]$MapId
@@ -210,7 +210,7 @@ function Get-MapNameById {
 		return "Unknown"
 	}
 }
-################################
+#################################################################
 function Get-ZoneNameById {
 	param(
 		[int]$ZoneId
@@ -230,7 +230,7 @@ function Get-ZoneNameById {
 		return "Unknown"
 	}
 }
-################################ Create character_info txt file
+#################################################################
 function CreateCharacterInfoFile {
 	param(
 		[string]$backupDirFull,
@@ -325,7 +325,7 @@ function CreateCharacterInfoFile {
 	
 	$Content | Out-File -FilePath $CharacterInfoFilePath -Append
 }
-################################
+#################################################################
 function GetCharacterRaceString {
 	param(
 		[int]$Race
@@ -347,7 +347,7 @@ function GetCharacterRaceString {
 	
 	return $RaceString
 }
-################################
+#################################################################
 function GetCharacterClassString {
 	param(
 		[int]$Class
@@ -369,7 +369,7 @@ function GetCharacterClassString {
 	
 	return $ClassString
 }
-################################
+#################################################################
 function GetCharacterGenderString {
 	param(
 		[int]$Gender
@@ -383,11 +383,11 @@ function GetCharacterGenderString {
 	
 	return $GenderString
 }
-################################
+#################################################################
 #endregion
-########################################
+#################################################################
 #region Backup-Characters
-########################################
+#################################################################
 function Backup-Character {
 	param (
 		[int]$characterId,
@@ -493,9 +493,9 @@ function Backup-Character {
 	Get-ChildItem -Path $BackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 	
 }
-########################################
+#################################################################
 
-########################################
+#################################################################
 function Backup-Character-Main {
 	# Open database connections
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
@@ -710,11 +710,11 @@ function Backup-Character-Main {
 	Close-SqlConnection -ConnectionName "CharConn"
 	Close-SqlConnection -ConnectionName "WorldConn"
 }
-########################################
+#################################################################
 #endregion
-########################################
+#################################################################
 #region Backup-Guilds
-########################################
+#################################################################
 function Backup-Guild {
 	param (
 		[int]$GuildID,
@@ -856,9 +856,7 @@ function Backup-Guild {
 ########### Delete empty SQL files
 	Get-ChildItem -Path $GuildBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 }
-########################################
-
-########################################
+#################################################################
 function Backup-Guild-Main {
 	param (
 		[switch]$AllGuilds
@@ -979,11 +977,11 @@ function Backup-Guild-Main {
 	
 	Close-SqlConnection -ConnectionName "CharConn"
 }
-########################################
+#################################################################
 #endregion
-########################################
+#################################################################
 #region Restore-Characters
-###################################################
+#################################################################
 function Restore-Character {
 	param (
 		[string]$account,
@@ -1167,7 +1165,7 @@ function Restore-Character {
 						Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
 					}
 				}
-			}	
+			}
 ############################################ PROCESS HOMEBIND (this was giving errors because the old azerothcore homebind had a extra column at the end which the new azerothcore doesn`t have)
 				$sqlFilePath = "$BackupDir\character_homebind.sql"
 				if (Test-Path -Path $sqlFilePath) {
@@ -1803,7 +1801,7 @@ function Restore-Character {
 	}
 #################################################
 }
-###################################################
+#################################################################
 function Restore-Multiple-Character-Tables {
 	param (
 		[string]$account,
@@ -1885,7 +1883,7 @@ function Restore-Multiple-Character-Tables {
 	}
 ############################################
 }
-###################################################
+#################################################################
 function Restore-Character-Main {
 	# Create SimplySql connections
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
@@ -2000,11 +1998,11 @@ function Restore-Character-Main {
 	Close-SqlConnection -ConnectionName "CharConn"
 	# Close-SqlConnection -ConnectionName "WorldConn"
 }
-###################################################
+#################################################################
 #endregion
-########################################
+#################################################################
 #region Restore-Guilds
-########################################
+#################################################################
 function Restore-Guild {
 	param (
 		[string]$character,
@@ -2524,7 +2522,7 @@ function Restore-Guild {
 	}
 ########################################
 }
-########################################
+#################################################################
 function Restore-Guild-Main {
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
@@ -2644,63 +2642,297 @@ function Restore-Guild-Main {
 	Close-SqlConnection -ConnectionName "CharConn"
 	Close-SqlConnection -ConnectionName "WorldConn"
 }
-###################################################
+#################################################################
 #endregion
-########################################
-function Backup-FusionCMS {
+#################################################################
+function Backup-FusionGEN {
 	param (
-		[int]$characterId,
-		[string]$characterName,
-		[string]$accountID,
 		[string]$BackupDir
 	)
 	
-	Write-Host "`nBacking up FusionCMS website data..." -ForegroundColor Cyan
-	
+	Write-Host "`nBacking up FusionGEN website data..." -ForegroundColor Cyan
+#################################################################
 	$tables = @(
-		"characters",
-		"character_account_data",
-		"character_achievement", 	#fixed achivements not being restored
-		"character_achievement_progress",
-		"character_action",
-		"character_aura",
-		"character_glyphs",
-		"character_homebind",
-		"character_queststatus",
-		"character_queststatus_rewarded",
-		"character_reputation",
-		"character_skills",
-		"character_spell",
-		"character_talent",
-		"character_inventory",
-		"character_equipmentsets",
-		################## new 13-01-2026
-		"character_arena_stats",
-		"character_banned",
-		"character_battleground_random",
-		"character_brew_of_the_month",
-		"character_entry_point",
-		"character_instance",
-		"character_queststatus_daily",
-		"character_queststatus_weekly",
-		"character_queststatus_monthly",
-		"character_queststatus_seasonal",
-		"character_spell_cooldown",
-		"character_stats",
-		################## new 14-01-2026
-		"character_social",
-		"battleground_deserters"
-		##################
+		"access_trade_items",
+		"account_data",
+		"acl_account_groups",
+		"acl_account_permissions",
+		"acl_account_roles",
+		"acl_group_roles",
+		"acl_groups",
+		"acl_roles",
+		"acl_roles_permissions",
+		"article_tag",
+		"articles",
+		"avatars",
+		"backup",
+		"changelog",
+		"changelog_type",
+		
+		"character_tools_free",
+		"character_trade",
+		"ci_sessions",
+		"comments",
+		"cta_logs",
+		
+		"daily_signups",
+		"data_wotlk_itemdisplayinfo",
+		"dpta_logs",
+		"email_change_key",
+		"email_log",
+		"email_templates",
+		
+		"emblemitems",
+		"failed_logins",
+		"gift_cards",
+		"giftcard",
+		"giftcard_attempts",
+		
+		"image_slider",
+		"item_icons",
+		
+		"levelup_items",
+		"log_emblem_transfer",
+		"log_item_eoe",
+		"log_skills",
+		"logs",
+		"member_admin_logs",
+		"member_features",
+		
+		"member_id",
+		"member_id_accounts",
+		"member_id_feature_items",
+		"member_id_features",
+		"member_id_login_attempts",
+		"member_id_purchases",
+		
+		"menu",
+		"mod_logs",
+		"monthly_income",
+		"monthly_votes",
+		
+		"mysterybox_chance_options",
+		"mysterybox_cooldowns",
+		"mysterybox_history",
+		"mysterybox_logs",
+		"mysterybox_rewards",
+		"notifications",
+		
+		"order_log",
+		"pages",
+		"password_recovery_key",
+		"paygol_logs",
+		
+		"paypal_donate",
+		"paypal_logs",
+		"ranks",
+		"realms",
+		
+		"sideboxes",
+		"sideboxes_custom",
+		"sideboxes_poll_answers",
+		"sideboxes_poll_questions",
+		"sideboxes_poll_votes",
+		
+		"skills",
+		"spell_recipes",
+		"spelltext_en",
+		
+		"store_groups",
+		"store_items",
+		"tag",
+		
+		"teleport_locations",
+		"visitor_log",
+		"vote_log",
+		
+		"vote_sites",
+		"wheel_logs",
+		"wheel_rewards_items",
+		"wheel_upgrade_options"
+	)
+#################################################################
+	foreach ($table in $tables) {
+		$backupFile = "$BackupDir\$table.sql"
+		
+		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-locks --skip-comments --compact --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
+		
+		Invoke-Expression $mysqldumpCommand
+		if ($LASTEXITCODE -eq 0) {
+			Write-Host "Backed up data from $table to $backupFile" -ForegroundColor Green
+		} else {
+			Write-Host "Error backing up data from $tableName" -ForegroundColor Red
+		}
+	}
+#################################################################
+	#remove empty sqls
+	Get-ChildItem -Path $BackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
+}
+#################################################################
+function Restore-FusionGEN {
+	param (
+		[string]$FusionGENBackupDir,
+		[string]$AccountCharacterBackupDir
 	)
 	
-	foreach ($table in $tables) {
-		Backup-TableData -tableName $table -tableNameFile $table -columnName "guid" -value $characterId -SourceDatabase $SourceDatabaseFusionCMS -BackupDir $BackupDir
-	}
+	Write-Host "`nRestoring FusionGEN website data..." -ForegroundColor Cyan
+#################################################################
+	$tables = @(
+		@("guild_bank_right", 0, $newGuildID),
+		@("guild_bank_tab", 0, $newGuildID),
+		@("guild_rank", 0, $newGuildID)
+	)
+#################################################################
+	# Loop through each table in the array
+	foreach ($entry in $tables) {
+		# Extract the table name and the column number
+		$table = $entry[0]
+		# Path to the .sql file
+		$sqlFilePath = "$BackupDir\$table.sql"
+#################################################################
+		if (Test-Path -Path $sqlFilePath) {
+			if (Table-Exists -TableName $table -ConnectionName "CharConn") {
+				# Read the contents of the .sql file
+				$sqlContent = Get-Content -Path $sqlFilePath -Raw
+				
+				# Pattern to match the correct column
+				# The pattern matches values inside parentheses (ignoring the last comma)
+				$pattern = "(?<=\().*?(?=\))"
+				
+				# Replace function
+				$modifiedSqlQuery = [regex]::Replace($sqlContent, $pattern, {
+					param($match)
+				
+					# Split the row into values
+					$values = $match.Value -split ","
+				
+					# Loop through column/value pairs (index 1/2, 3/4, 5/6 in $entry)
+					for ($i = 1; $i -lt $entry.Count; $i += 2) {
+						$colIndex = $entry[$i]
+						$colValue = $entry[$i + 1]
+				
+						if ($colIndex -ne -1 -and $colValue -ne -1) {
+							# Replace the value at the target column index
+							$values[$colIndex] = $colValue
+						}
+					}
+				
+					# Join back the modified values
+					return ($values -join ",")
+				})
 	
+				
+				# Output the modified SQL to verify
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
+				
+				#Execute the query
+				Execute-Query -query "$modifiedSqlQuery" -tablename $table -ConnectionName "CharConn"
+			} else {
+				Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
+			}
+		}
+	}
+#################################################################
 }
-########################################
+#################################################################
+function Backup-FusionGen-Main {
+	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseFusionGEN -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "FusionGENConn"
+	try {
+		$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
+		$BackupDir = "$FusionGENBackupDir\full_backups\$SourceServerName ($($CurrentDate))"
+		Backup-FusionGEN -BackupDir $BackupDir
+	} catch {
+		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
+	} finally {
+		Close-SqlConnection -ConnectionName "FusionGENConn"
+	}
+}
+#################################################################
+function Restore-FusionGen-Main {
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseFusionGEN -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "FusionGENConn"
+	try {
+#################################################################
+		# Get all backup folders under full_backups
+		$backupRoot = "$FusionGENBackupDir\full_backups"
+		
+		if (-not (Test-Path $backupRoot)) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+		}
+		
+		$backupFolders = Get-ChildItem -Path $backupRoot -Directory
+		
+		if ($backupFolders.Count -eq 0) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+		}
+		
+		# Display numbered list of available backup folders
+		Write-Host "`nAvailable backup folders:" -ForegroundColor Cyan
+		for ($i = 0; $i -lt $backupFolders.Count; $i++) {
+			Write-Host "[$i] $($backupFolders[$i].Name)"
+		}
+		
+		# Prompt user to choose one
+		$selection = Read-Host "Enter the number of the full backup you want to use"
+		
+		# Validate input
+		if ($selection -notmatch '^\d+$' -or [int]$selection -ge $backupFolders.Count) {
+			Write-Host "Invalid selection." -ForegroundColor Red
+			return
+		}
+		
+		# Get the chosen folder
+		$chosenFusionGENBackupFolder = $backupFolders[$selection].FullName
+		Write-Host "`nYou selected: $($chosenFusionGENBackupFolder.Name)" -ForegroundColor Green
+#################################################################
+		Write-Host "Now choose the full account and character backup to use to fetch ID lists" -ForegroundColor Cyan
+
+		# Get all backup folders under full_backups
+		$backupRoot = "$CharacterBackupDir\full_backups"
+		
+		if (-not (Test-Path $backupRoot)) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+		}
+		
+		$backupFolders = Get-ChildItem -Path $backupRoot -Directory
+		
+		if ($backupFolders.Count -eq 0) {
+			Write-Host "`nNo full backups found in '$backupRoot'." -ForegroundColor Red
+			return
+		}
+		
+		# Display numbered list of available backup folders
+		Write-Host "`nAvailable backup folders:" -ForegroundColor Cyan
+		for ($i = 0; $i -lt $backupFolders.Count; $i++) {
+			Write-Host "[$i] $($backupFolders[$i].Name)"
+		}
+		
+		# Prompt user to choose one
+		$selection = Read-Host "Enter the number of the full backup you want to use"
+		
+		# Validate input
+		if ($selection -notmatch '^\d+$' -or [int]$selection -ge $backupFolders.Count) {
+			Write-Host "Invalid selection." -ForegroundColor Red
+			return
+		}
+		
+		# Get the chosen folder
+		$chosenAccountCharacterBackupFolder = $backupFolders[$selection].FullName
+		Write-Host "`nYou selected: $($chosenAccountCharacterBackupFolder.Name)" -ForegroundColor Green
+#################################################################
+		Restore-FusionGEN -FusionGENBackupDir $chosenFusionGENBackupFolder -AccountCharacterBackupDir $chosenAccountCharacterBackupFolder
+#################################################################
+	} catch {
+		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
+	} finally {
+		Close-SqlConnection -ConnectionName "FusionGENConn"
+	}
+}
+#################################################################
 #region All-Accounts
-################################################################################
+#################################################################
 function Backup-All-Accounts-Main {
 	# Open database connections
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "AuthConn"
@@ -2829,7 +3061,7 @@ function Backup-All-Accounts-Main {
 		[console]::beep()
 	}
 }
-############################################################
+#################################################################
 function Restore-All-Accounts-Main {
 	# Create SimplySql connections
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
@@ -3048,16 +3280,16 @@ function Restore-All-Accounts-Main {
 		[console]::beep()
 	}
 }
-####################################################################
+#################################################################
 #endregion
-########################################
+#################################################################
 #region All-Guilds
-########################################
+#################################################################
 function Backup-All-Guilds-Main-Wrapper {
 	Backup-Guild-Main -AllGuilds
 	[console]::beep()
 }
-########################################
+#################################################################
 function Restore-All-Guilds-Main {
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
@@ -3139,6 +3371,6 @@ function Restore-All-Guilds-Main {
 		[console]::beep()
 	}
 }
-########################################
+#################################################################
 #endregion
-########################################
+#################################################################
