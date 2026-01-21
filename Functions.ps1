@@ -1372,9 +1372,6 @@ function Restore-Character {
 					
 					# Read the contents of the .sql file
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
-					
-					# Initialize the guidMapping as an ArrayList for dynamic addition
-					$guidMappingItems = [System.Collections.ArrayList]::new()
 	
 					# Extract values inside parentheses
 					$pattern = "(?<=\().*?(?=\))"
@@ -1399,8 +1396,12 @@ function Restore-Character {
 						$values[0] = $newItemGuidValue
 					
 						# Store the old and new GUIDs in the array
-						$guidMappingItems += [pscustomobject]@{OldGuid = $oldGuid; NewGuid = $newItemGuidValue}
-	
+						#add to list
+						$guidMappingItems.Add([pscustomobject]@{
+							OldGuid       = $oldGuid
+							NewGuid       = $newItemGuidValue
+						}) | Out-Null
+						
 						# Modify the third value with the new GUID
 						$values[2] = $newGuid
 						
