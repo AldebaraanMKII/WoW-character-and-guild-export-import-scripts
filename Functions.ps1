@@ -1262,7 +1262,9 @@ function Restore-Character {
 							$values[0] = $newPetGuidValue
 						
 							# Store the old and new GUIDs in the array
+							$PetName = $values[9].Trim()
 							$guidMappingpPets.Add([pscustomobject]@{
+								PetName       = $PetName
 								OldGuid       = $oldGuid
 								NewGuid       = $newPetGuidValue
 							}) | Out-Null
@@ -2091,7 +2093,7 @@ function Restore-Guild {
 		#get the old ID
 		$oldGuid = $parts[0]
 		#add to list
-		$guidMappingItems.Add([pscustomobject]@{
+		$guidMappingGuilds.Add([pscustomobject]@{
 			OldGuildGuid       = $oldGuid
 			NewGuildGuid       = $newGuildID
 			GuildLeaderID       = $characterID
@@ -3133,7 +3135,7 @@ function Restore-All-Accounts-Main {
 		$guidMappingCharacters.Clear()
 		$guidMappingpPets.Clear()
 		$guidMappingItems.Clear()
-		$guidMappingGuilds.Clear()
+		# $guidMappingGuilds.Clear()
 		#List to store character folder paths
 		$CharacterFolderList = @()
 ####################################################################
