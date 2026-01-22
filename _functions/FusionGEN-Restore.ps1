@@ -70,35 +70,49 @@ function Restore-FusionGEN {
 	
 		if (Test-Path -Path $sqlFilePath) {
 			if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
+				# Read the full SQL file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
-				$pattern    = "(?<=\().*?(?=\))"
-#################################################################
-				$modifiedSqlQuery = [regex]::Replace($sqlContent, $pattern, {
+				
+				# Regex pattern to match INSERT statements with values
+				$insertPattern = "(INSERT INTO.*?VALUES\s*\(.*?\);)"
+				
+				# Replace only inside INSERT statements
+				$modifiedSqlContent = [regex]::Replace($sqlContent, $insertPattern, {
 					param($match)
-					$values = $match.Value -split ","
-					# Loop through columnIndex/mapping pairs
-					for ($i = 1; $i -lt $entry.Count; $i += 2) {
-						$colIndex   = $entry[$i]
-						$mappingSet = $entry[$i + 1]
-	
-						if ($colIndex -ge 0 -and $mappingSet) {
-							$oldValue = $values[$colIndex].Trim()
-	
-							# Look up mapping object where OldGuid matches
-							$map = $mappingSet | Where-Object { $_.OldGuid -eq $oldValue }
-	
-							if ($map) {
-								$values[$colIndex] = $map.NewGuid
+				
+					# Work on the matched INSERT statement
+					$stmt = $match.Value
+				
+					# Replace values inside parentheses
+					$stmt = [regex]::Replace($stmt, "(?<=\().*?(?=\))", {
+						param($innerMatch)
+						$values = $innerMatch.Value -split ","
+				
+						# Loop through columnIndex/mapping pairs
+						for ($i = 1; $i -lt $entry.Count; $i += 2) {
+							$colIndex   = $entry[$i]
+							$mappingSet = $entry[$i + 1]
+				
+							if ($colIndex -ge 0 -and $mappingSet) {
+								$oldValue = $values[$colIndex].Trim()
+				
+								# Look up mapping object where OldGuid matches
+								$map = $mappingSet | Where-Object { $_.OldGuid -eq $oldValue }
+				
+								if ($map) {
+									$values[$colIndex] = $map.NewGuid
+								}
 							}
 						}
-					}
-					return ($values -join ",")
-				})
-#################################################################
-				# Output the modified SQL to verify
-				Write-Host "`nModified SQL for table $($table): $modifiedSqlQuery"
+						return ($values -join ",")
+					})
 				
-				Execute-Query -query "$modifiedSqlQuery" -tablename $table -ConnectionName "CharConn"
+					return $stmt
+				})
+				
+				Write-Host "`nModified SQL for table $($table): $modifiedSqlContent"
+				
+				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "CharConn"
 #################################################################
 			} else {
 				Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
@@ -180,7 +194,7 @@ function Restore-FusionGEN {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
 			Write-Host "Backing up table $($table)..." -ForegroundColor Cyan
 			# Output the modified SQL to verify
-			Write-Host "SQL for table $($table): $sqlContent" -ForegroundColor White
+			# Write-Host "SQL for table $($table): $sqlContent" -ForegroundColor White
 			
 			Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
 		}

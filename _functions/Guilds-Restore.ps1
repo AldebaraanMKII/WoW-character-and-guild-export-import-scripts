@@ -295,6 +295,9 @@ function Restore-Guild {
 				# Read the contents of the .sql file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
 				
+				#new temp guid mapping
+				$guidMappingItemsTemp = [System.Collections.ArrayList]::new()
+						
 				# Extract values inside parentheses
 				$pattern = "(?<=\().*?(?=\))"
 				$matches = [regex]::Matches($sqlContent, $pattern)
@@ -318,6 +321,11 @@ function Restore-Guild {
 				
 					# Store the old and new GUIDs in the array
 					$guidMappingItems.Add([pscustomobject]@{
+						OldGuid       = $oldGuid
+						NewGuid       = $newItemGuidValue
+					}) | Out-Null
+					
+					$guidMappingItemsTemp.Add([pscustomobject]@{
 						OldGuid       = $oldGuid
 						NewGuid       = $newItemGuidValue
 					}) | Out-Null
@@ -369,7 +377,7 @@ function Restore-Guild {
 							$currentValue = $values[3]
 							
 							# Check if the current value matches an old GUID in the mapping
-							$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
+							$matchingGuid = $guidMappingItemsTemp | Where-Object { $_.OldGuid -eq $currentValue }
 							
 							# If a match is found, replace the old GUID with the new GUID
 							if ($matchingGuid) {

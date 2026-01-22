@@ -233,6 +233,7 @@ function Restore-Character {
 				#region Pet Tables
 				$sqlFilePath = "$BackupDir\character_pet.sql"
 				
+				
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "character_pet" -ConnectionName "CharConn") {
 						Write-Host "Importing pet data..." -ForegroundColor Cyan
@@ -254,7 +255,8 @@ function Restore-Character {
 						$sqlContent = Get-Content -Path $sqlFilePath -Raw
 						
 						# Initialize the guidMapping as an ArrayList for dynamic addition
-	
+						$guidMappingpPetsTemp = [System.Collections.ArrayList]::new()
+						
 						# Extract values inside parentheses
 						$pattern = "(?<=\().*?(?=\))"
 						$matches = [regex]::Matches($sqlContent, $pattern)
@@ -276,9 +278,17 @@ function Restore-Character {
 							$newPetGuidValue = $newPetGuid + $i
 							$values[0] = $newPetGuidValue
 						
+							
 							# Store the old and new GUIDs in the array
 							$PetName = $values[9].Trim()
 							$guidMappingpPets.Add([pscustomobject]@{
+								PetName       = $PetName
+								OldGuid       = $oldGuid
+								NewGuid       = $newPetGuidValue
+							}) | Out-Null
+							
+							#add to temp guid mapping, because using the above caused slowdowns over time
+							$guidMappingpPetsTemp.Add([pscustomobject]@{
 								PetName       = $PetName
 								OldGuid       = $oldGuid
 								NewGuid       = $newPetGuidValue
@@ -338,7 +348,7 @@ function Restore-Character {
 										$currentValue = $values[$columnIndex - 1]
 										
 										# Check if the current value matches an old GUID in the mapping
-										$matchingGuid = $guidMappingpPets | Where-Object { $_.OldGuid -eq $currentValue }
+										$matchingGuid = $guidMappingpPetsTemp | Where-Object { $_.OldGuid -eq $currentValue }
 										
 										# If a match is found, replace the old GUID with the new GUID
 										if ($matchingGuid) {
@@ -393,6 +403,9 @@ function Restore-Character {
 					# Read the contents of the .sql file
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
 	
+					#initialize temp guid mapping, because using the main one caused slowdowns that got worse over time
+					$guidMappingItemsTemp = [System.Collections.ArrayList]::new()
+						
 					# Extract values inside parentheses
 					$pattern = "(?<=\().*?(?=\))"
 					$matches = [regex]::Matches($sqlContent, $pattern)
@@ -422,6 +435,12 @@ function Restore-Character {
 							NewGuid       = $newItemGuidValue
 						}) | Out-Null
 						
+						#temp guid mapping
+						$guidMappingItemsTemp.Add([pscustomobject]@{
+							OldGuid       = $oldGuid
+							NewGuid       = $newItemGuidValue
+						}) | Out-Null
+						
 						# Modify the third value with the new GUID
 						$values[2] = $newGuid
 						
@@ -434,7 +453,7 @@ function Restore-Character {
 					$modifiedSqlQuery = "INSERT INTO item_instance VALUES " + ($modifiedRows -join ",") + ";"
 					
 					# Output the array to verify
-					# Write-Host $guidMappingItems
+					# Write-Host $guidMappingpItemsTemp
 					
 					# Output the modified SQL to verify
 					# Write-Host "`nModified SQL: $modifiedSqlQuery"
@@ -469,7 +488,7 @@ function Restore-Character {
 								$currentValue = $values[3]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItemsTemp | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
@@ -480,7 +499,7 @@ function Restore-Character {
 								$currentValue = $values[1]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItemsTemp | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
@@ -533,7 +552,7 @@ function Restore-Character {
 								$currentValue = $values[2]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItemsTemp | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
@@ -590,7 +609,7 @@ function Restore-Character {
 								$currentValue = $values[0]
 								
 								# Check if the current value matches an old GUID in the mapping
-								$matchingGuid = $guidMappingItems | Where-Object { $_.OldGuid -eq $currentValue }
+								$matchingGuid = $guidMappingItemsTemp | Where-Object { $_.OldGuid -eq $currentValue }
 								
 								# If a match is found, replace the old GUID with the new GUID
 								if ($matchingGuid) {
