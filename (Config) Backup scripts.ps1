@@ -3,8 +3,8 @@
 # Source = database from which you will backup the characters/guilds from
 $SourceServerName = "127.0.0.1"
 $SourcePort = 3306
-$SourceUsername = "acore"
-$SourcePassword = "acore"
+$SourceUsername = "root"
+$SourcePassword = "test"
 $SourceDatabaseAuth = "acore_auth"
 $SourceDatabaseCharacters = "acore_characters"
 $SourceDatabaseWorld = "acore_world"
@@ -14,18 +14,18 @@ $SourceDatabaseFusionGEN = "website"
 # Target = database from which you will restore the characters/guilds to
 $TargetServerName = "127.0.0.1"
 $TargetPort = 3306
-$TargetUsername = "acore"
-$TargetPassword = "acore"
+$TargetUsername = "root"
+$TargetPassword = "test"
 $TargetDatabaseAuth = "acore_auth"
 $TargetDatabaseCharacters = "acore_characters"
 $TargetDatabaseWorld = "acore_world"
 $TargetDatabaseFusionGEN = "website"
 ###################################################################
 # if set to true, backup these log tables (which are over 80% of the size of the FusionGEN website database):
-# ci_sessions = 
+# ci_sessions = contains data of a user as they journeyed through the website.
 # visitor_log = contains a list of all the times someone visited the website.
 # set this to $false if you want a much quicker backup/restore.
-$FusionGENProcessLogTables = $true
+$FusionGENProcessLogTables = $false
 ###################################################################
 # Paths to executables
 $mysqldumpPath = "E:\Games\WoW Server Files\My Repack\mysql\bin\mysqldump.exe"

@@ -40,7 +40,6 @@ function Restore-FusionGEN {
 		@("acl_account_groups",	0, $guidMappingAccounts),
 		@("acl_account_permissions", 0, $guidMappingAccounts),
 		@("acl_account_roles",	0, $guidMappingAccounts, 1, $guidMappingCharacters),
-		@("articles", 2, $guidMappingAccounts),
 		@("comments", 2, $guidMappingAccounts),
 		@("changelog", 2, $guidMappingAccounts),
 		@("character_trade", 2, $guidMappingAccounts, 3, $guidMappingCharacters, 5, $guidMappingAccounts),
@@ -70,18 +69,18 @@ function Restore-FusionGEN {
 		$table       = $entry[0]
 		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
 	
+		Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
 		if (Test-Path -Path $sqlFilePath) {
-			# if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
-				# Read the full SQL file
-				$sqlContent = Get-Content -Path $sqlFilePath -Raw
-				
-				# Regex pattern to match INSERT statements with values
-				$insertPattern = "(INSERT INTO.*?VALUES\s*\(.*?\);)"
-				
-				# Replace only inside INSERT statements
-				# Before the regex replacement, extract the mapping pairs
+			# Read the full SQL file
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			
+			# Regex pattern to match INSERT statements with values
+			$insertPattern = "(INSERT INTO.*?VALUES\s*\(.*?\);)"
+#################################################################
+			# Check if there are any INSERT statements before processing
+			if ($sqlContent -match $insertPattern) {
+				# Extract the mapping pairs
 				$mappings = $entry[1..($entry.Count - 1)]
-
 				$modifiedSqlContent = [regex]::Replace($sqlContent, $insertPattern, {
 					param($match)
 					$stmt = $match.Value
@@ -89,7 +88,7 @@ function Restore-FusionGEN {
 					$stmt = [regex]::Replace($stmt, "(?<=\().*?(?=\))", {
 						param($innerMatch)
 						$values = $innerMatch.Value -split ","
-				
+#################################################################
 						# Loop through mapping pairs
 						for ($i = 0; $i -lt $mappings.Count; $i += 2) {
 							$colIndex   = $mappings[$i]
@@ -102,22 +101,26 @@ function Restore-FusionGEN {
 							}
 						}
 						return ($values -join ",")
+#################################################################
 					})
 					return $stmt
 				})
-
-				Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
-				Write-Host "Modified SQL for table $($table): $modifiedSqlContent"
-				
+				# Write-Host "Modified SQL for table $($table): $modifiedSqlContent"
 				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "FusionGENConn"
 #################################################################
-			# } else {
-				# Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
-			# }
-#################################################################
+			} else {
+				Write-Host "Table $($table): no INSERT statements found (table structure only). Executing sql as it is." -ForegroundColor Yellow
+				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "FusionGENConn"
+			}
 		}
-#################################################################
 	}
+	
+	#Process articles
+	
+	$tables = @(
+		@("articles", 2, $guidMappingAccounts),
+	)
+	
 #################################################################
 	# this is for tables that do not need any ID replacement
 	$tables = @(
@@ -190,6 +193,7 @@ function Restore-FusionGEN {
 		if (Test-Path -Path $sqlFilePath) {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
 			Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
+			Write-Host "Table $($table): No ID replacement necessary. Executing sql as it is." -ForegroundColor Green
 			# Output the modified SQL to verify
 			# Write-Host "SQL for table $($table): $sqlContent" -ForegroundColor White
 			
