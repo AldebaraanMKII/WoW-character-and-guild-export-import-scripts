@@ -111,7 +111,7 @@ function Execute-Query {
 	)
 
 	try {
-		Write-Output "Query: $Query"
+		# Write-Output "Query: $Query"
 		Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query | Out-Null
 		# Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
 	} catch {
@@ -149,7 +149,7 @@ function Check-Value-in-DB {
 	
 		$value = $null
 		try {
-			Write-Host "Check-Value-in-DB Query: $Query" -ForegroundColor Cyan
+			# Write-Host "Check-Value-in-DB Query: $Query" -ForegroundColor Cyan
 			$Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			# $Result = Invoke-SqlScalar -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			

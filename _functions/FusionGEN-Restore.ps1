@@ -77,40 +77,35 @@ function Restore-FusionGEN {
 				$insertPattern = "(INSERT INTO.*?VALUES\s*\(.*?\);)"
 				
 				# Replace only inside INSERT statements
+				# Before the regex replacement, extract the mapping pairs
+				$mappings = $entry[1..($entry.Count - 1)]
+
 				$modifiedSqlContent = [regex]::Replace($sqlContent, $insertPattern, {
 					param($match)
-				
-					# Work on the matched INSERT statement
 					$stmt = $match.Value
 				
-					# Replace values inside parentheses
 					$stmt = [regex]::Replace($stmt, "(?<=\().*?(?=\))", {
 						param($innerMatch)
 						$values = $innerMatch.Value -split ","
 				
-						# Loop through columnIndex/mapping pairs
-						for ($i = 1; $i -lt $entry.Count; $i += 2) {
-							$colIndex   = $entry[$i]
-							$mappingSet = $entry[$i + 1]
+						# Loop through mapping pairs
+						for ($i = 0; $i -lt $mappings.Count; $i += 2) {
+							$colIndex   = $mappings[$i]
+							$mappingSet = $mappings[$i + 1]
 				
 							if ($colIndex -ge 0 -and $mappingSet) {
 								$oldValue = $values[$colIndex].Trim()
-				
-								# Look up mapping object where OldGuid matches
 								$map = $mappingSet | Where-Object { $_.OldGuid -eq $oldValue }
-				
-								if ($map) {
-									$values[$colIndex] = $map.NewGuid
-								}
+								if ($map) { $values[$colIndex] = $map.NewGuid }
 							}
 						}
 						return ($values -join ",")
 					})
-				
 					return $stmt
 				})
-				
-				Write-Host "`nModified SQL for table $($table): $modifiedSqlContent"
+
+				Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
+				Write-Host "Modified SQL for table $($table): $modifiedSqlContent"
 				
 				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "FusionGENConn"
 #################################################################
@@ -192,11 +187,11 @@ function Restore-FusionGEN {
 	
 		if (Test-Path -Path $sqlFilePath) {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
-			Write-Host "Backing up table $($table)..." -ForegroundColor Cyan
+			Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
 			# Output the modified SQL to verify
 			# Write-Host "SQL for table $($table): $sqlContent" -ForegroundColor White
 			
-			Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
+			Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "FusionGENConn"
 		}
 #################################################################
 	}
@@ -217,13 +212,13 @@ function Restore-FusionGen-Main {
 			FROM INFORMATION_SCHEMA.SCHEMATA 
 			WHERE SCHEMA_NAME = '$databaseName';"
 	
-	$result = Invoke-SqlQuery -Query $query
+	$result = Invoke-SqlQuery -ConnectionName "MysqlConn" -Query $query
 	
 	if ($result) {
-		Write-Host "Database $databaseName exists."
+		Write-Host "Database $databaseName exists." -ForegroundColor Cyan
 	} else {
-		Write-Host "Database $databaseName does not exist."
-		Invoke-SqlQuery -Query "CREATE DATABASE IF NOT EXISTS 'website';"
+		Write-Host "Database $databaseName does not exist. Creating it..." -ForegroundColor Yellow
+		Invoke-SqlQuery -ConnectionName "MysqlConn" -Query "CREATE DATABASE IF NOT EXISTS '$databaseName';"
 	}
 
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseFusionGEN -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "FusionGENConn"
@@ -261,7 +256,7 @@ function Restore-FusionGen-Main {
 		
 		# Get the chosen folder
 		$chosenFusionGENBackupFolder = $backupFolders[$selection].FullName
-		Write-Host "`nYou selected: $($chosenFusionGENBackupFolder.Name)" -ForegroundColor Green
+		Write-Host "`nYou selected: $($backupFolders[$selection].Name)" -ForegroundColor Green
 #################################################################
 		Write-Host "Now choose the full account and character backup to use to fetch ID lists" -ForegroundColor Cyan
 
@@ -297,7 +292,7 @@ function Restore-FusionGen-Main {
 		
 		# Get the chosen folder
 		$chosenAccountCharacterBackupFolder = $backupFolders[$selection].FullName
-		Write-Host "`nYou selected: $($chosenAccountCharacterBackupFolder.Name)" -ForegroundColor Green
+		Write-Host "`nYou selected: $($backupFolders[$selection].Name)" -ForegroundColor Green
 #################################################################
 		Restore-FusionGEN -FusionGENBackupDir $chosenFusionGENBackupFolder -AccountCharacterBackupDir $chosenAccountCharacterBackupFolder
 #################################################################
