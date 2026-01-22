@@ -24,8 +24,23 @@ if (-not (Get-Module -ListAvailable -Name PSSQLite)) {
 Import-Module SimplySql
 Import-Module PSSQLite
 ########################################
-. "./(Config) Backup scripts.ps1"	# import configuration
-. "./Functions.ps1"	# import functions
+# Initialize the guidMapping as an ArrayList for dynamic addition
+$guidMappingAccounts = [System.Collections.ArrayList]::new()
+$guidMappingCharacters = [System.Collections.ArrayList]::new()
+$guidMappingpPets = [System.Collections.ArrayList]::new()
+$guidMappingItems = [System.Collections.ArrayList]::new()
+$guidMappingGuilds = [System.Collections.ArrayList]::new()
+########################################
+# import configuration
+. "./(Config) Backup scripts.ps1"
+# import functions
+. "./_functions/Utility.ps1"
+. "./_functions/Characters-Backup.ps1"
+. "./_functions/Characters-Restore.ps1"
+. "./_functions/Guilds-Backup.ps1"
+. "./_functions/Guilds-Restore.ps1"
+. "./_functions/FusionGEN-Backup.ps1"
+. "./_functions/FusionGEN-Restore.ps1"
 ########################################
 Function Show-Menu {
 	Write-Host "`nWoW Backup/Restore Scripts" -ForegroundColor Green
@@ -40,8 +55,7 @@ Function Show-Menu {
 	Write-Host "8. Restore all guilds." -ForegroundColor Green
 	Write-Host "9. Exit script" -ForegroundColor Green
 }
-
-
+########################################
 try {
 	# Start logging
 	$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
@@ -54,38 +68,38 @@ try {
         while (-not $exitScript) {
             Show-Menu #shows menu options
             $choice = $(Write-Host "`nType a number (1-9):" -ForegroundColor green -NoNewLine; Read-Host) 
-    ########################################
+########################################
             if ($choice -eq 1) {
                 Backup-Character-Main
-    ########################################
+########################################
             } elseif ($choice -eq 2){
                 Restore-Character-Main
-    ########################################
+########################################
             } elseif ($choice -eq 3){
                 Backup-All-Accounts-Main
-    ########################################
+########################################
             } elseif ($choice -eq 4){
                 Restore-All-Accounts-Main
-    ################################################################################
+########################################
             } elseif ($choice -eq 5){
                 Backup-Guild-Main
-    ########################################
+########################################
             } elseif ($choice -eq 6){
                 Restore-Guild-Main
-    ########################################
+########################################
             } elseif ($choice -eq 7){
                 Backup-All-Guilds-Main-Wrapper
-    ########################################
+########################################
             } elseif ($choice -eq 8){
                 Restore-All-Guilds-Main
-    ######################################## exit
+######################################## exit
             } elseif ($choice -eq 9){
                 exit
-    ########################################
+########################################
             } else {
                 Write-Host "`nInvalid choice. Try again." -ForegroundColor Red
             }
-    ########################################
+########################################
         }
     }
 ########################################
@@ -95,5 +109,4 @@ try {
 	Stop-Transcript
 	# Write-Output "Transcript stopped"
 }
-########################################
 ########################################
