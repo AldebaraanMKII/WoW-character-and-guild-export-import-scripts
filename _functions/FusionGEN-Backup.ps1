@@ -122,7 +122,7 @@ function Backup-FusionGEN {
 	foreach ($table in $tables) {
 		$backupFile = "$BackupDir\$table.sql"
 		
-		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --add-drop-table --skip-add-locks --skip-comments --compact --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
+		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-locks --skip-comments --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
 		
 		# Invoke-Expression $mysqldumpCommand
 		Invoke-Expression $mysqldumpCommand 2>$null
