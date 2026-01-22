@@ -32,15 +32,15 @@ $guidMappingItems = [System.Collections.ArrayList]::new()
 $guidMappingGuilds = [System.Collections.ArrayList]::new()
 ########################################
 # import configuration
-. "./(Config) Backup scripts.ps1"
+. "$PSScriptRoot/(Config) Backup scripts.ps1"
 # import functions
-. "./_functions/Utility.ps1"
-. "./_functions/Characters-Backup.ps1"
-. "./_functions/Characters-Restore.ps1"
-. "./_functions/Guilds-Backup.ps1"
-. "./_functions/Guilds-Restore.ps1"
-. "./_functions/FusionGEN-Backup.ps1"
-. "./_functions/FusionGEN-Restore.ps1"
+. "$PSScriptRoot/_functions/Utility.ps1"
+. "$PSScriptRoot/_functions/Characters-Backup.ps1"
+. "$PSScriptRoot/_functions/Characters-Restore.ps1"
+. "$PSScriptRoot/_functions/Guilds-Backup.ps1"
+. "$PSScriptRoot/_functions/Guilds-Restore.ps1"
+. "$PSScriptRoot/_functions/FusionGEN-Backup.ps1"
+. "$PSScriptRoot/_functions/FusionGEN-Restore.ps1"
 ########################################
 Function Show-Menu {
 	Write-Host "`nWoW Backup/Restore Scripts" -ForegroundColor Green
@@ -53,7 +53,9 @@ Function Show-Menu {
 	Write-Host "6. Restore guild(s)." -ForegroundColor Green
 	Write-Host "7. Backup all guilds." -ForegroundColor Green
 	Write-Host "8. Restore all guilds." -ForegroundColor Green
-	Write-Host "9. Exit script" -ForegroundColor Green
+	Write-Host "9. Backup FusionGEN data." -ForegroundColor Green
+	Write-Host "10. Restore FusionGEN data." -ForegroundColor Green
+	Write-Host "11. Exit script" -ForegroundColor Green
 }
 ########################################
 try {
@@ -92,8 +94,14 @@ try {
 ########################################
             } elseif ($choice -eq 8){
                 Restore-All-Guilds-Main
-######################################## exit
+########################################
             } elseif ($choice -eq 9){
+                Backup-FusionGen-Main
+########################################
+            } elseif ($choice -eq 10){
+                Restore-FusionGen-Main
+######################################## exit
+            } elseif ($choice -eq 11){
                 exit
 ########################################
             } else {

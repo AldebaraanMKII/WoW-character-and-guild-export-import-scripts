@@ -7,6 +7,11 @@ function Backup-FusionGEN {
 	)
 	
 	Write-Host "`nBacking up FusionGEN website data..." -ForegroundColor Cyan
+	
+	# Ensure backup directory exists 
+	if (-not (Test-Path $BackupDir)) { 
+		New-Item -ItemType Directory -Path $BackupDir -Force | Out-Null 
+	}
 #################################################################
 	$tables = @(
 		"access_trade_items",
@@ -117,11 +122,11 @@ function Backup-FusionGEN {
 	foreach ($table in $tables) {
 		$backupFile = "$BackupDir\$table.sql"
 		
-		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-locks --skip-comments --compact --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
+		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --add-drop-table --skip-add-locks --skip-comments --compact --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
 		
 		Invoke-Expression $mysqldumpCommand
 		if ($LASTEXITCODE -eq 0) {
-			Write-Host "Backed up data from $table to $backupFile" -ForegroundColor Green
+			# Write-Host "Backed up data from $table to $backupFile" -ForegroundColor Green
 		} else {
 			Write-Host "Error backing up data from $tableName to $backupFile." -ForegroundColor Red
 		}
