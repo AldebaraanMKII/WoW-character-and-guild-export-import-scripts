@@ -69,7 +69,7 @@ function Restore-FusionGEN {
 		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
 	
 		if (Test-Path -Path $sqlFilePath) {
-			if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
+			# if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
 				# Read the full SQL file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
 				
@@ -112,11 +112,11 @@ function Restore-FusionGEN {
 				
 				Write-Host "`nModified SQL for table $($table): $modifiedSqlContent"
 				
-				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "CharConn"
+				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "FusionGENConn"
 #################################################################
-			} else {
-				Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
-			}
+			# } else {
+				# Write-Host "Table '$table' does not exist, skipping restore for this table." -ForegroundColor Yellow
+			# }
 #################################################################
 		}
 #################################################################

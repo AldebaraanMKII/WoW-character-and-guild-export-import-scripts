@@ -10,7 +10,7 @@ function Restore-Guild {
 	)
 	
 	#Check if guild exists
-	$Query = "SELECT guildid FROM guild WHERE name = '$GuildName';"
+	$Query = "SELECT guildid FROM guild WHERE name = '$GuildName' LIMIT 1;"
 	$ValueColumn = "guildid"
 	$ConnectionName = "CharConn"
 	$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -51,7 +51,7 @@ function Restore-Guild {
 				$characterName = $property.Value
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = '$characterName';"
+				$Query = "SELECT guid FROM characters WHERE name = '$characterName' LIMIT 1;"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
 				$newCharGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -606,13 +606,13 @@ function Restore-Guild-Main {
 			$characterNameToSearch = Read-Host "Enter character name"
 			
 			# check if character exists first
-			$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
+			$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch LIMIT 1;"
 			$ValueColumn = "guid"
 			$ConnectionName = "CharConn"
 			$characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
 			if ($characterGuid){
 				#check if character already is a member of a guild
-				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = $characterGuid;"
+				$Query = "SELECT COUNT(*) as count FROM guild_member WHERE guid = $characterGuid LIMIT 1;"
 				$ValueColumn = "count"
 				$ConnectionName = "CharConn"
 				$FoundRow = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -638,7 +638,7 @@ function Restore-Guild-Main {
 				$characterNameToSearch = Read-Host "Enter character name"
 				
 				# check if character exists first
-				$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch;"
+				$Query = "SELECT guid FROM characters WHERE name = $characterNameToSearch LIMIT 1;"
 				$ValueColumn = "guid"
 				$ConnectionName = "CharConn"
 				$characterGuid = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName

@@ -74,7 +74,7 @@ function Restore-Character {
 			$modifiedSqlQuery = "INSERT INTO characters VALUES " + ($modifiedRows -join ",") + ";"
 ############################################
 			# check if character exists first, if yes return
-			$Query = "SELECT guid FROM characters WHERE name = $characterName;"
+			$Query = "SELECT guid FROM characters WHERE name = $characterName LIMIT 1;"
 			$ValueColumn = "guid"
 			$ConnectionName = "CharConn"
 			$result = Check-Value-in-DB -Query $Query -ValueColumn $ValueColumn -ConnectionName $ConnectionName
@@ -1093,6 +1093,48 @@ function Restore-All-Accounts-Main {
 		#List to store character folder paths
 		$CharacterFolderList = @()
 ####################################################################
+		#delete all character data before full restore, needed because of bots that may have similar names as players
+		$Query = 'DELETE FROM `acore_characters`.`characters` WHERE `name` != "Ahbot";
+		DELETE FROM `acore_characters`.`arena_team_member` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`arena_team` WHERE `arenaTeamId` NOT IN (SELECT `arenaTeamId` FROM `acore_characters`.`arena_team_member`);
+		DELETE FROM `acore_characters`.`character_account_data` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_achievement` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_achievement_progress` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_action` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_aura` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_glyphs` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_homebind` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`item_instance` WHERE `owner_guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`) AND `owner_guid` > 0;
+		DELETE FROM `acore_characters`.`character_inventory` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_pet` WHERE `owner` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`pet_aura` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
+		DELETE FROM `acore_characters`.`pet_spell` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
+		DELETE FROM `acore_characters`.`pet_spell_cooldown` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
+		DELETE FROM `acore_characters`.`character_queststatus` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_rewarded` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_reputation` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_skills` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_social` WHERE `friend` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_spell` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_spell_cooldown` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_talent` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`corpse` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`groups` WHERE `leaderGuid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`group_member` WHERE `memberGuid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`mail` WHERE `receiver` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`mail_items` WHERE `receiver` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`guild` WHERE `leaderguid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`guild_bank_eventlog` WHERE `guildid` NOT IN (SELECT `guildid` FROM `acore_characters`.`guild`);
+		DELETE FROM `acore_characters`.`guild_member` WHERE `guildid` NOT IN (SELECT `guildid` FROM `acore_characters`.`guild`) OR `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`guild_rank` WHERE `guildid` NOT IN (SELECT `guildid` FROM `acore_characters`.`guild`);
+		DELETE FROM `acore_characters`.`petition` WHERE `ownerguid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`petition_sign` WHERE `ownerguid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`) OR `playerguid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`custom_reagent_bank` WHERE `character_id` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`custom_transmogrification` WHERE `Owner` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`custom_transmogrification_sets` WHERE `Owner` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);'
+####################################################################
+		Execute-Query -query $Query -ConnectionName "CharConn"
+####################################################################
 		foreach ($accountFolder in $accountFolders) {
 			$accountName = $accountFolder.Name
 			Write-Host "`nRestoring account: $accountName" -ForegroundColor Blue
@@ -1261,6 +1303,8 @@ function Restore-All-Accounts-Main {
 		# foreach ($characterFolder in $CharacterFolderList) {
 			# Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
 		# }
+		
+	    Write-Host "`nRestoring friend lists..." -ForegroundColor Cyan
 		$totalChars = $CharacterFolderList.Count
 		$charCounter = 0
 		
@@ -1272,7 +1316,7 @@ function Restore-All-Accounts-Main {
 		
 			Restore-Multiple-Character-Tables -account $accountName -accountID $accountId -BackupDir $characterFolder
 		
-			if ($charCounter % 50 -eq 0) {
+			if ($charCounter % 100 -eq 0) {
 				Write-Host "Processed $charCounter characters so far..." -ForegroundColor Cyan
 			}
 		}
