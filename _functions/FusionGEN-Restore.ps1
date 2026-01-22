@@ -7,6 +7,8 @@ function Restore-FusionGEN {
 		[string]$AccountCharacterBackupDir
 	)
 #################################################################
+	Write-Host "`nRestoring FusionGEN website data..." -ForegroundColor Cyan
+	Write-Host "`nLoading JSON ID Lists..." -ForegroundColor Cyan
 	# Load JSON lists
 	$JsonList = @(
 		@("Accounts",	$guidMappingAccounts),
@@ -19,6 +21,7 @@ function Restore-FusionGEN {
 		$guidMapping = $entry[1]
 		$JsonFilePath = "$AccountCharacterBackupDir\$JsonName.json"
 		if (Test-Path -Path $JsonFilePath) {
+			Write-Host "Loading $($JsonName).json..." -ForegroundColor Cyan
 			# Read JSON file and convert to objects
 			$jsonData = Get-Content $JsonFilePath -Raw | ConvertFrom-Json
 			# Clear current ArrayList if you want to replace contents
@@ -29,15 +32,14 @@ function Restore-FusionGEN {
 			}
 		}
 	}
+	Write-Host "JSON ID lists loading complete." -ForegroundColor Green
 	
-#################################################################
-	Write-Host "`nRestoring FusionGEN website data..." -ForegroundColor Cyan
 #################################################################
 	$tables = @(
 		@("account_data",	0, $guidMappingAccounts),
 		@("acl_account_groups",	0, $guidMappingAccounts),
 		@("acl_account_permissions", 0, $guidMappingAccounts),
-		@("acl_account_roles",	0, $guidMappingAccounts, 1, $guidMappingCharacters)
+		@("acl_account_roles",	0, $guidMappingAccounts, 1, $guidMappingCharacters),
 		@("articles", 2, $guidMappingAccounts),
 		@("comments", 2, $guidMappingAccounts),
 		@("changelog", 2, $guidMappingAccounts),
