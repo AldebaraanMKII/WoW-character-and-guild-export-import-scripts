@@ -646,6 +646,7 @@ function Restore-Guild-Main {
 	Close-SqlConnection -ConnectionName "AuthConn"
 	Close-SqlConnection -ConnectionName "CharConn"
 	Close-SqlConnection -ConnectionName "WorldConn"
+	[console]::beep()
 }
 #################################################################
 function Restore-All-Guilds-Main {

@@ -124,9 +124,12 @@ function Backup-FusionGEN {
 		
 		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --add-drop-table --skip-add-locks --skip-comments --compact --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
 		
-		Invoke-Expression $mysqldumpCommand
+		# Invoke-Expression $mysqldumpCommand
+		Invoke-Expression $mysqldumpCommand 2>$null
+
 		if ($LASTEXITCODE -eq 0) {
 			# Write-Host "Backed up data from $table to $backupFile" -ForegroundColor Green
+			Write-Host "Backed up data from $table." -ForegroundColor Green
 		} else {
 			Write-Host "Error backing up data from $tableName to $backupFile." -ForegroundColor Red
 		}
@@ -139,13 +142,18 @@ function Backup-FusionGEN {
 function Backup-FusionGen-Main {
 	Open-MySqlConnection -Server $SourceServerName -Port $SourcePort -Database $SourceDatabaseFusionGEN -Credential (New-Object System.Management.Automation.PSCredential($SourceUsername, (ConvertTo-SecureString $SourcePassword -AsPlainText -Force))) -ConnectionName "FusionGENConn"
 	try {
+		$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 		$CurrentDate = Get-Date -Format "yyyyMMdd_HHmmss"
 		$BackupDir = "$FusionGENBackupDir\full_backups\$SourceServerName ($($CurrentDate))"
 		Backup-FusionGEN -BackupDir $BackupDir
 	} catch {
+		$stopwatch.Stop()
 		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
 	} finally {
 		Close-SqlConnection -ConnectionName "FusionGENConn"
+		$stopwatch.Stop()
+		Write-Host "`nFusionGEN data backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
+		[console]::beep()
 	}
 }
 #################################################################

@@ -49,7 +49,7 @@ function Backup-TableData {
 	$whereClause = "$columnName=$value"
 	
 	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabase`" `"$tableName`" > `"$backupFile`""
-	Invoke-Expression $mysqldumpCommand
+	Invoke-Expression $mysqldumpCommand 2>$null
 	
 	if ($LASTEXITCODE -eq 0) {
 		# Write-Host "Backed up data from $table to $backupFile" -ForegroundColor Green
@@ -79,7 +79,7 @@ function Backup-TableData-Array {
 	$whereClause = "$columnName IN ($valuesList)"
 	
 	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabase`" `"$tableName`" > `"$backupFile`""
-	Invoke-Expression $mysqldumpCommand
+	Invoke-Expression $mysqldumpCommand 2>$null
 
 	if ($LASTEXITCODE -eq 0) {
 		# Write-Host "Backed up data from $table to $backupFile" -ForegroundColor Green

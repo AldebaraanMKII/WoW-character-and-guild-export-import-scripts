@@ -262,11 +262,11 @@ function Backup-Guild-Main {
 	}
 	
 	Close-SqlConnection -ConnectionName "CharConn"
+	[console]::beep()
 }
 #################################################################
 function Backup-All-Guilds-Main-Wrapper {
 	Backup-Guild-Main -AllGuilds
-	[console]::beep()
 }
 #################################################################
 #endregion

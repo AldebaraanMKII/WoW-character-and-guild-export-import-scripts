@@ -318,6 +318,7 @@ function Backup-Character-Main {
 	Close-SqlConnection -ConnectionName "AuthConn"
 	Close-SqlConnection -ConnectionName "CharConn"
 	Close-SqlConnection -ConnectionName "WorldConn"
+	[console]::beep()
 }
 #################################################################
 function Backup-All-Accounts-Main {

@@ -1013,6 +1013,7 @@ function Restore-Character-Main {
 	Close-SqlConnection -ConnectionName "AuthConn"
 	Close-SqlConnection -ConnectionName "CharConn"
 	# Close-SqlConnection -ConnectionName "WorldConn"
+	[console]::beep()
 }
 #################################################################
 function Restore-All-Accounts-Main {
