@@ -148,7 +148,8 @@ function Check-Value-in-DB {
 		$value = $null
 		try {
 			# Write-Host "Query: $Query" -ForegroundColor Cyan
-			$Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
+			# $Result = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
+			$Result = Invoke-SqlScalar -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
 			
 			if ($Result) {
 				$value = $Result.$ValueColumn
@@ -2685,12 +2686,12 @@ function Backup-FusionGEN {
 		"articles",
 		"avatars",
 		"backup",
+		# "ci_sessions",
 		"changelog",
 		"changelog_type",
 		
 		"character_tools_free",
 		"character_trade",
-		"ci_sessions",
 		"comments",
 		"cta_logs",
 		
@@ -2762,7 +2763,7 @@ function Backup-FusionGEN {
 		"tag",
 		
 		"teleport_locations",
-		"visitor_log",
+		# "visitor_log",
 		"vote_log",
 		
 		"vote_sites",
@@ -2770,6 +2771,12 @@ function Backup-FusionGEN {
 		"wheel_rewards_items",
 		"wheel_upgrade_options"
 	)
+	
+	#if this is set to true, backup the log tables as well
+	if ($FusionGENProcessLogTables) {
+		$tables += "ci_sessions"
+		$tables += "visitor_log"
+	}
 #################################################################
 	foreach ($table in $tables) {
 		$backupFile = "$BackupDir\$table.sql"
@@ -2896,7 +2903,7 @@ function Restore-FusionGEN {
 	}
 #################################################################
 	# this is for tables that do not need any ID replacement
-	$tables2 = @(
+	$tables = @(
 		"access_trade_items",
 		"levelup_items",
 		"member_id_features",
@@ -2909,7 +2916,7 @@ function Restore-FusionGEN {
 		"backup",
 		"changelog_type",
 		"character_tools_free",
-		"ci_sessions",
+		# "ci_sessions",
 		"daily_signups",
 		"data_wotlk_itemdisplayinfo",
 		"email_change_key",
@@ -2947,36 +2954,32 @@ function Restore-FusionGEN {
 		"store_items",
 		"tag",
 		"teleport_locations",
-		"visitor_log",
+		# "visitor_log",
 		"vote_sites",
 		"wheel_rewards_items",
 		"wheel_upgrade_options"
 	)
+	
+	#if this is set to true, restore the log tables as well
+	if ($FusionGENProcessLogTables) {
+		$tables += "ci_sessions"
+		$tables += "visitor_log"
+	}
 #################################################################
-	foreach ($entry in $tables2) {
+	foreach ($entry in $tables) {
 		$table       = $entry[0]
 		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
 	
 		if (Test-Path -Path $sqlFilePath) {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
-			if (Table-Exists -TableName $table -ConnectionName "FusionGENConn") {
-				# Output the modified SQL to verify
-				Write-Host "`nSQL for table $($table): $sqlContent"
-				
-				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
-#################################################################
-			} else {
-				Write-Host "Table '$table' does not exist, Creating it..." -ForegroundColor Cyan
-				# Output the modified SQL to verify
-				Write-Host "`nSQL for table $($table): $sqlContent"
-				
-				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
-			}
-#################################################################
+			Write-Host "Backing up table $($table)..." -ForegroundColor Cyan
+			# Output the modified SQL to verify
+			Write-Host "SQL for table $($table): $sqlContent" -ForegroundColor White
+			
+			Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "CharConn"
 		}
 #################################################################
 	}
-	
 #################################################################
 }
 #################################################################
@@ -2994,6 +2997,26 @@ function Backup-FusionGen-Main {
 }
 #################################################################
 function Restore-FusionGen-Main {
+	# DROP DATABASE IF EXISTS `website`;
+	# CREATE DATABASE IF NOT EXISTS `website` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+	# USE `website`;
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database "mysql" -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "MysqlConn"
+
+	$databaseName = "website"
+	
+	$query = "SELECT SCHEMA_NAME 
+			FROM INFORMATION_SCHEMA.SCHEMATA 
+			WHERE SCHEMA_NAME = '$databaseName';"
+	
+	$result = Invoke-SqlQuery -Query $query
+	
+	if ($result) {
+		Write-Host "Database $databaseName exists."
+	} else {
+		Write-Host "Database $databaseName does not exist."
+		Invoke-SqlQuery -Query "CREATE DATABASE IF NOT EXISTS 'website';"
+	}
+
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseFusionGEN -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "FusionGENConn"
 	try {
 #################################################################
@@ -3072,6 +3095,7 @@ function Restore-FusionGen-Main {
 	} catch {
 		Write-Host "An error occurred (line $($_.InvocationInfo.ScriptLineNumber)): $($_.Exception.Message)" -ForegroundColor Red
 	} finally {
+		Close-SqlConnection -ConnectionName "MysqlConn"
 		Close-SqlConnection -ConnectionName "FusionGENConn"
 	}
 }
