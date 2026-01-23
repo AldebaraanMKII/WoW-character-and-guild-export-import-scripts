@@ -1132,6 +1132,7 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`pet_spell` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
 		DELETE FROM `acore_characters`.`pet_spell_cooldown` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
 		DELETE FROM `acore_characters`.`character_arena_stats` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_banned` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_entry_point` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_instance` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_queststatus` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
