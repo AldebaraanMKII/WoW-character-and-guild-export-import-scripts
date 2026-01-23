@@ -1135,8 +1135,6 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`character_banned` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_entry_point` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_instance` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
-		DELETE FROM `acore_characters`.`character_queststatus` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
-		DELETE FROM `acore_characters`.`character_queststatus_rewarded` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_reputation` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_settings` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_skills` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
@@ -1151,7 +1149,6 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`character_queststatus_rewarded` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_queststatus_seasonal` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_queststatus_weekly` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
-		DELETE FROM `acore_characters`.`character_queststatus_daily` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`corpse` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`groups` WHERE `leaderGuid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`group_member` WHERE `memberGuid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
