@@ -1111,6 +1111,9 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`pet_aura` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
 		DELETE FROM `acore_characters`.`pet_spell` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
 		DELETE FROM `acore_characters`.`pet_spell_cooldown` WHERE `guid` NOT IN (SELECT `id` FROM `acore_characters`.`character_pet`);
+		DELETE FROM `acore_characters`.`character_arena_stats` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_entry_point` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_instance` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_queststatus` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_queststatus_rewarded` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_reputation` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
@@ -1119,7 +1122,15 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`character_social` WHERE `friend` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_spell` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_spell_cooldown` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_stats` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_talent` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_daily` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_monthly` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_rewarded` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_seasonal` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_weekly` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_queststatus_daily` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`corpse` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`groups` WHERE `leaderGuid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`group_member` WHERE `memberGuid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
