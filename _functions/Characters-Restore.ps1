@@ -1357,16 +1357,16 @@ function Restore-All-Accounts-Main {
 ####################################################################
 		# Convert mappings to json and dump them
 		$Json = $guidMappingAccounts | ConvertTo-Json -Depth 3
-		$Json | Out-File "$($chosenFolder)/Accounts.json" -Encoding UTF8
+		$Json | Out-File "$($chosenFolder)/Accounts.json" -Encoding UTF8 -Force
 		
 		$Json = $guidMappingCharacters | ConvertTo-Json -Depth 3
-		$Json | Out-File "$($chosenFolder)/Characters.json" -Encoding UTF8
+		$Json | Out-File "$($chosenFolder)/Characters.json" -Encoding UTF8 -Force
 		
 		$Json = $guidMappingpPets | ConvertTo-Json -Depth 3
-		$Json | Out-File "$($chosenFolder)/Pets.json" -Encoding UTF8
+		$Json | Out-File "$($chosenFolder)/Pets.json" -Encoding UTF8 -Force
 		
 		$Json = $guidMappingItems | ConvertTo-Json -Depth 3
-		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8
+		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8 -Force
 ####################################################################
 		$stopwatch.Stop()
 		Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
