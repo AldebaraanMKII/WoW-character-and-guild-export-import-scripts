@@ -214,17 +214,18 @@ function Restore-FusionGen-Main {
 
 	$databaseName = "website"
 	
-	$query = "SELECT SCHEMA_NAME 
+	$query = 'SELECT SCHEMA_NAME 
 			FROM INFORMATION_SCHEMA.SCHEMATA 
-			WHERE SCHEMA_NAME = '$databaseName';"
+			WHERE SCHEMA_NAME = "website";'
 	
-	$result = Invoke-SqlQuery -ConnectionName "MysqlConn" -Query $query
+	$result = Invoke-SqlQuery -ConnectionName "MysqlConn" -Query $query 3>$null		#supress warnings when no results found
 	
 	if ($result) {
 		Write-Host "Database $databaseName exists." -ForegroundColor Cyan
 	} else {
 		Write-Host "Database $databaseName does not exist. Creating it..." -ForegroundColor Yellow
-		Invoke-SqlQuery -ConnectionName "MysqlConn" -Query "CREATE DATABASE IF NOT EXISTS '$databaseName';"
+		Invoke-SqlQuery -ConnectionName "MysqlConn" -Query 'CREATE DATABASE IF NOT EXISTS `website` DEFAULT CHARACTER SET UTF8MB4 COLLATE utf8mb4_unicode_ci;' 3>$null		#supress warnings when no results found
+		Invoke-SqlQuery -ConnectionName "MysqlConn" -Query "GRANT ALL PRIVILEGES ON `website` . * TO 'acore'@'localhost' WITH GRANT OPTION;" 3>$null		#supress warnings when no results found
 	}
 
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseFusionGEN -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "FusionGENConn"
