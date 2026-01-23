@@ -45,16 +45,16 @@ $guidMappingGuilds = [System.Collections.ArrayList]::new()
 Function Show-Menu {
 	Write-Host "`nWoW Backup/Restore Scripts" -ForegroundColor Green
 	Write-Host "`nSelect a option:" -ForegroundColor Green
-	Write-Host "1. Backup character(s)." -ForegroundColor Green
-	Write-Host "2. Restore character(s)." -ForegroundColor Green
-	Write-Host "3. Backup all accounts and characters." -ForegroundColor Green
-	Write-Host "4. Restore all accounts and characters." -ForegroundColor Green
-	Write-Host "5. Backup guild(s)." -ForegroundColor Green
-	Write-Host "6. Restore guild(s)." -ForegroundColor Green
-	Write-Host "7. Backup all guilds." -ForegroundColor Green
-	Write-Host "8. Restore all guilds." -ForegroundColor Green
-	Write-Host "9. Backup FusionGEN data." -ForegroundColor Green
-	Write-Host "10. Restore FusionGEN data." -ForegroundColor Green
+	Write-Host "1. Backup all accounts and characters." -ForegroundColor Green
+	Write-Host "2. Restore all accounts and characters." -ForegroundColor Green
+	Write-Host "3. Backup all guilds." -ForegroundColor Green
+	Write-Host "4. Restore all guilds." -ForegroundColor Green
+	Write-Host "5. Backup FusionGEN website data." -ForegroundColor Green
+	Write-Host "6. Restore FusionGEN website data." -ForegroundColor Green
+	Write-Host "7. Backup character(s)." -ForegroundColor Green
+	Write-Host "8. Restore character(s)." -ForegroundColor Green
+	Write-Host "9. Backup guild(s)." -ForegroundColor Green
+	Write-Host "10. Restore guild(s)." -ForegroundColor Green
 	Write-Host "11. Exit script" -ForegroundColor Green
 }
 ########################################
@@ -71,35 +71,35 @@ try {
             Show-Menu #shows menu options
             $choice = $(Write-Host "`nType a number (1-9):" -ForegroundColor green -NoNewLine; Read-Host) 
 ########################################
-            if ($choice -eq 1) {
-                Backup-Character-Main
-########################################
-            } elseif ($choice -eq 2){
-                Restore-Character-Main
-########################################
-            } elseif ($choice -eq 3){
+            if ($choice -eq 1){
                 Backup-All-Accounts-Main
 ########################################
-            } elseif ($choice -eq 4){
+            } elseif ($choice -eq 2){
                 Restore-All-Accounts-Main
 ########################################
-            } elseif ($choice -eq 5){
-                Backup-Guild-Main
-########################################
-            } elseif ($choice -eq 6){
-                Restore-Guild-Main
-########################################
-            } elseif ($choice -eq 7){
+            } elseif ($choice -eq 3){
                 Backup-All-Guilds-Main-Wrapper
 ########################################
-            } elseif ($choice -eq 8){
+            } elseif ($choice -eq 4){
                 Restore-All-Guilds-Main
 ########################################
-            } elseif ($choice -eq 9){
+            } elseif ($choice -eq 5){
                 Backup-FusionGen-Main
 ########################################
-            } elseif ($choice -eq 10){
+            } elseif ($choice -eq 6){
                 Restore-FusionGen-Main
+########################################
+            } elseif ($choice -eq 7) {
+                Backup-Character-Main
+########################################
+            } elseif ($choice -eq 8){
+                Restore-Character-Main
+########################################
+            } elseif ($choice -eq 9){
+                Backup-Guild-Main
+########################################
+            } elseif ($choice -eq 10){
+                Restore-Guild-Main
 ######################################## exit
             } elseif ($choice -eq 11){
                 exit
