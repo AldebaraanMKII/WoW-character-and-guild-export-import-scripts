@@ -534,6 +534,21 @@ function Restore-Character {
 							# Read the contents of the .sql file
 							$sqlContent = Get-Content -Path $sqlFilePath -Raw
 							
+############################################
+							$maxIDResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM auctionhouse" 3>$null		#supress warnings when no results found
+			
+							# Extract the numeric value from the DataRow
+							if ($maxIDResult -and $maxIDResult.MaxID -ne [DBNull]::Value) {
+								$maxID = $maxIDResult.MaxID
+							} else {
+								# If no records found, set maxID to 0
+								$maxID = 0
+							}
+							
+							#assign new ID to highest value in column ID + 1
+							$newAuctionID = $maxID + 1
+############################################
+							
 							# Extract values inside parentheses
 							$pattern = "(?<=\().*?(?=\))"
 							$matches = [regex]::Matches($sqlContent, $pattern)
@@ -547,7 +562,10 @@ function Restore-Character {
 								
 								# Split the row into individual values
 								$values = $match -split ","
-								
+############################################ THIS IS FOR AUCTION ID
+								#get a new ID
+								$newAuctionIDValue = $newAuctionID + $i
+								$values[0] = $newAuctionIDValue
 ############################################ THIS IS FOR ITEM GUID
 								# Get the current value in the target column (adjust for 0-based index)
 								$currentValue = $values[2]
@@ -1094,8 +1112,10 @@ function Restore-All-Accounts-Main {
 		#List to store character folder paths
 		$CharacterFolderList = @()
 ####################################################################
+		Write-Host "`nDeleting existing characters..." -ForegroundColor Blue
 		#delete all character data before full restore, needed because of bots that may have similar names as players
 		$Query = 'DELETE FROM `acore_characters`.`characters` WHERE `name` != "Ahbot";
+		DELETE FROM `acore_characters`.`auctionhouse` WHERE `itemowner` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`arena_team_member` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`arena_team` WHERE `arenaTeamId` NOT IN (SELECT `arenaTeamId` FROM `acore_characters`.`arena_team_member`);
 		DELETE FROM `acore_characters`.`character_account_data` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
