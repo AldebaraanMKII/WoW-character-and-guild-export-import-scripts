@@ -65,11 +65,12 @@ function Restore-FusionGEN {
 		@("wheel_logs", 1, $guidMappingAccounts, 3, $guidMappingCharacters)
 	)
 #################################################################
+	Write-Host "`nRestoring data..." -ForegroundColor Cyan
 	foreach ($entry in $tables) {
 		$table       = $entry[0]
 		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
 	
-		Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
+		Write-Host "Restoring data for table $($table)..." -ForegroundColor Cyan
 		if (Test-Path -Path $sqlFilePath) {
 			# Read the full SQL file
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -109,21 +110,80 @@ function Restore-FusionGEN {
 				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "FusionGENConn"
 #################################################################
 			} else {
-				Write-Host "Table $($table): no INSERT statements found (table structure only). Executing sql as it is." -ForegroundColor Yellow
+				# Write-Host "Table $($table): no INSERT statements found (table structure only). Executing SQL file as it is." -ForegroundColor Yellow
 				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "FusionGENConn"
 			}
 		}
 	}
-	
+#################################################################
 	#Process articles
-	
-	$tables = @(
-		@("articles", 2, $guidMappingAccounts),
+	$tables2 = @(
+		,@("articles", 2, $guidMappingAccounts)
 	)
-	
+#################################################################
+	foreach ($entry in $tables2) {
+		$table       = $entry[0]
+		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
+		
+		Write-Host "Restoring data for table $($table)..." -ForegroundColor Cyan
+#################################################################
+		if (Test-Path -Path $sqlFilePath) {
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+		
+			# Pattern to match full INSERT statements (handles multi-row inserts)
+			$insertPattern = "INSERT INTO.*?VALUES\s*\(.*?\)(?:,\(.*?\))*;"
+#################################################################
+			if ($sqlContent -match $insertPattern) {
+				$mappings = $entry[1..($entry.Count - 1)]
+		
+				# Match each INSERT statement
+				$modifiedSqlContent = [regex]::Replace($sqlContent, $insertPattern, {
+					param($match)
+					$stmt = $match.Value
+		
+					# Pattern to match each row inside parentheses
+					$rowPattern = "\((?>[^()']+|'[^']*')*\)"
+		
+					$stmt = [regex]::Replace($stmt, $rowPattern, {
+						param($innerMatch)
+		
+						# Split values by commas not inside quotes
+						$values = [regex]::Split(
+							$innerMatch.Value.Trim("()"),
+							",(?=(?:[^']*'[^']*')*[^']*$)"
+						)
+		
+						# Apply mappings
+						for ($i = 0; $i -lt $mappings.Count; $i += 2) {
+							$colIndex   = $mappings[$i]
+							$mappingSet = $mappings[$i + 1]
+		
+							if ($colIndex -ge 0 -and $mappingSet) {
+								$oldValue = $values[$colIndex].Trim()
+								$map = $mappingSet | Where-Object { $_.OldGuid -eq $oldValue }
+								if ($map) { $values[$colIndex] = $map.NewGuid }
+							}
+						}
+		
+						return "(" + ($values -join ",") + ")"
+					})
+		
+					return $stmt
+				})
+		
+				# Write-Host "Modified SQL for table $($table): $modifiedSqlContent"
+				Execute-Query -query "$modifiedSqlContent" -tablename $table -ConnectionName "FusionGENConn"
+			}
+#################################################################
+			else {
+				# Write-Host "Table $($table): no INSERT statements found (table structure only). Executing SQL file as it is." -ForegroundColor Yellow
+				Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "FusionGENConn"
+			}
+		}
+	}
 #################################################################
 	# this is for tables that do not need any ID replacement
-	$tables = @(
+	$tables3 = @(
 		"access_trade_items",
 		"levelup_items",
 		"member_id_features",
@@ -182,24 +242,23 @@ function Restore-FusionGEN {
 	
 	#if this is set to true, restore the log tables as well
 	if ($FusionGENProcessLogTables) {
-		$tables += "ci_sessions"
-		$tables += "visitor_log"
+		$tables3 += "ci_sessions"
+		$tables3 += "visitor_log"
 	}
 #################################################################
-	foreach ($entry in $tables) {
-		$table       = $entry[0]
+	Write-Host "`nRestoring data for tables that do not need ID replacements..." -ForegroundColor Cyan
+	foreach ($table in $tables3) {
 		$sqlFilePath = "$FusionGENBackupDir\$table.sql"
 	
 		if (Test-Path -Path $sqlFilePath) {
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
-			Write-Host "`nRestoring data for table $($table)..." -ForegroundColor Cyan
-			Write-Host "Table $($table): No ID replacement necessary. Executing sql as it is." -ForegroundColor Green
+			Write-Host "Restoring data for table $($table)..." -ForegroundColor Cyan
+			# Write-Host "Table $($table): No ID replacement necessary. Executing sql as it is." -ForegroundColor Green
 			# Output the modified SQL to verify
 			# Write-Host "SQL for table $($table): $sqlContent" -ForegroundColor White
 			
 			Execute-Query -query "$sqlContent" -tablename $table -ConnectionName "FusionGENConn"
 		}
-#################################################################
 	}
 #################################################################
 }
