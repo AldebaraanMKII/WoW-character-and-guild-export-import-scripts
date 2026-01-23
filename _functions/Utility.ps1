@@ -111,7 +111,9 @@ function Execute-Query {
 	)
 
 	try {
-		# Write-Output "Query: $Query"
+		# if ($TableName -in @("character_settings")) {
+			# Write-Output "[$($TableName)] Query: $Query"
+		# }
 		Invoke-SqlUpdate -ConnectionName $ConnectionName -Query $Query | Out-Null
 		# Write-Output "Query for $TableName executed successfully." -ForegroundColor Green
 	} catch {

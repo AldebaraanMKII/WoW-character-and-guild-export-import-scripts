@@ -28,6 +28,7 @@ function Restore-Character {
 			
 			# Calculate the new GUID as the next sequential number
 			$newGuid = $maxGuid + 1
+			# Write-Host "New GUID: $newGuid" -ForegroundColor Cyan
 				
 			# Read the content of the SQL file as a single string
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -1113,6 +1114,7 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`character_queststatus` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_queststatus_rewarded` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_reputation` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
+		DELETE FROM `acore_characters`.`character_settings` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_skills` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_social` WHERE `friend` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`character_spell` WHERE `guid` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
@@ -1133,7 +1135,7 @@ function Restore-All-Accounts-Main {
 		DELETE FROM `acore_characters`.`custom_transmogrification` WHERE `Owner` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);
 		DELETE FROM `acore_characters`.`custom_transmogrification_sets` WHERE `Owner` NOT IN (SELECT `guid` FROM `acore_characters`.`characters`);'
 ####################################################################
-		Execute-Query -query $Query -ConnectionName "CharConn"
+		Invoke-SqlUpdate -ConnectionName "CharConn" -Query $Query | Out-Null
 ####################################################################
 		foreach ($accountFolder in $accountFolders) {
 			$accountName = $accountFolder.Name
