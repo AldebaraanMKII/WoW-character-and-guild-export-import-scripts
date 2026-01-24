@@ -1352,6 +1352,7 @@ function Restore-All-Accounts-Main {
 			}
 		}
 ####################################################################
+		Write-Host "Dumping IDs to JSONs..." -ForegroundColor Cyan
 		# Convert mappings to json and dump them
 		$Json = $guidMappingAccounts | ConvertTo-Json -Depth 3
 		$Json | Out-File "$($chosenFolder)/Accounts.json" -Encoding UTF8 -Force
@@ -1364,6 +1365,7 @@ function Restore-All-Accounts-Main {
 		
 		$Json = $guidMappingItems | ConvertTo-Json -Depth 3
 		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8 -Force
+		Write-Host "JSON dump complete!" -ForegroundColor Green
 ####################################################################
 		$stopwatch.Stop()
 		Write-Host "`nAll accounts and characters restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green

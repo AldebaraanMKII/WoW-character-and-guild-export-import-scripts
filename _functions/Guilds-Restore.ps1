@@ -731,12 +731,14 @@ function Restore-All-Guilds-Main {
 			}
 		}
 #################################################################### 
+		Write-Host "Dumping IDs to JSONs..." -ForegroundColor Cyan
 		# Convert mappings to json and dump them
 		$Json = $guidMappingItems | ConvertTo-Json -Depth 3
 		$Json | Out-File "$($chosenFolder)/Items.json" -Encoding UTF8 -Force
 		
 		$Json = $guidMappingGuilds | ConvertTo-Json -Depth 3
 		$Json | Out-File "$($chosenFolder)/Guilds.json" -Encoding UTF8 -Force
+		Write-Host "JSON dump complete!" -ForegroundColor Green
 ####################################################################
 		$stopwatch.Stop()
 		Write-Host "`nAll guilds restored in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
