@@ -80,7 +80,10 @@ function Restore-Guild {
 		$parts = $innerValues -split ",", 4  # Split into: 0:guildid, 1:name, 2:leaderguid, 3:the_rest
 		
 		#get the old ID
-		$oldGuid = $parts[0]
+		# $oldGuid = $parts[0]
+		# get the old ID cleanly
+		$oldGuid = [regex]::Match($parts[0], "\d+").Value
+
 		#add to list
 		$guidMappingGuilds.Add([pscustomobject]@{
 			GuildName	= $GuildName
@@ -160,7 +163,7 @@ function Restore-Guild {
 		
 			if ($modifiedRows.Count -gt 0) {
 				# Clean up target table for this guild
-				Invoke-SqlUpdate -ConnectionName "CharConn" -Query "DELETE FROM guild_member WHERE guildid = $newGuildID"
+				Invoke-SqlUpdate -ConnectionName "CharConn" -Query "DELETE FROM guild_member WHERE guildid = $newGuildID" | Out-Null
 		
 				# Construct and execute final query
 				$finalQuery = "INSERT INTO `guild_member` VALUES " + ($modifiedRows -join ",") + ";"
