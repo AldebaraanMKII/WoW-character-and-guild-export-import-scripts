@@ -32,20 +32,18 @@ $mysqldumpPath = "E:\Games\WoW Server Files\My Repack\mysql\bin\mysqldump.exe"
 $mysqlPath = "E:\Games\WoW Server Files\My Repack\mysql\bin\mysql.exe"
 ###################################################################
 # Backup directory for sqls
-# $CharacterBackupDir = "$PSScriptRoot/data_character"
-$CharacterBackupDir = "C:\Users\Antares\Desktop\New folder\data_character"
+$CharacterBackupDir = "$PSScriptRoot/data_character"
 # Backup directory for guild sqls
-# $GuildBackupDir = "$PSScriptRoot/data_guild"
-$GuildBackupDir = "C:\Users\Antares\Desktop\New folder\data_guild"
+$GuildBackupDir = "$PSScriptRoot/data_guild"
 # Backup directory for FusionGEN sqls
-# $FusionGENBackupDir = "$PSScriptRoot/data_fusiongen"
-$FusionGENBackupDir = "C:\Users\Antares\Desktop\New folder\data_fusiongen"
+$FusionGENBackupDir = "$PSScriptRoot/data_fusiongen"
 ###################################################################
 # Map and zone names
 $MapZoneDBFilePath = "$PSScriptRoot/Map_Zone_Names.sqlite3"
 ###################################################################
 # Regex filters
-$AccountNameRegexFilter = "^(?!.*(RNDBOT|AHBOT)).*$"    #excludes both RNDBOT and AHBOT accounts
+# $AccountNameRegexFilter = "^(?!.*(RNDBOT|AHBOT)).*$"    #excludes both RNDBOT and AHBOT accounts
+$AccountNameRegexFilter = "^(?!.*(RNDBOT)).*$"    #excludes both RNDBOT and AHBOT accounts
 $CharacterNameRegexFilter = ""
 $GuildNameRegexFilter = ""
 ###################################################################
