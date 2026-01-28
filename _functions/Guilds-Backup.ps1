@@ -77,7 +77,7 @@ function Backup-Guild {
 				# Write-Host $mysqldumpCommand
 				
 				# Run the mysqldump command
-				Invoke-Expression $mysqldumpCommand
+				Invoke-Expression $mysqldumpCommand 2>$null
 								
 								
 				if ($LASTEXITCODE -eq 0) {
@@ -107,7 +107,7 @@ function Backup-Guild {
 				# Write-Host $mysqldumpCommand
 				
 				# Run the mysqldump command
-				Invoke-Expression $mysqldumpCommand
+				Invoke-Expression $mysqldumpCommand 2>$null
 								
 				if ($LASTEXITCODE -eq 0) {
 					# Write-Host "Successfully backed up item_instance table to $backupFile" -ForegroundColor Green
@@ -131,7 +131,7 @@ function Backup-Guild {
 	# Write-Host $mysqldumpCommand
 	
 	# Run the mysqldump command
-	Invoke-Expression $mysqldumpCommand
+	Invoke-Expression $mysqldumpCommand 2>$null
 
 	if ($LASTEXITCODE -eq 0) {
 		# Write-Host "Successfully backed up creature table to $backupFile" -ForegroundColor Green

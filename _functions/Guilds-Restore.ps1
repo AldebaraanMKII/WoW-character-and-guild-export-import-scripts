@@ -28,18 +28,10 @@ function Restore-Guild {
 		# Write-Host "The file exists: $sqlFilePath"
 #################################################################
 		# Get the maximum guildid from the characters table
-		$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guildid) AS MaxGuildID FROM guild" 3>$null		#supress warnings when no results found
-		
-		# Extract the numeric value from the DataRow and check for DBNull
-		if ($maxGuidResult -and $maxGuidResult.MaxGuildID -ne [DBNull]::Value) {
-			$maxGuid = $maxGuidResult.MaxGuildID
-		} else {
-			# If no records found or value is DBNull, set maxGuid to 0
-			$maxGuid = 0
-		}
-					
-		#assign new guid to highest value in column guid + 1,
-		$newGuildID = $maxGuid + 1
+		$ConnectionName = "CharConn"
+		$Query = "SELECT MAX(guildid) FROM guild"
+		$Column = "guildid"
+		$newGuildID = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 ############################ PROCESS GUILD_MEMBERS.JSON
 		Write-Host "Processing guild member data..." -ForegroundColor Cyan
 		$guidMapping = @{}
@@ -282,18 +274,10 @@ function Restore-Guild {
 			if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
 				Write-Host "Processing guild bank items..." -ForegroundColor Cyan
 				# Get the maximum GUID from the characters table
-				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance" 3>$null		#supress warnings when no results found
-				
-				# Extract the numeric value from the DataRow and check for DBNull
-				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-					$maxGuid = $maxGuidResult.MaxGuid
-				} else {
-					# If no records found or value is DBNull, set maxGuid to 0
-					$maxGuid = 0
-				}
-				
-				#assign new guid to highest value in column guid + 1
-				$newItemGuid = $maxGuid + 1
+				$ConnectionName = "CharConn"
+				$Query = "SELECT MAX(guid) FROM item_instance"
+				$Column = "guid"
+				$newItemGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 				
 				# Read the contents of the .sql file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -418,18 +402,10 @@ function Restore-Guild {
 			if (Table-Exists -TableName "guild_house" -ConnectionName "CharConn") {
 				Write-Host "Processing guild house data..." -ForegroundColor Cyan
 				# Get the maximum GUID from the characters table
-				$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxGuid FROM guild_house" 3>$null		#supress warnings when no results found
-				
-				# Extract the numeric value from the DataRow and check for DBNull
-				if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-					$maxGuid = $maxGuidResult.MaxGuid
-				} else {
-					# If no records found or value is DBNull, set maxGuid to 23
-					$maxGuid = 23
-				}
-				
-				#assign new guid to highest value in column guid + 24
-				$newRowID = $maxGuid + 1
+				$ConnectionName = "CharConn"
+				$Query = "SELECT MAX(id) FROM guild_house"
+				$Column = "id"
+				$newRowID = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 				
 				# Read the contents of the .sql file
 				$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -474,18 +450,10 @@ function Restore-Guild {
 				if (Test-Path -Path $sqlFilePath) {
 					if (Table-Exists -TableName "creature" -ConnectionName "WorldConn") {
 						# Get the maximum GUID from the characters table
-						$maxGuidResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(guid) AS MaxGuid FROM creature" 3>$null		#supress warnings when no results found
-						
-						# Extract the numeric value from the DataRow and check for DBNull
-						if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-							$maxGuid = $maxGuidResult.MaxGuid
-						} else {
-							# If no records found or value is DBNull, set maxGuid to 0
-							$maxGuid = 0
-						}
-						
-						#assign new guid to highest value in column guid + 1
-						$newCreatureGuid = $maxGuid + 1
+						$ConnectionName = "CharConn"
+						$Query = "SELECT MAX(guid) FROM creature"
+						$Column = "guid"
+						$newCreatureGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 						
 						# Read the contents of the .sql file
 						$sqlContent = Get-Content -Path $sqlFilePath -Raw

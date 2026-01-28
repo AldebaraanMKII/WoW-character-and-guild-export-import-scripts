@@ -393,5 +393,26 @@ function GetCharacterGenderString {
 	return $GenderString
 }
 #################################################################
+function GetMaxValueFromColumn {
+	param(
+		[string]$ConnectionName,
+		[string]$Query,
+		[string]$Column
+	)
+	
+	$MaxColumnResult = Invoke-SqlQuery -ConnectionName $ConnectionName -Query $Query 3>$null		#supress warnings when no results found
+	# Extract the numeric value from the DataRow
+	if ($MaxColumnResult -and $MaxColumnResult.$Column -ne [DBNull]::Value) {
+		$MaxValue = $MaxColumnResult.$Column
+	} else {
+		# If no records found, set MaxValue to 0
+		$MaxValue = 0
+	}
+	#assign new value to highest value in column + 1
+	$newID = $MaxValue + 1
+			
+	return $newID
+}
+#################################################################
 #endregion
 #################################################################

@@ -15,19 +15,10 @@ function Restore-Character {
 		if (Table-Exists -TableName "characters" -ConnectionName "CharConn") {
 			# Write-Host "The file exists: $sqlFilePath"
 	
-			# Get the maximum GUID from the characters table
-			$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM characters" 3>$null		#supress warnings when no results found
-			
-			# Extract the numeric value from the DataRow
-			if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-				$maxGuid = $maxGuidResult.MaxGuid
-			} else {
-				# If no records found, set maxGuid to 0
-				$maxGuid = 0
-			}
-			
-			# Calculate the new GUID as the next sequential number
-			$newGuid = $maxGuid + 1
+			$ConnectionName = "CharConn"
+			$Query = "SELECT MAX(guid) FROM characters"
+			$Column = "guid"
+			$newGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 			# Write-Host "New GUID: $newGuid" -ForegroundColor Cyan
 				
 			# Read the content of the SQL file as a single string
@@ -239,18 +230,10 @@ function Restore-Character {
 					if (Table-Exists -TableName "character_pet" -ConnectionName "CharConn") {
 						Write-Host "Importing pet data..." -ForegroundColor Cyan
 						
-						$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM character_pet" 3>$null		#supress warnings when no results found
-						
-						# Extract the numeric value from the DataRow
-						if ($maxGuidResult -and $maxGuidResult.MaxID -ne [DBNull]::Value) {
-							$maxGuid = $maxGuidResult.MaxID
-						} else {
-							# If no records found, set maxGuid to 0
-							$maxGuid = 0
-						}
-						
-						#assign new guid to highest value in column guid + 1
-						$newPetGuid = $maxGuid + 1
+						$ConnectionName = "CharConn"
+						$Query = "SELECT MAX(id) FROM character_pet"
+						$Column = "id"
+						$newPetGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 						
 						# Read the contents of the .sql file
 						$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -388,18 +371,10 @@ function Restore-Character {
 				if (Table-Exists -TableName "item_instance" -ConnectionName "CharConn") {
 					Write-Host "Importing character items..." -ForegroundColor Cyan
 					
-					$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(guid) AS MaxGuid FROM item_instance" 3>$null		#supress warnings when no results found
-	
-					# Extract the numeric value from the DataRow
-					if ($maxGuidResult -and $maxGuidResult.MaxGuid -ne [DBNull]::Value) {
-						$maxGuid = $maxGuidResult.MaxGuid
-					} else {
-						# If no records found, set maxGuid to 0
-						$maxGuid = 0
-					}
-					
-					#assign new guid to highest value in column guid + 1
-					$newItemGuid = $maxGuid + 1
+					$ConnectionName = "CharConn"
+					$Query = "SELECT MAX(guid) FROM item_instance"
+					$Column = "guid"
+					$newItemGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 					
 					# Read the contents of the .sql file
 					$sqlContent = Get-Content -Path $sqlFilePath -Raw
@@ -535,18 +510,10 @@ function Restore-Character {
 							$sqlContent = Get-Content -Path $sqlFilePath -Raw
 							
 ############################################
-							$maxIDResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(id) AS MaxID FROM auctionhouse" 3>$null		#supress warnings when no results found
-			
-							# Extract the numeric value from the DataRow
-							if ($maxIDResult -and $maxIDResult.MaxID -ne [DBNull]::Value) {
-								$maxID = $maxIDResult.MaxID
-							} else {
-								# If no records found, set maxID to 0
-								$maxID = 0
-							}
-							
-							#assign new ID to highest value in column ID + 1
-							$newAuctionID = $maxID + 1
+							$ConnectionName = "CharConn"
+							$Query = "SELECT MAX(id) FROM auctionhouse"
+							$Column = "id"
+							$newAuctionID = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 ############################################
 							
 							# Extract values inside parentheses
@@ -662,20 +629,11 @@ function Restore-Character {
 							if (Table-Exists -TableName "custom_transmogrification_sets" -ConnectionName "CharConn") {
 								Write-Host "Importing transmog sets..." -ForegroundColor Cyan
 								
-								# Get the maximum PresetID from the database
-								$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(PresetID) AS MaxPresetID FROM custom_transmogrification_sets" 3>$null		#supress warnings when no results found
-								
-								# Extract the numeric value from the DataRow and check for DBNull
-								if ($maxGuidResult -and $maxGuidResult.MaxPresetID -ne [DBNull]::Value) {
-									$maxGuid = $maxGuidResult.MaxPresetID
-								} else {
-									# If no records found or value is DBNull, set maxGuid to 0
-									$maxGuid = 0
-								}
-								
-								# Calculate the new starting PresetID
-								$newPresetID = $maxGuid + 1
-								
+								$ConnectionName = "CharConn"
+								$Query = "SELECT MAX(PresetID) FROM custom_transmogrification_sets"
+								$Column = "PresetID"
+								$newPresetID = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
+							
 								# Read the contents of the .sql file
 								$sqlContent = Get-Content -Path $sqlFilePath -Raw
 								
@@ -788,19 +746,11 @@ function Restore-Character {
 						if (Table-Exists -TableName "character_equipmentsets" -ConnectionName "CharConn") {
 							Write-Host "Importing character equipment sets..." -ForegroundColor Cyan
 							
-							$maxGuidResult = Invoke-SqlQuery -ConnectionName "CharConn" -Query "SELECT MAX(setguid) AS MaxSetguid FROM character_equipmentsets" 3>$null		#supress warnings when no results found
-	
-							# Extract the numeric value from the DataRow
-							if ($maxGuidResult -and $maxGuidResult.MaxSetguid -ne [DBNull]::Value) {
-								$maxGuid = $maxGuidResult.MaxSetguid
-							} else {
-								# If no records found, set maxGuid to 0
-								$maxGuid = 0
-							}
-							
-							#assign new guid to highest value in column guid + 1
-							$newID = $maxGuid + 1
-							
+							$ConnectionName = "CharConn"
+							$Query = "SELECT MAX(setguid) FROM character_equipmentsets"
+							$Column = "setguid"
+							$newID = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
+					
 							# Read the contents of the .sql file
 							$sqlContent = Get-Content -Path $sqlFilePath -Raw
 							
@@ -1205,21 +1155,10 @@ function Restore-All-Accounts-Main {
 				Write-Host "Account '$accountName' does not exist. Creating it..." -ForegroundColor Cyan
 				$accountSqlFile = Join-Path $accountFolder.FullName "_account.sql"
 				if (Test-Path $accountSqlFile) {
-					
-					# Get the maximum GUID from the characters table
-					$maxIDResult = Invoke-SqlQuery -ConnectionName "AuthConn" -Query "SELECT MAX(id) AS MaxID FROM account" 3>$null		#supress warnings when no results found
-					
-					# Extract the numeric value from the DataRow
-					if ($maxIDResult -and $maxIDResult.MaxID -ne [DBNull]::Value) {
-						$MaxID = $maxIDResult.MaxID
-					} else {
-						# If no records found, set maxGuid to 0
-						$MaxID = 0
-					}
-					
-					# Calculate the new GUID as the next sequential number
-					# $newID = $MaxID + 1
-					$accountId = $MaxID + 1
+					$ConnectionName = "AuthConn"
+					$Query = "SELECT MAX(id) FROM account"
+					$Column = "id"
+					$accountId = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 ####################################################################
 					# Read the content of the SQL file as a single string
 					$sqlContent = Get-Content -Path $accountSqlFile -Raw
@@ -1353,27 +1292,13 @@ function Restore-All-Accounts-Main {
 			}
 		}
 ####################################################################
-	    Write-Host "`nRestoring module creatures..." -ForegroundColor Cyan
-		$TableName = "creature"
-		$backupFile = "$backupDirFullAccount\$TableName.sql"
-		$whereClause = "id1 IN (601026, 190010, 300000, 290011, 601015, 200001, 200002, 190000, 601016, 93080, 199999, 55333, 100000, 500030, 98888)"
-		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseWorld`" `"$TableName`" > `"$backupFile`""
-		Invoke-Expression $mysqldumpCommand 2>$null
-
 		$accountSqlFile = Join-Path $accountFolder.FullName "creature.sql"
 		if (Test-Path $accountSqlFile) {
-			$MaxIDResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(id) AS MaxID FROM creature" 3>$null		#supress warnings when no results found
 			
-			# Extract the numeric value from the DataRow
-			if ($MaxIDResult -and $MaxIDResult.MaxID -ne [DBNull]::Value) {
-				$MaxID = $MaxIDResult.MaxID
-			} else {
-				# If no records found, set MaxID to 0
-				$MaxID = 0
-			}
-			
-			#assign new guid to highest value in column guid + 1
-			$newCreatureGuid = $MaxID + 1
+			$ConnectionName = "WorldConn"
+			$Query = "SELECT MAX(guid) FROM creature"
+			$Column = "guid"
+			$newCreatureGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
 			
 			# Read the contents of the .sql file
 			$sqlContent = Get-Content -Path $sqlFilePath -Raw
