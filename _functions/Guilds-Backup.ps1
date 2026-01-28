@@ -52,7 +52,7 @@ function Backup-Guild {
 		# Write-Host "$mysqldumpCommand"
 
 		# Run the mysqldump command
-		Invoke-Expression $mysqldumpCommand
+		Invoke-Expression $mysqldumpCommand 2>$null
 		
 		if ($LASTEXITCODE -eq 0) {
 				# Write-Host "Backed up data from $tableName to $sqlFilePath"

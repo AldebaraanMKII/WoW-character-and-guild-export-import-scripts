@@ -124,7 +124,6 @@ function Backup-FusionGEN {
 		
 		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-locks --skip-comments --hex-blob `"$SourceDatabaseFusionGEN`" `"$table`" > `"$backupFile`""
 		
-		# Invoke-Expression $mysqldumpCommand
 		Invoke-Expression $mysqldumpCommand 2>$null
 
 		if ($LASTEXITCODE -eq 0) {

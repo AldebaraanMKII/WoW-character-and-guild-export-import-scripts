@@ -358,13 +358,13 @@ function Backup-All-Accounts-Main {
 				$backupFile = "$backupDirFullAccount\_account.sql"
 				$whereClause = "id=$accountId"
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account`" > `"$backupFile`""
-				Invoke-Expression $mysqldumpCommand
+				Invoke-Expression $mysqldumpCommand 2>$null
 				
 				# Backup account access details
 				$backupFile = "$backupDirFullAccount\_account_access.sql"
 				$whereClause = "id=$accountId"
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
-				Invoke-Expression $mysqldumpCommand
+				Invoke-Expression $mysqldumpCommand 2>$null
 				
 				#remove empty sqls
 				Get-ChildItem -Path $backupDirFullAccount -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
@@ -432,6 +432,14 @@ function Backup-All-Accounts-Main {
 					Write-Host "No characters found for account '$accountName'" -ForegroundColor Yellow
 				}
 			}
+			
+################################################################################
+			# Backup creature data
+			$TableName = "creature"
+			$backupFile = "$backupDirFullAccount\$TableName.sql"
+			$whereClause = "id1 IN (601026, 190010, 300000, 290011, 601015, 200001, 200002, 190000, 601016, 93080, 199999, 55333, 100000, 500030, 98888)"
+			$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseWorld`" `"$TableName`" > `"$backupFile`""
+			Invoke-Expression $mysqldumpCommand 2>$null
 ################################################################################
 			$stopwatch.Stop()
 			Write-Host "`nAll accounts and characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
