@@ -1058,6 +1058,7 @@ function Restore-All-Accounts-Main {
 	# Create SimplySql connections
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseAuth -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "AuthConn"
 	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseCharacters -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "CharConn"
+	Open-MySqlConnection -Server $TargetServerName -Port $TargetPort -Database $TargetDatabaseWorld -Credential (New-Object System.Management.Automation.PSCredential($TargetUsername, (ConvertTo-SecureString $TargetPassword -AsPlainText -Force))) -ConnectionName "WorldConn"
 ####################################################################
 	try {
 		# Get all backup folders under full_backups
@@ -1352,6 +1353,65 @@ function Restore-All-Accounts-Main {
 			}
 		}
 ####################################################################
+	    Write-Host "`nRestoring module creatures..." -ForegroundColor Cyan
+		$TableName = "creature"
+		$backupFile = "$backupDirFullAccount\$TableName.sql"
+		$whereClause = "id1 IN (601026, 190010, 300000, 290011, 601015, 200001, 200002, 190000, 601016, 93080, 199999, 55333, 100000, 500030, 98888)"
+		$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseWorld`" `"$TableName`" > `"$backupFile`""
+		Invoke-Expression $mysqldumpCommand 2>$null
+
+		$accountSqlFile = Join-Path $accountFolder.FullName "creature.sql"
+		if (Test-Path $accountSqlFile) {
+			$MaxIDResult = Invoke-SqlQuery -ConnectionName "WorldConn" -Query "SELECT MAX(id) AS MaxID FROM creature" 3>$null		#supress warnings when no results found
+			
+			# Extract the numeric value from the DataRow
+			if ($MaxIDResult -and $MaxIDResult.MaxID -ne [DBNull]::Value) {
+				$MaxID = $MaxIDResult.MaxID
+			} else {
+				# If no records found, set MaxID to 0
+				$MaxID = 0
+			}
+			
+			#assign new guid to highest value in column guid + 1
+			$newCreatureGuid = $MaxID + 1
+			
+			# Read the contents of the .sql file
+			$sqlContent = Get-Content -Path $sqlFilePath -Raw
+			
+			# Extract values inside parentheses
+			$pattern = "(?<=\().*?(?=\))"
+			$matches = [regex]::Matches($sqlContent, $pattern)
+			
+			# List to store modified rows
+			$modifiedRows = @()
+			
+			# Loop through each match
+			for ($i = 0; $i -lt $matches.Count; $i++) {
+				$match = $matches[$i].Value
+				
+				# Split the row into individual values
+				$values = $match -split ","
+				
+				# Get the old GUID (first value), trim it for safety in case of spaces
+				# $oldGuid = $values[0].Trim()
+				# $oldGuid = $values[0]
+			
+				# Modify the first value with the incrementing GUID
+				$newCreatureGuidValue = $newCreatureGuid + $i
+				$values[0] = $newCreatureGuidValue
+				
+				# Recreate the modified row and store it
+				$modifiedRow = "(" + ($values -join ",") + ")"
+				$modifiedRows += $modifiedRow
+			}
+			
+			# Join the modified rows into the final SQL query
+			$modifiedSqlQuery = "INSERT INTO creature VALUES " + ($modifiedRows -join ",") + ";"
+			
+			#Execute the query
+			Execute-Query -query "$modifiedSqlQuery" -tablename "creature" -ConnectionName "WorldConn"
+		}
+####################################################################
 		Write-Host "Dumping IDs to JSONs..." -ForegroundColor Cyan
 		# Convert mappings to json and dump them
 		$Json = $guidMappingAccounts | ConvertTo-Json -Depth 3
@@ -1375,6 +1435,7 @@ function Restore-All-Accounts-Main {
 	} finally {
 		Close-SqlConnection -ConnectionName "AuthConn"
 		Close-SqlConnection -ConnectionName "CharConn"
+		Close-SqlConnection -ConnectionName "WorldConn"
 		[console]::beep()
 	}
 }

@@ -366,8 +366,6 @@ function Backup-All-Accounts-Main {
 				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseAuth`" `"account_access`" > `"$backupFile`""
 				Invoke-Expression $mysqldumpCommand 2>$null
 				
-				#remove empty sqls
-				Get-ChildItem -Path $backupDirFullAccount -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 ################################################################################
 				$characterData = Invoke-SqlQuery -ConnectionName "CharConn" -Query @"
 					SELECT guid, account, name, race, class, gender, level, xp, health, power1, money, skin, face, hairStyle, hairColor, facialStyle, bankSlots, equipmentCache, ammoId, arenapoints, totalHonorPoints, totalKills, creation_date, map, zone
@@ -440,6 +438,9 @@ function Backup-All-Accounts-Main {
 			$whereClause = "id1 IN (601026, 190010, 300000, 290011, 601015, 200001, 200002, 190000, 601016, 93080, 199999, 55333, 100000, 500030, 98888)"
 			$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --hex-blob --where=`"$whereClause`" `"$SourceDatabaseWorld`" `"$TableName`" > `"$backupFile`""
 			Invoke-Expression $mysqldumpCommand 2>$null
+################################################################################
+			#remove empty sqls
+			Get-ChildItem -Path $backupDirFullAccount -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 ################################################################################
 			$stopwatch.Stop()
 			Write-Host "`nAll accounts and characters backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
