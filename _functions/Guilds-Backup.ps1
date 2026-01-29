@@ -117,28 +117,6 @@ function Backup-Guild {
 			}
 		}
 	}
-########### Handle creature_respawn table
-
-	$backupFile = "$BackupDir\creature.sql"
-	
-	$NPCIds = @(26327, 26324, 26325, 26326, 26328, 26329, 26330, 26331, 26332, 500030, 500031, 500032, 30605, 29195, 2836, 8128, 8736, 18774, 18751, 18773, 18753, 30721, 30722, 19187, 19180, 19052, 908, 2627, 19184, 2834, 19185, 8719, 9856, 184137, 1685, 4087, 500000, 500001, 500002, 500003, 500004, 500005, 500006, 500007, 500008, 500009, 187293, 28692, 28776, 4255, 6491, 191028, 29636, 29493, 28690, 9858, 2622) 
-	
-	$whereClause = "id1 IN (" + ($NPCIds -join ',') + ") AND map = 1 AND zoneId = 0 AND areaId = 0"
-	
-	$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseWorld`" creature > `"$backupFile`""
-	
-	# Write-Host "Running mysqldump command..."
-	# Write-Host $mysqldumpCommand
-	
-	# Run the mysqldump command
-	Invoke-Expression $mysqldumpCommand 2>$null
-
-	if ($LASTEXITCODE -eq 0) {
-		# Write-Host "Successfully backed up creature table to $backupFile" -ForegroundColor Green
-	} else {
-		Write-Host "Error backing up creature table." -ForegroundColor Red
-	}
-
 ########### Delete empty SQL files
 	Get-ChildItem -Path $GuildBackupDir -Filter "*.sql" -Recurse | Where-Object { $_.Length -eq 0 } | Remove-Item
 }
@@ -172,12 +150,34 @@ function Backup-Guild-Main {
 					# $BankMoneyConverted = ConvertToGoldSilverCopper -MoneyAmount $guild.BankMoney
 					$GuildName = $guild.name
 					$LeaderName = $guild.leader_name
+					$BackupDirFull = "$GuildBackupDir\full_backups\$SourceServerName ($($CurrentDate))"
 					$BackupDir = "$GuildBackupDir\full_backups\$SourceServerName ($($CurrentDate))\$GuildName ($CurrentDate) - $LeaderName"
 					
 					Backup-Guild -GuildID $guild.guildid `
 								-GuildName $guild.name `
 								-BackupDir $BackupDir
 				}
+################################################### Handle creature table
+				Write-Host "Backing up guild NPCs..." -ForegroundColor Cyan
+				$backupFile = "$BackupDirFull\creature.sql"
+				
+				$NPCIds = @(26327, 26324, 26325, 26326, 26328, 26329, 26330, 26331, 26332, 500030, 500031, 500032, 30605, 29195, 2836, 8128, 8736, 18774, 18751, 18773, 18753, 30721, 30722, 19187, 19180, 19052, 908, 2627, 19184, 2834, 19185, 8719, 9856, 184137, 1685, 4087, 500000, 500001, 500002, 500003, 500004, 500005, 500006, 500007, 500008, 500009, 187293, 28692, 28776, 4255, 6491, 191028, 29636, 29493, 28690, 9858, 2622) 
+				
+				$whereClause = "id1 IN (" + ($NPCIds -join ',') + ") AND map = 1 AND zoneId = 0 AND areaId = 0"
+				$mysqldumpCommand = "& `"$mysqldumpPath`" --host=`"$SourceServerName`" --port=`"$SourcePort`" --user=`"$SourceUsername`" --password=`"$SourcePassword`" --skip-add-drop-table --skip-add-locks --skip-comments --no-create-info --compact --where=`"$whereClause`" `"$SourceDatabaseWorld`" creature > `"$backupFile`""
+				
+				# Write-Host "Running mysqldump command..."
+				# Write-Host $mysqldumpCommand
+				
+				# Run the mysqldump command
+				Invoke-Expression $mysqldumpCommand 2>$null
+			
+				if ($LASTEXITCODE -eq 0) {
+					# Write-Host "Successfully backed up creature table to $backupFile" -ForegroundColor Green
+				} else {
+					Write-Host "Error backing up creature table." -ForegroundColor Red
+				}
+########################################
 				$stopwatch.Stop()
 				Write-Host "All Guilds backed up in $($stopwatch.Elapsed.TotalSeconds) seconds." -ForegroundColor Green
 				return

@@ -1294,7 +1294,6 @@ function Restore-All-Accounts-Main {
 ####################################################################
 		$accountSqlFile = Join-Path $accountFolder.FullName "creature.sql"
 		if (Test-Path $accountSqlFile) {
-			
 			$ConnectionName = "WorldConn"
 			$Query = "SELECT MAX(guid) FROM creature"
 			$Column = "guid"

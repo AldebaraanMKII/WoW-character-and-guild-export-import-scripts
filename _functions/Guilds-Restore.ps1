@@ -444,55 +444,6 @@ function Restore-Guild {
 				
 				#Execute the query
 				Execute-Query -query $modifiedSqlQuery -tablename "guild_house" -ConnectionName "CharConn"
-############################## PROCESS CREATURE (this is for guild house NPCs) - alter guid[0] taking into account existing creatures
-				$sqlFilePath = "$BackupDir\creature.sql"
-				
-				if (Test-Path -Path $sqlFilePath) {
-					if (Table-Exists -TableName "creature" -ConnectionName "WorldConn") {
-						# Get the maximum GUID from the characters table
-						$ConnectionName = "CharConn"
-						$Query = "SELECT MAX(guid) FROM creature"
-						$Column = "guid"
-						$newCreatureGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
-						
-						# Read the contents of the .sql file
-						$sqlContent = Get-Content -Path $sqlFilePath -Raw
-						
-						# Extract values inside parentheses
-						$pattern = "(?<=\().*?(?=\))"
-						$matches = [regex]::Matches($sqlContent, $pattern)
-					
-						# List to store modified rows
-						$modifiedRows = @()
-					
-						# Loop through each match
-						for ($i = 0; $i -lt $matches.Count; $i++) {
-							$match = $matches[$i].Value
-							
-							# Split the row into individual values
-							$values = $match -split ","
-							
-							# Modify the first value with the incrementing GUID
-							$newCreatureGuidValue = $newCreatureGuid + $i
-							$values[0] = $newCreatureGuidValue
-						
-							# Recreate the modified row and store it
-							$modifiedRow = "(" + ($values -join ",") + ")"
-							$modifiedRows += $modifiedRow
-						}
-					
-						# Join the modified rows into the final SQL query
-						$modifiedSqlQuery = "INSERT INTO creature VALUES " + ($modifiedRows -join ",") + ";"
-						
-						# Output the modified SQL to verify
-						# Write-Host "`nModified SQL: $modifiedSqlQuery"
-						
-						#Execute the query
-						Execute-Query -query $modifiedSqlQuery -tablename "creature" -ConnectionName "WorldConn"
-					} else {
-						Write-Host "Table 'creature' does not exist, skipping restore for this table." -ForegroundColor Red
-					}
-				}
 #################################################################
 			} else {
 				Write-Host "Table 'guild_house' does not exist, skipping restore for this table." -ForegroundColor Red
@@ -699,6 +650,55 @@ function Restore-All-Guilds-Main {
 				Restore-Guild -character $leaderName -characterID $characterGuid -GuildName $guildName -BackupDir $folder
 			} else {
 				Write-Host "Leader character '$leaderName' not found for guild '$guildName'. Skipping restore." -ForegroundColor Red
+			}
+		}
+		
+############################## PROCESS CREATURE (this is for guild house NPCs) - alter guid[0] taking into account existing creatures
+		$sqlFilePath = "$chosenFolder\creature.sql"
+		if (Test-Path -Path $sqlFilePath) {
+			if (Table-Exists -TableName "creature" -ConnectionName "WorldConn") {
+				# Get the maximum GUID from the characters table
+				$ConnectionName = "CharConn"
+				$Query = "SELECT MAX(guid) FROM creature"
+				$Column = "guid"
+				$newCreatureGuid = GetMaxValueFromColumn -ConnectionName $ConnectionName -Query $Query -Column $Column
+				
+				# Read the contents of the .sql file
+				$sqlContent = Get-Content -Path $sqlFilePath -Raw
+				
+				# Extract values inside parentheses
+				$pattern = "(?<=\().*?(?=\))"
+				$matches = [regex]::Matches($sqlContent, $pattern)
+			
+				# List to store modified rows
+				$modifiedRows = @()
+			
+				# Loop through each match
+				for ($i = 0; $i -lt $matches.Count; $i++) {
+					$match = $matches[$i].Value
+					
+					# Split the row into individual values
+					$values = $match -split ","
+					
+					# Modify the first value with the incrementing GUID
+					$newCreatureGuidValue = $newCreatureGuid + $i
+					$values[0] = $newCreatureGuidValue
+				
+					# Recreate the modified row and store it
+					$modifiedRow = "(" + ($values -join ",") + ")"
+					$modifiedRows += $modifiedRow
+				}
+			
+				# Join the modified rows into the final SQL query
+				$modifiedSqlQuery = "INSERT INTO creature VALUES " + ($modifiedRows -join ",") + ";"
+				
+				# Output the modified SQL to verify
+				# Write-Host "`nModified SQL: $modifiedSqlQuery"
+				
+				#Execute the query
+				Execute-Query -query $modifiedSqlQuery -tablename "creature" -ConnectionName "WorldConn"
+			} else {
+				Write-Host "Table 'creature' does not exist, skipping restore for this table." -ForegroundColor Red
 			}
 		}
 #################################################################### 
